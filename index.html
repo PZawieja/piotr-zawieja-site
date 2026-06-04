@@ -145,12 +145,32 @@
     display: block;
   }
 
+  .hero-hook {
+    font-family: var(--serif);
+    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+    color: var(--white);
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    max-width: 560px;
+    font-style: italic;
+    font-weight: 400;
+  }
+
   .hero-sub {
     font-size: 1.05rem;
     color: var(--muted);
-    max-width: 540px;
-    margin-bottom: 2.5rem;
+    max-width: 560px;
+    margin-bottom: 1.25rem;
     line-height: 1.7;
+  }
+
+  .hero-tags {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--dim);
+    letter-spacing: 0.03em;
+    margin-bottom: 2rem;
+    line-height: 1.8;
   }
 
   .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
@@ -541,8 +561,16 @@
       <span class="line-muted">Analytics Engineer</span>
     </h1>
 
+    <p class="hero-hook">
+      If different teams disagree on the numbers,<br>the problem isn't data. It's trust.
+    </p>
+
     <p class="hero-sub">
-      8+ years building revenue data systems for B2B SaaS. I own the full stack — from Snowflake modelling and dbt pipelines to AI-assisted analytics and executive reporting.
+      I build systems that fix that — turning fragmented data into a single, reliable foundation for decision-making across the entire company.
+    </p>
+
+    <p class="hero-tags">
+      10+ years in B2B SaaS &nbsp;·&nbsp; Snowflake &nbsp;·&nbsp; dbt &nbsp;·&nbsp; End-to-end analytics systems &nbsp;·&nbsp; Self-service data layers &nbsp;·&nbsp; AI-assisted analytics
     </p>
 
     <div class="hero-actions">
@@ -581,7 +609,7 @@
       </div>
 
       <ul class="facts-list">
-        <li>8+ years in B2B SaaS analytics, primarily subscription/revenue data</li>
+        <li>10+ years in B2B SaaS analytics, primarily subscription/revenue data</li>
         <li>Berlin-based, open to relocation to Warsaw/Kraków or fully remote internationally</li>
         <li>Fluent in English; professional Polish</li>
         <li>Comfortable as individual contributor or technical lead</li>
