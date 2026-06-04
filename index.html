@@ -481,6 +481,45 @@
 
   .contact-note strong { color: var(--white); display: block; margin-bottom: 0.5rem; font-size: 1rem; }
 
+  /* ─── Writing ──────────────────────────────────────────────── */
+  .writing-list { display: flex; flex-direction: column; gap: 1px; }
+
+  .writing-item {
+    display: block;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    transition: none;
+  }
+
+  .writing-item:first-child { border-top: 1px solid var(--border); }
+
+  .writing-item:hover .writing-title { color: var(--accent); }
+
+  .writing-item-meta {
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-bottom: 0.6rem; flex-wrap: wrap;
+  }
+
+  .writing-tag {
+    font-family: var(--mono); font-size: 0.65rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.15rem 0.5rem; border-radius: 3px;
+  }
+
+  .writing-date { font-family: var(--mono); font-size: 0.7rem; color: var(--dim); margin-left: auto; }
+
+  .writing-title {
+    font-family: var(--serif); font-size: 1.2rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.01em;
+    line-height: 1.3; margin-bottom: 0.5rem;
+    transition: color 0.15s;
+  }
+
+  .writing-lede { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
   /* ─── Footer ───────────────────────────────────────────────── */
   footer {
     border-top: 1px solid var(--border);
@@ -543,6 +582,7 @@
       <li><a href="#stack">stack</a></li>
       <li><a href="#projects">projects</a></li>
       <li><a href="#achievements">impact</a></li>
+      <li><a href="#writing">writing</a></li>
       <li><a href="#contact">contact</a></li>
     </ul>
   </div>
@@ -899,6 +939,30 @@
         <p>Principal-level skills: team enablement, data contracts as organisational boundaries, and analytics-as-a-product thinking.</p>
         <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Writing ─────────────────────────────────────────────────── -->
+<section id="writing">
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// writing</p>
+      <h2>Articles</h2>
+    </div>
+
+    <div class="writing-list">
+
+      <a href="writing/dbt-47-models-nobody-trusts.html" class="writing-item">
+        <div class="writing-item-meta">
+          <span class="writing-tag">dbt</span>
+          <span class="writing-tag">Analytics Engineering</span>
+          <span class="writing-date">June 2026 · 7 min</span>
+        </div>
+        <h3 class="writing-title">Why your dbt project has 47 models and nobody trusts any of them</h3>
+        <p class="writing-lede">The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer.</p>
+      </a>
+
     </div>
   </div>
 </section>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why your dbt project has 47 models and nobody trusts any of them — Piotr Zawieja</title>
+<meta name="description" content="The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it's fixable.">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">pzawieja.dev</a></span>
+    <a href="../index.html#writing" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">Analytics Engineering</span>
+      <span class="meta-tag">Data Quality</span>
+      <span class="meta-date">June 2026 · 7 min read</span>
+    </div>
+    <h1 class="article-title">Why your dbt project has 47 models and nobody trusts any of them</h1>
+    <p class="article-lede">The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer.</p>
+  </header>
+
+  <div class="article-body">
+
+    <p>Every data team I talk to eventually confesses the same thing. They adopted dbt six to eighteen months ago. The project has grown. There are models everywhere — staging, intermediate, marts, one-offs, experiments that never got cleaned up. The CI pipeline is green.</p>
+
+    <p>And nobody trusts the numbers.</p>
+
+    <p>Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.</p>
+
+    <p>This is the dbt trust problem. It is not a tooling problem. It is an architectural and process problem that tooling alone cannot fix.</p>
+
+    <hr>
+
+    <h2>How you get to 47 models</h2>
+
+    <p>The pattern is consistent enough that I'd call it a law. It goes like this:</p>
+
+    <p><strong>Month 1–3:</strong> A data engineer — sometimes a senior one, sometimes someone who just did the dbt Fundamentals course — sets up the project. They create a staging layer. They build a few marts. It's clean. There's hope.</p>
+
+    <p><strong>Month 4–8:</strong> The business starts making requests faster than the model structure can absorb them. Someone adds a one-off model for a sales report. Someone else forks <code>fct_orders</code> because they need a slightly different grain. An analyst writes a model directly in the marts folder because staging felt too far away. Nobody reviews it. The CI passes.</p>
+
+    <p><strong>Month 9–18:</strong> You now have:</p>
+    <ul>
+      <li>Staging models that duplicate logic from each other</li>
+      <li>Intermediate models that exist for one downstream consumer and nowhere else</li>
+      <li>Multiple "fct" models for the same business entity with subtly different definitions</li>
+      <li>A <code>mart_finance_v2</code> next to <code>mart_finance</code> with no documentation explaining the difference</li>
+      <li>Tests that check for nulls and uniqueness but not for business logic</li>
+    </ul>
+
+    <p>The project is large. The project is broken in ways that are invisible to <code>dbt test</code>.</p>
+
+    <hr>
+
+    <h2>The real problem is undocumented decisions</h2>
+
+    <p>When a stakeholder looks at two numbers that disagree, they don't think "there's a SQL bug." They think "I can't trust this system." And once that trust breaks, it's very slow to rebuild.</p>
+
+    <p>The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record. Consider:</p>
+
+<pre><code><span class="comment">-- Which of these is "correct" MRR?</span>
+
+<span class="comment">-- Version A — in mart_revenue</span>
+<span class="keyword">select</span>
+    date_trunc(<span class="string">'month'</span>, subscription_start) <span class="keyword">as</span> month
+  , <span class="keyword">sum</span>(monthly_amount) <span class="keyword">as</span> mrr
+<span class="keyword">from</span> {{ ref(<span class="string">'stg_subscriptions'</span>) }}
+<span class="keyword">where</span> status = <span class="string">'active'</span>
+
+<span class="comment">-- Version B — in mart_finance_v2</span>
+<span class="keyword">select</span>
+    date_trunc(<span class="string">'month'</span>, billing_date) <span class="keyword">as</span> month
+  , <span class="keyword">sum</span>(amount) <span class="keyword">as</span> mrr
+<span class="keyword">from</span> {{ ref(<span class="string">'stg_invoices'</span>) }}
+<span class="keyword">where</span> payment_status = <span class="string">'paid'</span></code></pre>
+
+    <p>Both look reasonable. They produce different numbers. Without documentation explaining the business decision behind each, every stakeholder who sees a discrepancy becomes a skeptic.</p>
+
+    <p>The model exists. The test passes. The trust is gone.</p>
+
+    <hr>
+
+    <h2>What actually fixes it</h2>
+
+    <h3>1. Enforce the layer contract</h3>
+
+    <p>The staging layer should contain exactly one model per source table, with no business logic — only renaming, casting, and deduplication. If a staging model joins two source tables, something is wrong.</p>
+
+    <p>The intermediate layer is where business logic lives. It is not for consumption — it exists to make marts readable. If an analyst is querying an intermediate model directly, the mart layer is missing something.</p>
+
+    <p>The mart layer is what stakeholders and BI tools touch. Every model here should have a documented grain, a documented owner, and documented definitions for every column that represents a business concept.</p>
+
+    <p>This is not a novel framework. It is what the dbt docs describe. The gap is enforcement.</p>
+
+<pre><code><span class="comment">-- stg_subscriptions: clean, no business logic</span>
+<span class="keyword">select</span>
+    subscription_id
+  , customer_id
+  , cast(started_at <span class="keyword">as</span> date)     <span class="keyword">as</span> started_date
+  , cast(ended_at <span class="keyword">as</span> date)       <span class="keyword">as</span> ended_date
+  , lower(trim(status))          <span class="keyword">as</span> status
+  , amount_cents / 100.0         <span class="keyword">as</span> monthly_amount
+<span class="keyword">from</span> {{ source(<span class="string">'billing'</span>, <span class="string">'subscriptions'</span>) }}</code></pre>
+
+    <h3>2. Write tests for business rules, not just data shape</h3>
+
+    <p><code>not_null</code> and <code>unique</code> are hygiene. They are not trust. Business logic errors reach dashboards because the tests were not written to catch them.</p>
+
+    <p>Write tests for the things that matter to stakeholders:</p>
+
+<pre><code><span class="comment"># schema.yml</span>
+models:
+  - name: fct_subscriptions
+    columns:
+      - name: monthly_amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 50000
+      - name: status
+        tests:
+          - accepted_values:
+              values: [<span class="string">'active'</span>, <span class="string">'cancelled'</span>, <span class="string">'paused'</span>, <span class="string">'trialing'</span>]</code></pre>
+
+    <p>This is the minimum. For revenue-critical models, add reconciliation tests that compare aggregate outputs across models for the same business concept.</p>
+
+    <h3>3. Deprecate loudly, delete completely</h3>
+
+    <p>The <code>mart_finance_v2</code> that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it.</p>
+
+    <p>Before you delete it, write a YAML description in the replacement model that says exactly what changed and why. A one-sentence note in <code>schema.yml</code> prevents 80% of the stakeholder questions that follow.</p>
+
+    <h3>4. Treat the mart layer like an API</h3>
+
+    <p>If you were building a public API, you would version it, document it, and not break consumers without notice. Your mart models are an API — Finance, RevOps, and the product team are your consumers.</p>
+
+    <p>This means: every mart model has a description. Every column that means something to the business has a description. Changes that affect downstream consumers go through a review. Not a formal RFC — just a human who reads the diff and asks "does anything consume this?"</p>
+
+    <p>In a growing company moving from spreadsheets to a proper data stack, this step is usually the one that gets skipped. It's also the one that determines whether dbt becomes the source of truth or becomes the thing the analysts work around.</p>
+
+    <hr>
+
+    <div class="takeaways">
+      <h2>Three takeaways</h2>
+      <ul>
+        <li><strong>Audit your intermediate layer for models that have exactly one downstream consumer</strong> — those belong in the mart that uses them, not as standalone files creating false structure.</li>
+        <li><strong>Write at least one business logic test per mart model</strong> — not a null check, an actual rule that a stakeholder would care about if violated.</li>
+        <li><strong>Document the definition of every revenue or retention metric at the model level</strong> — not in Confluence, not in Slack, in <code>schema.yml</code> next to the column it describes.</li>
+      </ul>
+    </div>
+
+    <p>The project with 47 models is not a failure. It's a growth stage. The signal that you've moved past it is not a smaller model count — it's when a new analyst joins, reads the schema files, and doesn't need to ask anyone what "active customer" means.</p>
+
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../index.html#writing" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
