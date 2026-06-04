@@ -350,6 +350,37 @@
 
   .metric-detail { color: var(--muted); font-size: 0.82rem; }
 
+  /* ─── Contribution cards ──────────────────────────────────── */
+  .contrib-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .contrib-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .contrib-num {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 0.08em;
+  }
+
+  .contrib-card h3 { font-size: 0.88rem; color: var(--white); }
+  .contrib-card p  { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+  @media (max-width: 780px) { .contrib-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 500px) { .contrib-grid { grid-template-columns: 1fr; } }
+
   /* ─── Learning ─────────────────────────────────────────────── */
   .learning-grid {
     display: grid;
@@ -766,6 +797,48 @@
         </tr>
       </tbody>
     </table>
+
+    <div class="rule" style="margin-top:2.5rem"></div>
+
+    <div class="contrib-grid">
+
+      <div class="contrib-card">
+        <span class="contrib-num">01</span>
+        <h3>Single source of truth for revenue</h3>
+        <p>Designed and implemented a unified revenue data platform that consolidated fragmented reporting logic into one trusted framework — enabling Finance, Revenue Operations, and leadership to work from consistent metric definitions.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">02</span>
+        <h3>Self-service analytics layer</h3>
+        <p>Built a curated analytics layer that allowed business users to answer complex questions independently, without ad-hoc data requests. Improved accessibility, consistency, and governance of key business metrics across the organisation.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">03</span>
+        <h3>Data trust as a competitive advantage</h3>
+        <p>Led data quality, reconciliation, and metric standardisation initiatives that moved organisations from conflicting reports and manual validation toward trusted, decision-ready data.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">04</span>
+        <h3>Modernised revenue analytics architecture</h3>
+        <p>Designed scalable data models and transformation frameworks capable of supporting business growth while maintaining transparency, auditability, and reliability across the analytics stack.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">05</span>
+        <h3>Predictive customer intelligence</h3>
+        <p>Developed customer analytics frameworks enabling teams to identify risk patterns, prioritise interventions, and shift from reactive to proactive business decisions.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">06</span>
+        <h3>Analytics through data product thinking</h3>
+        <p>Introduced product-oriented approaches to analytics: ownership models, documentation standards, monitoring practices, and reusable assets — reducing operational complexity and improving adoption.</p>
+      </div>
+
+    </div>
   </div>
 </section>
 
