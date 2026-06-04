@@ -542,7 +542,7 @@
           I'm an Analytics Engineer specialising in <strong>revenue and GTM data</strong> for B2B SaaS. My work sits at the intersection of data engineering, analytics, and business intelligence — building the warehouse layer that finance, CS, and product teams rely on daily.
         </p>
         <p>
-          Most recently at <strong>Shiftmove</strong> (formerly Vimcar), I led a post-merger CRM unification across two product lines, rebuilt the CARR pipeline from 78 minutes to 7 minutes, and shipped an XGBoost churn model into production. I've owned Snowflake, dbt, Salesforce, Chargebee, and Tableau end-to-end across the whole revenue data lifecycle.
+          Across my career in B2B SaaS I've led CRM unification projects, rebuilt revenue data pipelines from the ground up, and shipped machine learning models into production CS workflows. I've owned Snowflake, dbt, Salesforce, and Tableau end-to-end across the whole revenue data lifecycle.
         </p>
         <p>
           My current focus is integrating <strong>AI as a governed layer</strong> on top of warehouse assets — not replacing analytical rigour, but amplifying it with safer, auditable LLM tooling.
@@ -676,7 +676,7 @@
         </div>
         <h3>Air Traffic Pulse</h3>
         <p>
-          Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern I use for CARR monitoring and MRR drop detection.
+          Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern used in production revenue monitoring systems.
         </p>
         <div class="project-tags">
           <span class="tag">Python</span>
@@ -730,7 +730,7 @@
             <span class="metric">12–15% customer overlap found</span>
             <span class="metric-detail">8–10% revenue overstatement corrected</span>
           </td>
-          <td>Post-merger CRM unification across two product lines. Identified duplicate accounts and corrected CARR overstatement before it reached board reporting.</td>
+          <td>CRM data reconciliation across two product lines following a business integration. Identified customer overlap and corrected revenue double-counting in subscription data.</td>
         </tr>
         <tr>
           <td>Pipeline performance</td>
@@ -738,7 +738,7 @@
             <span class="metric">78 min → 7 min</span>
             <span class="metric-detail">91% reduction in CARR pipeline runtime</span>
           </td>
-          <td>Full rebuild of the CARR pipeline — incremental materialisation, partitioning strategy, and query restructuring. Finance now has daily refresh by 08:00.</td>
+          <td>Full rebuild of a subscription revenue pipeline — incremental materialisation, query restructuring, and partitioning strategy. Daily refresh completed well within business hours.</td>
         </tr>
         <tr>
           <td>Churn ML model</td>
@@ -746,7 +746,7 @@
             <span class="metric">86% accuracy · AUC-ROC 0.91</span>
             <span class="metric-detail">~5% churn reduction in target segment</span>
           </td>
-          <td>XGBoost health score model deployed to production. Features sourced from dbt gold layer. Scored weekly per account; integrated into CS workflow.</td>
+          <td>XGBoost churn risk model built on warehouse-sourced features and deployed to production. Scored weekly per account; integrated into customer success tooling.</td>
         </tr>
         <tr>
           <td>Data migration</td>
@@ -754,7 +754,7 @@
             <span class="metric">100k+ records migrated</span>
             <span class="metric-detail">Zero data loss, zero downtime</span>
           </td>
-          <td>Chargebee subscription data migration during billing platform consolidation. Validation suite ran against both source and destination before cutover.</td>
+          <td>Subscription data migration during a billing platform consolidation. Full validation suite run against source and destination before cutover; zero rollbacks required.</td>
         </tr>
         <tr>
           <td>Reporting efficiency</td>
@@ -762,7 +762,7 @@
             <span class="metric">~40% reduction</span>
             <span class="metric-detail">in manual reporting time</span>
           </td>
-          <td>Standardised dbt models replacing ad-hoc analyst SQL. Executive dashboards automated; weekly Finance decks self-serve from certified Tableau extracts.</td>
+          <td>Standardised dbt models replacing ad-hoc analyst SQL across the reporting layer. Executive dashboards and recurring business reviews moved to self-serve certified extracts.</td>
         </tr>
       </tbody>
     </table>
