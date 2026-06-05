@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>From Excel to dbt: a realistic transition guide for Polish data teams — Piotr Zawieja</title>
+<meta name="description" content="A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.">
+<meta property="og:title" content="From Excel to dbt: a realistic transition guide for Polish data teams">
+<meta property="og:description" content="A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.">
+<meta property="og:url" content="https://goldlayer.dev/writing/excel-to-dbt-polish-data-teams.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">sql</span>
+      <span class="meta-tag">career</span>
+      <span class="meta-date">June 2026 · 8 min read</span>
+    </div>
+    <h1 class="article-title">From Excel to dbt: a realistic transition guide for Polish data teams</h1>
+    <p class="article-lede">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Most Polish data teams I talk to are two to three years into a dbt migration. The ones that are struggling share a common pattern: they installed dbt, learned the syntax, and skipped the one step that makes it actually work. The step is not technical.</p>
+<p>This guide is for teams in Warsaw, Kraków, and the wider Polish market who are somewhere in that transition — or about to start it. The technical parts are real. The process parts are the ones that actually determine whether the migration sticks.</p>
+<hr />
+<h2>The pattern</h2>
+<p>Nearly every migration I have seen follows the same arc.</p>
+<p><strong>Stage 0</strong> looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that.</p>
+<p>Then someone joins who knows SQL well. Things move to BigQuery or Snowflake. dbt gets installed over a weekend. Month one through three: it works beautifully. Clean staging models, a few marts, a DAG that makes sense. The team is proud, and they should be.</p>
+<p>Month six through twelve: the project has forty models, Finance is still using the spreadsheet from 2022, and nobody can agree on what "active customer" means. The dbt project is technically correct. It is also not trusted.</p>
+<p>The thing they skipped was agreeing on definitions before building models. That is not a dbt problem. That is a data governance problem, and dbt cannot solve it on your behalf.</p>
+<hr />
+<h2>What the Polish market context means</h2>
+<p>Warsaw and Kraków data teams are often smaller than their Western European equivalents. A team of one to three analytics engineers doing everything — ingestion, transformation, dashboards, stakeholder management — is common. That structure produces strong generalists, but it leaves less time for the coordination work that makes a data platform trustworthy.</p>
+<p>dbt skill is in high demand in Poland and supply is growing fast. What is genuinely thin is supply of people who can <em>govern</em> a dbt project — not just build models, but establish a shared metric layer, write documentation that non-technical stakeholders can read, and retire the spreadsheets in a way that earns trust rather than forcing compliance.</p>
+<p>That governance gap is where projects break down, and it is also where the opportunity is for engineers who can close it. This is not a criticism of Polish teams specifically — it is the same pattern that played out in the UK and Germany three to four years earlier. The market catches up, and the engineers who built those skills early are now well-compensated senior practitioners.</p>
+<hr />
+<h2>A realistic five-stage transition</h2>
+<h3>Stage 1: Document your Excel formulas as SQL before touching dbt</h3>
+<p>Before you write a single <code>{{ ref() }}</code>, open every significant Excel file and translate its logic into SQL. Not into dbt — just SQL. This forces you to find all the hidden assumptions.</p>
+<pre><code class="language-sql">-- Excel formula: =IF(AND(B2=&quot;active&quot;, C2&gt;0), &quot;paying&quot;, IF(B2=&quot;trial&quot;, &quot;trial&quot;, &quot;churned&quot;))
+-- Equivalent SQL:
+SELECT
+    customer_id
+    , CASE
+        WHEN status = 'active' AND mrr &gt; 0 THEN 'paying'
+        WHEN status = 'trial'              THEN 'trial'
+        ELSE                                    'churned'
+      END AS customer_segment
+FROM raw.customers
+</code></pre>
+<p>You will find edge cases in this step. Deal with them now, in a document, before they become bugs in production.</p>
+<h3>Stage 2: Build a staging layer that mirrors your sources exactly</h3>
+<p>No business logic in staging. Rename columns to a consistent convention, cast types, and stop there. The discipline pays off later.</p>
+<pre><code class="language-sql">-- models/staging/stg_customers.sql
+SELECT
+    id                                         AS customer_id
+    , name                                     AS customer_name
+    , status                                   AS subscription_status
+    , CAST(mrr_cents AS FLOAT64) / 100         AS mrr
+    , CAST(created_at AS TIMESTAMP)            AS created_at
+    , CAST(cancelled_at AS TIMESTAMP)          AS cancelled_at
+FROM {{ source('crm', 'customers') }}
+</code></pre>
+<p>A staging layer that contains derived logic is a staging layer you will regret in six months.</p>
+<h3>Stage 3: Build marts that match your current Excel outputs first</h3>
+<p>Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off.</p>
+<pre><code class="language-yaml"># models/marts/schema.yml
+version: 2
+
+models:
+  - name: fct_monthly_revenue
+    description: &gt;
+      Monthly recurring revenue by customer, matching the Finance MRR report.
+      Definition: sum of active subscriptions in the billing period.
+      Verified against Finance spreadsheet v2.3 (2026-05-01).
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+          - unique
+      - name: mrr
+        tests:
+          - not_null
+</code></pre>
+<p>Write the description and the verification note. When Finance asks "where did this number come from," you want a written answer ready.</p>
+<h3>Stage 4: Add tests that catch what Excel caught through human eyes</h3>
+<p>Excel had a human reviewing it every month. dbt needs explicit tests to replace that review.</p>
+<pre><code class="language-yaml"># models/marts/schema.yml (extended)
+      - name: subscription_status
+        tests:
+          - accepted_values:
+              values: ['active', 'trial', 'paused', 'churned']
+      - name: mrr
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 50000
+              inclusive: true
+</code></pre>
+<p>The <code>accepted_range</code> test on MRR is particularly useful. It catches the category of error where a unit conversion goes wrong and a customer suddenly has 100x their actual revenue.</p>
+<h3>Stage 5: Retire the Excel — but not before</h3>
+<p>Run both the dbt output and the Excel in parallel for a minimum of three consecutive billing cycles. When they agree for three cycles, you have earned the right to ask the business to switch. Not before.</p>
+<pre><code class="language-python"># scripts/validate_mrr_parity.py
+import pandas as pd
+
+def check_parity(dbt_df: pd.DataFrame, excel_df: pd.DataFrame, tolerance: float = 0.01) -&gt; bool:
+    &quot;&quot;&quot;
+    Returns True if total MRR matches within tolerance across all customers.
+    tolerance: relative — 0.01 means within 1 percent.
+    &quot;&quot;&quot;
+    merged = dbt_df.merge(excel_df, on=&quot;customer_id&quot;, suffixes=(&quot;_dbt&quot;, &quot;_excel&quot;))
+    merged[&quot;delta_pct&quot;] = abs(
+        (merged[&quot;mrr_dbt&quot;] - merged[&quot;mrr_excel&quot;]) / merged[&quot;mrr_excel&quot;].replace(0, float(&quot;nan&quot;))
+    )
+    mismatches = merged[merged[&quot;delta_pct&quot;] &gt; tolerance]
+    if not mismatches.empty:
+        print(f&quot;Mismatches found: {len(mismatches)} rows&quot;)
+        print(mismatches[[&quot;customer_id&quot;, &quot;mrr_dbt&quot;, &quot;mrr_excel&quot;, &quot;delta_pct&quot;]].head(10))
+        return False
+    print(&quot;Parity check passed.&quot;)
+    return True
+</code></pre>
+<p>Running this script before each month-end close builds a paper trail that makes the retirement conversation much easier.</p>
+<hr />
+<h2>The one thing that makes it stick</h2>
+<p>The transition fails when dbt is treated as a technical upgrade and succeeds when it is treated as a trust-building project.</p>
+<p>Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.</p>
+<p>Write the documentation before anyone asks for it. Define "active customer" in your schema.yml before Finance asks why dbt's count differs from theirs. Set up the parity tests before the first month-end. Make the process visible.</p>
+<p>The Polish data market is moving fast. Senior analytics engineers who can take a team through this transition — combining technical depth with the stakeholder work — are in genuinely short supply. The teams that invest in this skill set are building something durable.</p>
+<hr />
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Definitions first, models second</strong> — agreeing on what "active customer" means before writing SQL is not optional; it is the work that makes everything else hold together.</li>
+<li><strong>Staging layers should be boring</strong> — no business logic, just renaming and casting; complexity belongs in marts where it can be tested and documented.</li>
+<li><strong>Match before you improve</strong> — producing identical output to the existing spreadsheet, even if you know it has flaws, is how you build the trust that lets you fix those flaws later.</li>
+<li><strong>Run parallel for three cycles</strong> — three consecutive billing periods of parity between dbt output and Excel gives you evidence; one week of matching numbers does not.</li>
+<li><strong>Governance is the gap</strong> — in the Polish market right now, the scarce skill is not dbt syntax but the ability to govern a metric layer and retire spreadsheets through stakeholder buy-in rather than mandate.</li>
+</ul>
+</div>
+
+<hr />
+<p>What was the hardest part of your own Excel-to-dbt migration — the technical side, or getting the business to trust the new numbers?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
