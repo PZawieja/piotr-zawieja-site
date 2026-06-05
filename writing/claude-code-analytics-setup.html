@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How I set up Claude Code for analytics engineering work — Piotr Zawieja</title>
+<meta name="description" content="Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.">
+<meta property="og:title" content="How I set up Claude Code for analytics engineering work">
+<meta property="og:description" content="Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.">
+<meta property="og:url" content="https://goldlayer.dev/writing/claude-code-analytics-setup.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">claude-code</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">automation</span>
+      <span class="meta-date">June 2026 · 6 min read</span>
+    </div>
+    <h1 class="article-title">How I set up Claude Code for analytics engineering work</h1>
+    <p class="article-lede">Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Every session starts the same way. You open a new chat, paste a model, and spend the first five minutes re-explaining: we use Snowflake, commas go at the start of lines, staging is one-to-one with sources, marts follow a specific naming convention. The AI helps. It just doesn't know your project yet.</p>
+<p>Claude Code can fix this — but not out of the box. With CLAUDE.md, AGENTS.md, and a handful of skills, it stops being a generic assistant and starts behaving like a senior engineer who already read your style guide. Here's the exact setup.</p>
+<hr />
+<h2>The architecture</h2>
+<pre><code>dbt-project/
+├── CLAUDE.md                    ← entry point, kept short
+├── .claude/
+│   ├── AGENTS.md                ← conventions, stack, skills menu
+│   ├── skills/
+│   │   ├── develop.md           ← /develop
+│   │   ├── test.md              ← /test
+│   │   ├── review.md            ← /review
+│   │   └── deploy.md            ← /deploy
+│   └── docs/
+│       ├── sql-conventions.md
+│       ├── dbt-conventions.md
+│       ├── yaml-conventions.md
+│       └── data-warehouse.md    ← schema reference
+└── models/
+    ├── staging/
+    ├── intermediate/
+    └── marts/
+</code></pre>
+<p>Three layers. CLAUDE.md is short and points to AGENTS.md. AGENTS.md is the brain — it holds the conventions that would otherwise live only in your head or in a Notion doc nobody reads. The <code>docs/</code> files are lazy-loaded: a skill reads them explicitly when needed, which keeps the context window clean on simple tasks.</p>
+<hr />
+<h2>The actual files</h2>
+<p><strong>CLAUDE.md</strong> — keep it under 20 lines. Its job is orientation, not documentation:</p>
+<pre><code class="language-markdown"># Analytics Engineering Agent
+
+Stack: dbt Core, Snowflake, Python
+Conventions and skills: see .claude/AGENTS.md
+
+## Hard rules
+- Never modify production models without running dbt compile first
+- All SQL uses CTEs — no subqueries
+- YAML descriptions required for all mart-layer models
+</code></pre>
+<p><strong>AGENTS.md</strong> is where the real setup lives. The placeholders are intentional — fill them in once per project:</p>
+<pre><code class="language-markdown"># Analytics Engineering Agent — Context
+
+## Stack
+- Warehouse: [YOUR_WAREHOUSE]        (e.g. Snowflake, BigQuery)
+- Transformation: dbt Core [VERSION]
+- Orchestration: [YOUR_ORCHESTRATOR] (e.g. Airflow, dbt Cloud)
+- Schema: [YOUR_WAREHOUSE_SCHEMA]
+
+## Directory conventions
+models/staging/      → stg_[source]__[entity].sql, 1:1 with source tables
+models/intermediate/ → int_[entity]_[verb].sql
+models/marts/        → fct_[entity].sql, dim_[entity].sql
+
+## SQL conventions
+See .claude/docs/sql-conventions.md
+
+## Skills
+/develop  scaffold a new model from a staging source
+/test     generate dbt YAML tests for an existing model
+/review   read-only SQL review — flags issues, never edits
+/deploy   dbt compile + dbt run for a target model
+
+## Sub-agents
+code-reviewer  reviews SQL only, never writes or modifies files
+doc-reviewer   reviews YAML descriptions only
+</code></pre>
+<p><strong>The <code>/develop</code> skill</strong> is where this setup earns its keep. Save it as <code>.claude/skills/develop.md</code>:</p>
+<pre><code class="language-markdown"># /develop
+
+Given a target model name and layer (intermediate or mart):
+
+1. Read the relevant staging model(s) from models/staging/
+2. Read .claude/docs/sql-conventions.md and .claude/docs/dbt-conventions.md
+3. Scaffold the new model SQL following naming conventions and CTE structure
+4. Create the YAML schema entry in the same directory as the model
+5. Run: dbt compile --select [model_name]
+6. Report compile errors. Do not run dbt run without explicit confirmation.
+
+Output: SQL file, YAML entry, compile result, list of assumptions made.
+</code></pre>
+<p>Short, declarative, repeatable. No ambiguity about what gets read, what gets written, what gets run.</p>
+<hr />
+<h2>Before and after</h2>
+<p><strong>Before:</strong> <code>write me a dbt model for MRR</code></p>
+<p>Claude invents column names, picks an arbitrary CTE style, skips the YAML, and uses a subquery because it doesn't know you've banned them.</p>
+<p><strong>After:</strong> <code>/develop fct_mrr mart</code></p>
+<p>Claude reads <code>stg_subscriptions.sql</code>, loads your SQL conventions, and produces:</p>
+<pre><code class="language-sql">-- models/marts/fct_mrr.sql
+with
+
+subscriptions as (
+    select * from {{ ref('stg_subscriptions') }}
+)
+
+, monthly_revenue as (
+    select
+          date_trunc('month', subscription_start_date) as mrr_month
+        , sum(monthly_amount_usd)                      as mrr
+    from subscriptions
+    where status = 'active'
+    group by 1
+)
+
+select * from monthly_revenue
+</code></pre>
+<p>Plus the YAML entry. Plus <code>dbt compile</code> output. In one shot.</p>
+<p>The difference isn't model quality alone — it's that you didn't have to check whether it followed your conventions, because it read them first.</p>
+<hr />
+<h2>What this changes</h2>
+<p><strong>No more context re-explanation.</strong> Conventions live in files, not in your prompt history. Close the session, come back the next day — the agent reads AGENTS.md and knows exactly where it is.</p>
+<p><strong>Skills are version-controlled.</strong> Your <code>/develop</code> skill is a file in the repo. When conventions change, you update the file. Everyone on the team gets the update on the next pull. No more tribal knowledge drift.</p>
+<p><strong>Sub-agents enforce separation of concerns.</strong> The <code>code-reviewer</code> sub-agent is instructed never to modify files. It reads, flags, and stops. You don't accidentally end up with a reviewer that "helpfully" rewrites the SQL it was supposed to review.</p>
+<p><strong>Onboarding shrinks.</strong> A new analytics engineer joins. You hand them the repo. They run <code>/develop</code> on their first ticket. The conventions are embedded in the workflow, not locked inside someone's head.</p>
+<hr />
+<h2>30-minute setup</h2>
+<p><strong>Step 1 (5 min):</strong> Create <code>.claude/</code> in your dbt project root. Add <code>AGENTS.md</code> using the skeleton above, filling in your stack and directory conventions.</p>
+<p><strong>Step 2 (10 min):</strong> Write your SQL and dbt conventions into <code>.claude/docs/</code>. Copy from your existing style guide if you have one. If you don't — write down what you'd tell a new hire on day one. That's your conventions doc.</p>
+<p><strong>Step 3 (10 min):</strong> Write your first skill: <code>/develop</code>. Keep it under 20 lines. Explicit beats clever — the more precise the instructions, the less the skill has to guess.</p>
+<p><strong>Step 4 (5 min):</strong> Test it on a real staging model. Run <code>/develop [your_staging_model] intermediate</code>. Check the output against your actual conventions. Fix the skill file where it missed something.</p>
+<p>That's the full loop. The first run will catch two or three gaps. Fix the skill, not the output — you want the skill to get it right next time without your intervention.</p>
+<hr />
+<h2>What it doesn't solve</h2>
+<p>It still needs your judgment on business logic. If your MRR definition has edge cases, or your subscription data has non-standard states, the agent doesn't know that unless you document it. Hallucination on complex multi-join SQL is real. Review the output before pushing to main — the skill reduces the surface area of what can go wrong, it doesn't eliminate it.</p>
+<hr />
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Put your conventions in files, not prompts</strong> — AGENTS.md is read every session; your chat history is not</li>
+<li><strong>Skills are just markdown</strong> — version-controlled, diff-able, reviewable by the whole team</li>
+<li><strong>Separate write and review agents</strong> — the code-reviewer sub-agent should never modify files; enforce it in the skill definition</li>
+<li><strong>Lazy-load reference docs</strong> — keep context lean by having skills explicitly load only the docs they need</li>
+<li><strong>Test your skill on a real model first</strong> — the first run reveals the gaps; fix the skill file, not the one-off output</li>
+</ul>
+</div>
+
+<p>What's in your AGENTS.md right now — and what convention took you the longest to get right?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
