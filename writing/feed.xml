@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Piotr Zawieja — Writing</title>
+    <link>https://goldlayer.dev/writing/</link>
+    <description>Analytics engineering, dbt, Snowflake, and AI-assisted data systems.</description>
+    <language>en</language>
+    <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>Why your dbt project has 47 models and nobody trusts any of them</title>
+      <link>https://goldlayer.dev/writing/dbt-47-models-nobody-trusts.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-47-models-nobody-trusts.html</guid>
+      <pubDate>Fri, 05 Jun 2026 00:00:00 +0000</pubDate>
+      <description>The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer.</description>
+    </item>
+  </channel>
+</rss>
