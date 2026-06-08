@@ -581,8 +581,8 @@
       <li><a href="#about">about</a></li>
       <li><a href="#stack">stack</a></li>
       <li><a href="#projects">projects</a></li>
-      <li><a href="#achievements">impact</a></li>
       <li><a href="#writing">writing</a></li>
+      <li><a href="#achievements">impact</a></li>
       <li><a href="#contact">contact</a></li>
     </ul>
   </div>
@@ -641,7 +641,7 @@
           I'm an Analytics Engineer specialising in <strong>revenue and GTM data</strong> for B2B SaaS. My work sits at the intersection of data engineering, analytics, and business intelligence — building the warehouse layer that finance, CS, and product teams rely on daily.
         </p>
         <p>
-          Across my career in B2B SaaS I've led CRM unification projects, rebuilt revenue data pipelines from the ground up, and shipped machine learning models into production CS workflows. I've owned Snowflake, dbt, Salesforce, and Tableau end-to-end across the whole revenue data lifecycle.
+          Across my career in B2B SaaS I've led CRM unification projects, rebuilt revenue data pipelines from the ground up, and shipped machine learning models into production CS workflows. Most recently: post-merger integration at a ~200-person company with a dual-entity data stack — unifying two product lines into a single, trusted revenue view. I've owned Snowflake, dbt, Salesforce, and Tableau end-to-end across the whole revenue data lifecycle.
         </p>
         <p>
           My current focus is integrating <strong>AI as a governed layer</strong> on top of warehouse assets — not replacing analytical rigour, but amplifying it with safer, auditable LLM tooling.
@@ -806,143 +806,6 @@
   </div>
 </section>
 
-<!-- ─── Achievements ───────────────────────────────────────────── -->
-<section id="achievements">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// production impact</p>
-      <h2>Selected achievements</h2>
-    </div>
-
-    <table class="achievements-table">
-      <thead>
-        <tr>
-          <th>Domain</th>
-          <th>Impact</th>
-          <th>Context</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Revenue accuracy</td>
-          <td>
-            <span class="metric">12–15% customer overlap found</span>
-            <span class="metric-detail">8–10% revenue overstatement corrected</span>
-          </td>
-          <td>CRM data reconciliation across two product lines following a business integration. Identified customer overlap and corrected revenue double-counting in subscription data.</td>
-        </tr>
-        <tr>
-          <td>Pipeline performance</td>
-          <td>
-            <span class="metric">78 min → 7 min</span>
-            <span class="metric-detail">91% reduction in CARR pipeline runtime</span>
-          </td>
-          <td>Full rebuild of a subscription revenue pipeline — incremental materialisation, query restructuring, and partitioning strategy. Daily refresh completed well within business hours.</td>
-        </tr>
-        <tr>
-          <td>Churn ML model</td>
-          <td>
-            <span class="metric">86% accuracy · AUC-ROC 0.91</span>
-            <span class="metric-detail">~5% churn reduction in target segment</span>
-          </td>
-          <td>XGBoost churn risk model built on warehouse-sourced features and deployed to production. Scored weekly per account; integrated into customer success tooling.</td>
-        </tr>
-        <tr>
-          <td>Data migration</td>
-          <td>
-            <span class="metric">100k+ records migrated</span>
-            <span class="metric-detail">Zero data loss, zero downtime</span>
-          </td>
-          <td>Subscription data migration during a billing platform consolidation. Full validation suite run against source and destination before cutover; zero rollbacks required.</td>
-        </tr>
-        <tr>
-          <td>Reporting efficiency</td>
-          <td>
-            <span class="metric">~40% reduction</span>
-            <span class="metric-detail">in manual reporting time</span>
-          </td>
-          <td>Standardised dbt models replacing ad-hoc analyst SQL across the reporting layer. Executive dashboards and recurring business reviews moved to self-serve certified extracts.</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="rule" style="margin-top:2.5rem"></div>
-
-    <div class="contrib-grid">
-
-      <div class="contrib-card">
-        <span class="contrib-num">01</span>
-        <h3>Single source of truth for revenue</h3>
-        <p>Designed and implemented a unified revenue data platform that consolidated fragmented reporting logic into one trusted framework — enabling Finance, Revenue Operations, and leadership to work from consistent metric definitions.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">02</span>
-        <h3>Self-service analytics layer</h3>
-        <p>Built a curated analytics layer that allowed business users to answer complex questions independently, without ad-hoc data requests. Improved accessibility, consistency, and governance of key business metrics across the organisation.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">03</span>
-        <h3>Data trust as a competitive advantage</h3>
-        <p>Led data quality, reconciliation, and metric standardisation initiatives that moved organisations from conflicting reports and manual validation toward trusted, decision-ready data.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">04</span>
-        <h3>Modernised revenue analytics architecture</h3>
-        <p>Designed scalable data models and transformation frameworks capable of supporting business growth while maintaining transparency, auditability, and reliability across the analytics stack.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">05</span>
-        <h3>Predictive customer intelligence</h3>
-        <p>Developed customer analytics frameworks enabling teams to identify risk patterns, prioritise interventions, and shift from reactive to proactive business decisions.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">06</span>
-        <h3>Analytics through data product thinking</h3>
-        <p>Introduced product-oriented approaches to analytics: ownership models, documentation standards, monitoring practices, and reusable assets — reducing operational complexity and improving adoption.</p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ─── Currently Learning ────────────────────────────────────── -->
-<section id="learning">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// current focus</p>
-      <h2>Currently learning</h2>
-    </div>
-
-    <div class="learning-grid">
-      <div class="learning-item">
-        <h3>LLM tool use &amp; agents</h3>
-        <p>Building governed AI layers on top of warehouse assets — intent routing, parameterised SQL templates, output validation.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>dbt Mesh, contracts &amp; semantic layer</h3>
-        <p>Cross-project dependencies, model contracts, and the dbt semantic layer — unified metric definitions queryable across tools without duplicating logic.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Snowflake Cortex</h3>
-        <p>Native ML functions, Cortex Analyst, and document AI for embedding AI directly into the warehouse layer.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Analytics engineering leadership</h3>
-        <p>Principal-level skills: team enablement, data contracts as organisational boundaries, and analytics-as-a-product thinking.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ─── Writing ─────────────────────────────────────────────────── -->
 <section id="writing">
   <div class="container">
@@ -989,6 +852,128 @@
 
     </div>
     <!-- WRITING_END -->
+    <p style="margin-top:1.5rem;font-family:var(--mono);font-size:0.78rem;">
+      <a href="writing/" style="color:var(--muted);">View all writing →</a>
+    </p>
+  </div>
+</section>
+
+<!-- ─── Achievements ───────────────────────────────────────────── -->
+<section id="achievements">
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// production impact</p>
+      <h2>Selected achievements</h2>
+    </div>
+
+    <table class="achievements-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Impact</th>
+          <th>Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Revenue accuracy</td>
+          <td>
+            <span class="metric">12–15% customer overlap found</span>
+            <span class="metric-detail">8–10% revenue overstatement corrected</span>
+          </td>
+          <td>CRM data reconciliation across two product lines following a post-merger integration. Identified customer overlap and corrected revenue double-counting in subscription data.</td>
+        </tr>
+        <tr>
+          <td>Pipeline performance</td>
+          <td>
+            <span class="metric">78 min → 7 min</span>
+            <span class="metric-detail">91% reduction in CARR pipeline runtime</span>
+          </td>
+          <td>Full rebuild of a subscription revenue pipeline — incremental materialisation, query restructuring, and partitioning strategy. Daily refresh completed well within business hours.</td>
+        </tr>
+        <tr>
+          <td>Churn ML model</td>
+          <td>
+            <span class="metric">86% accuracy · AUC-ROC 0.91</span>
+            <span class="metric-detail">~5% churn reduction in target segment</span>
+          </td>
+          <td>XGBoost churn risk model built on warehouse-sourced features and deployed to production. Scored weekly per account; integrated into customer success tooling.</td>
+        </tr>
+        <tr>
+          <td>Data migration</td>
+          <td>
+            <span class="metric">100k+ records migrated</span>
+            <span class="metric-detail">Zero data loss, zero downtime</span>
+          </td>
+          <td>Subscription data migration during a billing platform consolidation. Full validation suite run against source and destination before cutover; zero rollbacks required.</td>
+        </tr>
+        <tr>
+          <td>Reporting efficiency</td>
+          <td>
+            <span class="metric">~40% reduction</span>
+            <span class="metric-detail">in manual reporting time</span>
+          </td>
+          <td>Standardised dbt models replacing ad-hoc analyst SQL across the reporting layer. Executive dashboards and recurring business reviews moved to self-serve certified extracts.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rule" style="margin-top:2.5rem"></div>
+
+    <div class="contrib-grid">
+
+      <div class="contrib-card">
+        <span class="contrib-num">01</span>
+        <h3>Revenue unification across a dual-entity stack</h3>
+        <p>Post-merger integration at a ~200-person company: unified CRM and billing data across two product lines, resolved 12–15% customer overlap, corrected 8–10% revenue overstatement. Finance and RevOps moved to a single definition of truth.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">02</span>
+        <h3>Governed AI on warehouse assets</h3>
+        <p>Built a parameterised query layer on top of certified dbt marts for Customer Success. LLM classifies intent and fills pre-reviewed templates — no free-form SQL generation. Routine questions answered automatically; analysts freed for complex work.</p>
+      </div>
+
+      <div class="contrib-card">
+        <span class="contrib-num">03</span>
+        <h3>Analytics as a product</h3>
+        <p>Introduced ownership models, documentation standards, and certified mart contracts across the analytics layer — reducing ad-hoc data requests by ~40% and enabling self-serve reporting for Finance, CS, and Product without analyst bottlenecks.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Currently Learning ────────────────────────────────────── -->
+<section id="learning">
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// current focus</p>
+      <h2>Currently learning</h2>
+    </div>
+
+    <div class="learning-grid">
+      <div class="learning-item">
+        <h3>LLM tool use &amp; agents</h3>
+        <p>Building governed AI layers on top of warehouse assets — intent routing, parameterised SQL templates, output validation.</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+      </div>
+      <div class="learning-item">
+        <h3>dbt Mesh, contracts &amp; semantic layer</h3>
+        <p>Cross-project dependencies, model contracts, and the dbt semantic layer — unified metric definitions queryable across tools without duplicating logic.</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+      </div>
+      <div class="learning-item">
+        <h3>Snowflake Cortex</h3>
+        <p>Native ML functions, Cortex Analyst, and document AI for embedding AI directly into the warehouse layer.</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+      </div>
+      <div class="learning-item">
+        <h3>Analytics engineering leadership</h3>
+        <p>Principal-level skills: team enablement, data contracts as organisational boundaries, and analytics-as-a-product thinking.</p>
+        <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
+      </div>
+    </div>
   </div>
 </section>
 
