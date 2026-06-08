@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Why governed AI on your warehouse beats RAG on your docs — Piotr Zawieja</title>
+<meta name="description" content="Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.">
+<meta property="og:title" content="Why governed AI on your warehouse beats RAG on your docs">
+<meta property="og:description" content="Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.">
+<meta property="og:url" content="https://goldlayer.dev/writing/governed-ai-warehouse-beats-rag.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">Analytics Engineering</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">Snowflake</span>
+      <span class="meta-date">June 2026 · 7 min read</span>
+    </div>
+    <h1 class="article-title">Why governed AI on your warehouse beats RAG on your docs</h1>
+    <p class="article-lede">Most enterprise AI projects for data start by indexing documentation. Here is why that is backwards, and what a warehouse-native approach looks like instead.</p>
+  </header>
+
+  <div class="article-body">
+
+    <p>Most enterprise AI projects for data start the same way: someone exports Confluence, dumps in a few Notion wikis, maybe pulls in some Slack threads, and calls it a knowledge base. Run a retrieval pipeline over it, hook up an LLM, and now the business can "ask questions about data." The demo works. Then three people use it in production and the answers are wrong.</p>
+
+    <p>This is not a model quality problem. It is a source-of-truth problem. And it points to a different architecture entirely.</p>
+
+    <h2>The RAG approach and why it fails</h2>
+
+    <p>The retrieval-augmented generation pattern is straightforward enough. You chunk your documentation, embed it, store the vectors, and at query time you retrieve the most relevant chunks and let the LLM synthesise an answer. For support tickets, product documentation, and legal FAQs, this works reasonably well.</p>
+
+    <p>For business data questions, it has a structural flaw: documentation describes what was planned or what was true at some point. It does not describe what exists in the warehouse right now. Docs get written during a project kickoff, updated once when someone files a complaint, and then drift quietly into irrelevance. The metric definition in your Notion page is probably the version from three strategy pivots ago.</p>
+
+    <p>A user asks "what is our churn rate this quarter?" The RAG system retrieves a doc that says churn is calculated as cancelled MRR divided by starting MRR, churns out a confident answer, and nobody notices that the definition was revised six months ago to exclude downgrades from the numerator. The warehouse has the correct answer. The wiki does not. You indexed the wiki.</p>
+
+    <p>The real source of truth is the warehouse. The docs are a shadow of it, written by humans, maintained inconsistently, and always lagging.</p>
+
+    <hr>
+
+    <h2>The alternative: governed AI on structured data</h2>
+
+    <p>Instead of teaching an LLM to synthesise answers from documentation, give it access to a parameterised query layer built on top of your tested, governed dbt models. The architecture is less exciting to describe but far more reliable in practice.</p>
+
+    <p>It works like this: the LLM classifies user intent, matches that intent to an allowlisted query template, fills in the parameters, executes the SQL against the warehouse, and presents the result. At no point does the LLM write SQL. It selects from a finite, reviewed set of templates.</p>
+
+<pre><code><span class="keyword">import</span> re
+<span class="keyword">import</span> snowflake.connector
+
+QUERY_TEMPLATES = {
+    <span class="string">"monthly_churn_rate"</span>: <span class="string">"""
+        SELECT
+            DATE_TRUNC('month', churned_at) AS month
+            , COUNT(DISTINCT customer_id) AS churned_customers
+            , SUM(mrr_lost) AS churned_mrr
+            , ROUND(SUM(mrr_lost) / NULLIF(SUM(starting_mrr), 0), 4) AS churn_rate
+        FROM mart_subscription_churn
+        WHERE DATE_TRUNC('month', churned_at) = DATE_TRUNC('month', '{period}'::DATE)
+        GROUP BY 1
+    """</span>,
+    <span class="string">"new_mrr_by_segment"</span>: <span class="string">"""
+        SELECT
+            segment
+            , SUM(new_mrr) AS new_mrr
+            , COUNT(DISTINCT customer_id) AS new_customers
+        FROM mart_new_business
+        WHERE DATE_TRUNC('month', closed_at) = DATE_TRUNC('month', '{period}'::DATE)
+        GROUP BY 1
+        ORDER BY 2 DESC
+    """</span>,
+    <span class="string">"top_churned_accounts"</span>: <span class="string">"""
+        SELECT
+            customer_id
+            , customer_name
+            , mrr_lost
+            , churn_reason
+        FROM mart_subscription_churn
+        WHERE DATE_TRUNC('month', churned_at) = DATE_TRUNC('month', '{period}'::DATE)
+        ORDER BY mrr_lost DESC
+        LIMIT {limit}
+    """</span>,
+}
+
+<span class="keyword">def</span> run_intent(intent: str, params: dict, conn) -&gt; list[dict]:
+    <span class="keyword">if</span> intent <span class="keyword">not in</span> QUERY_TEMPLATES:
+        <span class="keyword">raise</span> ValueError(f<span class="string">"Unknown intent: {intent}"</span>)
+    sql = QUERY_TEMPLATES[intent].format(**params)
+    cursor = conn.cursor(snowflake.connector.DictCursor)
+    cursor.execute(sql)
+    <span class="keyword">return</span> cursor.fetchall()</code></pre>
+
+    <p>The LLM's job is narrow: given a natural language question, pick the right key from <code>QUERY_TEMPLATES</code> and extract the parameter values. That is a classification and extraction task, which LLMs handle well. Writing correct SQL against a schema the LLM has never seen is not a classification task — it is a code generation task with a high failure rate in edge cases.</p>
+
+    <p>You can implement the intent classification with a simple prompt that lists the available intents and their descriptions, asks the model to return a JSON object with <code>intent</code> and <code>params</code>, and validates the output before anything touches the database.</p>
+
+    <hr>
+
+    <h2>Why dbt makes this work</h2>
+
+    <p>The pattern above is only trustworthy if the underlying models are trustworthy. This is where dbt earns its place in the stack.</p>
+
+    <p>Your mart models are documented and tested. The <code>schema.yml</code> descriptions are precise enough to drive the intent-matching prompt — you do not need a separate wiki for the LLM to understand what each template does. The descriptions live next to the models, which means they get updated when the model gets updated. That is a much smaller gap than keeping a Confluence page in sync.</p>
+
+<pre><code><span class="comment"># schema.yml</span>
+models:
+  - name: mart_subscription_churn
+    description: &gt;
+      One row per churned subscription. A subscription is counted as churned
+      in the month the cancellation became effective. Downgrades are excluded —
+      see mart_subscription_downgrades for those. MRR figures use the final
+      contracted amount, not list price.
+    columns:
+      - name: customer_id
+        description: Surrogate key from dim_customers.
+        tests:
+          - not_null
+      - name: mrr_lost
+        description: Monthly recurring revenue lost at cancellation, in USD cents.
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: <span class="string">">= 0"</span>
+      - name: churn_reason
+        description: &gt;
+          Categorised exit reason from CRM at close. Values: price, competitor,
+          product_gap, budget_freeze, unknown.</code></pre>
+
+    <p>The <code>description</code> field on <code>mart_subscription_churn</code> above is specific enough that an LLM can correctly decide whether to route a "why did we lose revenue last month" question to this model versus <code>mart_subscription_downgrades</code>. That specificity comes from writing good dbt docs — something you should be doing anyway for your analysts.</p>
+
+    <p>dbt tests add a second layer of confidence. If the <code>mrr_lost</code> column starts returning negative values because someone changed the upstream transformation, the test catches it before the LLM surfaces a nonsensical answer to a stakeholder. The governance you built for your analytics engineering practice extends to the AI layer for free.</p>
+
+<pre><code><span class="comment">-- mart_subscription_churn.sql (simplified)</span>
+<span class="keyword">WITH</span> source <span class="keyword">AS</span> (
+    <span class="keyword">SELECT</span> *
+    <span class="keyword">FROM</span> {{ ref(<span class="string">'stg_crm_subscriptions'</span>) }}
+    <span class="keyword">WHERE</span> status = <span class="string">'cancelled'</span>
+)
+
+, enriched <span class="keyword">AS</span> (
+    <span class="keyword">SELECT</span>
+        s.subscription_id
+        , s.customer_id
+        , c.customer_name
+        , c.segment
+        , s.cancelled_at <span class="keyword">AS</span> churned_at
+        , s.mrr <span class="keyword">AS</span> mrr_lost
+        , s.cancellation_reason <span class="keyword">AS</span> churn_reason
+        , b.mrr <span class="keyword">AS</span> starting_mrr
+    <span class="keyword">FROM</span> source s
+    <span class="keyword">LEFT JOIN</span> {{ ref(<span class="string">'dim_customers'</span>) }} c <span class="keyword">USING</span> (customer_id)
+    <span class="keyword">LEFT JOIN</span> {{ ref(<span class="string">'mart_subscription_bookings'</span>) }} b
+        <span class="keyword">ON</span> s.customer_id = b.customer_id
+        <span class="keyword">AND</span> DATE_TRUNC(<span class="string">'month'</span>, s.cancelled_at)
+            = DATE_TRUNC(<span class="string">'month'</span>, b.created_at)
+)
+
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> enriched</code></pre>
+
+    <hr>
+
+    <h2>What it does not solve</h2>
+
+    <p>This pattern has a hard boundary: it can only answer questions you have templates for. Ask something outside the template library and you get nothing useful. That is not a bug — it is the point. A system that answers every question, some of them incorrectly, is harder to trust than a system that answers a defined set of questions correctly.</p>
+
+    <p>The template library needs ongoing maintenance. When the business redefines a metric, the template changes. When a new reporting segment is introduced, a new template gets added. This is maintenance work, but it is the same maintenance work you are doing when you update your dbt models. You are not adding a new workflow, you are extending an existing one.</p>
+
+    <p>It does not replace an analyst. What it does is handle the high-volume routine questions — weekly churn, last month's new MRR by segment, top churned accounts — so that analysts spend their time on questions that actually require judgement. The analyst who was running the same Snowflake query every Monday morning for six stakeholders is now available to think about something harder.</p>
+
+    <div class="takeaways">
+      <h2>Takeaways</h2>
+      <ul>
+        <li><strong>Index the warehouse, not the wiki</strong> — documentation describes intent; the warehouse contains the actual state of your data, including all the definition changes your docs never caught up with.</li>
+        <li><strong>Keep the LLM out of SQL generation</strong> — use it for intent classification and parameter extraction, then execute pre-written, reviewed templates. The failure modes are far more predictable.</li>
+        <li><strong>dbt schema.yml descriptions are your LLM's knowledge base</strong> — write precise model and column descriptions and they do double duty: they orient your analysts and they drive your intent-matching prompts without a separate maintenance burden.</li>
+        <li><strong>Bounded coverage is a feature, not a limitation</strong> — a system that correctly answers 30 well-defined questions is more useful in practice than one that attempts any question and gets 20% of them wrong.</li>
+        <li><strong>The governance you already have extends to the AI layer</strong> — dbt tests, freshness checks, and column-level lineage mean your AI answers inherit the same quality gates as your dashboards.</li>
+      </ul>
+    </div>
+
+    <p>What is one question your business asks on a weekly basis that you could template right now — and what has stopped you from automating it sooner?</p>
+
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
