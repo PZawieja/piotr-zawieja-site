@@ -1,6 +1,7 @@
 ---
 title: "Why your dbt project has 47 models and nobody trusts any of them"
 date: 2026-06-05
+published_at: 2026-06-05T10:00:00Z
 slug: dbt-47-models-nobody-trusts
 description: "The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer."
 tags: [dbt, analytics-engineering, data-quality]

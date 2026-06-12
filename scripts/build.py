@@ -11,6 +11,7 @@ Writes: writing/[slug].html, writing/index.html, writing/feed.xml
 """
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import frontmatter
@@ -27,24 +28,34 @@ INDEX_HTML = ROOT / "index.html"
 
 SITE_URL = "https://goldlayer.dev"
 
-MONTH_NAMES = {
-    1: "January", 2: "February", 3: "March", 4: "April",
-    5: "May", 6: "June", 7: "July", 8: "August",
-    9: "September", 10: "October", 11: "November", 12: "December",
+MONTH_ABBR = {
+    1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr",
+    5: "May", 6: "Jun", 7: "Jul", 8: "Aug",
+    9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec",
 }
 
 MD_EXTENSIONS = ["extra", "fenced_code", "tables", "nl2br"]
 
 
+def _parse_published_at(post) -> datetime:
+    raw = post.get("published_at")
+    if raw:
+        if isinstance(raw, datetime):
+            return raw if raw.tzinfo else raw.replace(tzinfo=timezone.utc)
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    d = post["date"]
+    return datetime(d.year, d.month, d.day, 12, 0, 0, tzinfo=timezone.utc)
+
+
 def parse_posts() -> list:
     posts = []
-    for md_file in sorted(POSTS_DIR.glob("*.md"), reverse=True):
+    for md_file in POSTS_DIR.glob("*.md"):
         post = frontmatter.load(md_file)
         if post.get("status") != "published":
             continue
 
-        date = post["date"]
-        date_formatted = f"{MONTH_NAMES[date.month]} {date.year}"
+        published_at = _parse_published_at(post)
+        date_formatted = f"{published_at.day} {MONTH_ABBR[published_at.month]} {published_at.year}"
 
         content_html = markdown.markdown(
             post.content,
@@ -53,10 +64,10 @@ def parse_posts() -> list:
 
         posts.append({
             "title": post["title"],
-            "date": date,
+            "published_at": published_at,
             "date_formatted": date_formatted,
-            "date_iso": date.isoformat(),
-            "date_rss": date.strftime("%a, %d %b %Y 00:00:00 +0000"),
+            "date_iso": published_at.date().isoformat(),
+            "date_rss": published_at.strftime("%a, %d %b %Y %H:%M:%S +0000"),
             "slug": post["slug"],
             "description": post["description"],
             "tags": post["tags"],
@@ -64,6 +75,8 @@ def parse_posts() -> list:
             "content": content_html,
             "url": f"{SITE_URL}/writing/{post['slug']}.html",
         })
+
+    posts.sort(key=lambda p: p["published_at"], reverse=True)
     return posts
 
 
@@ -83,7 +96,7 @@ def build_writing_index(posts: list, env: Environment) -> None:
     html = template.render(posts=posts, all_tags=all_tags)
     out = WRITING_DIR / "index.html"
     out.write_text(html, encoding="utf-8")
-    print(f"  ✓ writing/index.html")
+    print("  ✓ writing/index.html")
 
 
 def update_index_html(posts: list) -> None:
@@ -102,7 +115,7 @@ def update_index_html(posts: list) -> None:
             f'      <a href="writing/{post["slug"]}.html" class="writing-item">\n'
             f'        <div class="writing-item-meta">\n'
             f'          {tags_html}\n'
-            f'          <span class="writing-date">{post["date_formatted"]} · {post["read_time"]} min</span>\n'
+            f'          <span class="writing-date">{post["date_formatted"]} · {post["read_time"]} min read</span>\n'
             f'        </div>\n'
             f'        <h3 class="writing-title">{post["title"]}</h3>\n'
             f'        <p class="writing-lede">{post["description"]}</p>\n'
@@ -111,9 +124,9 @@ def update_index_html(posts: list) -> None:
 
     list_html = "\n".join(items)
     view_all = (
-        f'\n      <p style="margin-top:1.5rem">'
-        f'<a href="writing/" style="font-family:var(--mono);font-size:0.78rem;color:var(--muted)">'
-        f'View all articles →</a></p>'
+        '\n      <p style="margin-top:1.5rem">'
+        '<a href="writing/" style="font-family:var(--mono);font-size:0.78rem;color:var(--muted)">'
+        'View all articles →</a></p>'
     ) if len(posts) > 5 else ""
 
     new_block = (
@@ -135,7 +148,7 @@ def update_index_html(posts: list) -> None:
         print("  ~ index.html writing section unchanged")
     else:
         INDEX_HTML.write_text(new_content, encoding="utf-8")
-        print(f"  ✓ index.html (writing section updated)")
+        print("  ✓ index.html (writing section updated)")
 
 
 def main() -> None:

@@ -7,38 +7,31 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
-      <title>How to build a modern analytics data platform: the decisions nobody documents</title>
-      <link>https://goldlayer.dev/writing/data-platform-decisions.html</link>
-      <guid isPermaLink="true">https://goldlayer.dev/writing/data-platform-decisions.html</guid>
-      <pubDate>Mon, 22 Jun 2026 00:00:00 +0000</pubDate>
-      <description>Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</description>
-    </item>
-    <item>
-      <title>Why governed AI on your warehouse beats RAG on your docs</title>
-      <link>https://goldlayer.dev/writing/governed-ai-warehouse-beats-rag.html</link>
-      <guid isPermaLink="true">https://goldlayer.dev/writing/governed-ai-warehouse-beats-rag.html</guid>
-      <pubDate>Mon, 16 Jun 2026 00:00:00 +0000</pubDate>
-      <description>Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</description>
-    </item>
-    <item>
-      <title>From Excel to dbt: a realistic transition guide for Polish data teams</title>
-      <link>https://goldlayer.dev/writing/excel-to-dbt-polish-data-teams.html</link>
-      <guid isPermaLink="true">https://goldlayer.dev/writing/excel-to-dbt-polish-data-teams.html</guid>
-      <pubDate>Wed, 24 Jun 2026 00:00:00 +0000</pubDate>
-      <description>A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</description>
+      <title>AI-assisted SQL review: using Claude to catch data quality issues before they ship</title>
+      <link>https://goldlayer.dev/writing/ai-assisted-sql-review-claude-dbt.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/ai-assisted-sql-review-claude-dbt.html</guid>
+      <pubDate>Fri, 12 Jun 2026 10:00:00 +0000</pubDate>
+      <description>Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</description>
     </item>
     <item>
       <title>How I set up Claude Code for analytics engineering work</title>
       <link>https://goldlayer.dev/writing/claude-code-analytics-setup.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/claude-code-analytics-setup.html</guid>
-      <pubDate>Mon, 08 Jun 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 08 Jun 2026 10:00:00 +0000</pubDate>
       <description>Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</description>
+    </item>
+    <item>
+      <title>From Excel to dbt: a realistic transition guide for Polish data teams</title>
+      <link>https://goldlayer.dev/writing/excel-to-dbt-polish-data-teams.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/excel-to-dbt-polish-data-teams.html</guid>
+      <pubDate>Fri, 05 Jun 2026 11:00:00 +0000</pubDate>
+      <description>A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</description>
     </item>
     <item>
       <title>Why your dbt project has 47 models and nobody trusts any of them</title>
       <link>https://goldlayer.dev/writing/dbt-47-models-nobody-trusts.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-47-models-nobody-trusts.html</guid>
-      <pubDate>Fri, 05 Jun 2026 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 05 Jun 2026 10:00:00 +0000</pubDate>
       <description>The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer.</description>
     </item>
   </channel>

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-assisted SQL review: using Claude to catch data quality issues before they ship — Piotr Zawieja</title>
+<meta name="description" content="Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.">
+<meta property="og:title" content="AI-assisted SQL review: using Claude to catch data quality issues before they ship">
+<meta property="og:description" content="Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.">
+<meta property="og:url" content="https://goldlayer.dev/writing/ai-assisted-sql-review-claude-dbt.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">ai</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">claude-code</span>
+      <span class="meta-date">12 Jun 2026 · 8 min read</span>
+    </div>
+    <h1 class="article-title">AI-assisted SQL review: using Claude to catch data quality issues before they ship</h1>
+    <p class="article-lede">Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</p>
+  </header>
+
+  <div class="article-body">
+    <p>SQL review in a dbt project degrades predictably. When the team is small and the project is new, reviews are careful — every CTE gets read, every join gets a question. As the project grows and PRs stack up, reviews get shallower. The standard gets set by whoever is busiest. "Looks good" becomes the default.</p>
+<p>The bugs that slip through are not exotic. They are the same patterns, over and over:</p>
+<ul>
+<li>An incremental model with no <code>WHERE</code> clause guarding the <code>is_incremental()</code> block, so it full-scans the source on every run</li>
+<li>A join on a column that is not unique, inflating row counts silently</li>
+<li>An aggregation performed before a join, creating fanout that no one notices until a dashboard number is 3× what finance expects</li>
+<li>A <code>DISTINCT</code> used as a band-aid over a deduplication problem that was never fixed upstream</li>
+</ul>
+<p>These patterns are predictable. Predictable means automatable.</p>
+<hr />
+<h2>What this is not</h2>
+<p>Not a replacement for human code review. The human reviewer still owns the things that require judgment: is this the right model to build, does this metric definition match what finance agreed, is the grain correct, should this live in staging or intermediate or mart.</p>
+<p>What Claude handles is the structural layer — the class of errors a human reviewer <em>would</em> catch if they were fresh and focused, but regularly misses when they're on their third PR of the afternoon.</p>
+<p>The workflow:</p>
+<pre><code>PR opened → automated Claude check → human review → merge
+</code></pre>
+<p>Claude catches the structural problems. The human focuses on business logic.</p>
+<hr />
+<h2>The prompt</h2>
+<p>The mistake most people make is asking Claude to "review my SQL". That produces a mix of style suggestions, observations, and genuine findings, all weighted equally. It is not useful.</p>
+<p>The approach that works: ask Claude to check for specific failure modes only, and return nothing for patterns it does not find.</p>
+<pre><code>You are reviewing a dbt SQL model for data correctness issues only.
+
+Check for these patterns:
+
+1. Incremental model with no WHERE clause on the is_incremental() block —
+   the model will process the full source table on every incremental run.
+
+2. Join on a column that may not be unique — flag if no unique test is visible
+   in the SQL or schema context provided. Inflated row counts will be silent.
+
+3. Aggregation before join — a CTE that aggregates, then gets joined to a
+   non-aggregated table. This is usually a fanout waiting to happen.
+
+4. DISTINCT used as a workaround — flag DISTINCT in a position that suggests
+   it is masking duplicate rows from an upstream join rather than being intentional.
+
+5. Unused CTEs — defined but never referenced downstream.
+
+6. Hardcoded date literals — values like '2024-01-01' that should be
+   dbt variables or relative date expressions.
+
+For each issue found: quote the relevant lines, name the pattern, describe
+the consequence in one sentence. If nothing is found, say &quot;No issues found.&quot;
+Do not comment on style, formatting, or naming conventions.
+
+Model: {{ model_name }}
+
+SQL:
+{{ sql }}
+</code></pre>
+<p>The constraint at the end — no style, no naming — is as important as the checklist. Without it, half the output is noise.</p>
+<hr />
+<h2>What it catches</h2>
+<h3>Missing <code>is_incremental()</code> guard</h3>
+<pre><code class="language-sql">-- models/intermediate/int_subscription_events.sql
+{{ config(
+    materialized='incremental',
+    unique_key='event_id'
+) }}
+
+SELECT
+    event_id,
+    subscription_id,
+    event_type,
+    event_at
+FROM {{ source('billing', 'subscription_events') }}
+</code></pre>
+<p>Claude flags this immediately: no <code>WHERE</code> clause using <code>is_incremental()</code>. Every run processes the full source table. On a small table this is invisible. On a 50-million-row events table it eventually causes a timeout or a warehouse cost spike that requires a blameless postmortem to trace.</p>
+<p>The correct version:</p>
+<pre><code class="language-sql">SELECT
+    event_id,
+    subscription_id,
+    event_type,
+    event_at
+FROM {{ source('billing', 'subscription_events') }}
+{% if is_incremental() %}
+WHERE event_at &gt;= (SELECT MAX(event_at) FROM {{ this }})
+{% endif %}
+</code></pre>
+<h3>Aggregation before join (fanout)</h3>
+<pre><code class="language-sql">WITH daily_mrr AS (
+    SELECT
+        account_id,
+        SUM(mrr_amount) AS mrr
+    FROM {{ ref('int_mrr_movements') }}
+    GROUP BY account_id
+),
+
+account_details AS (
+    SELECT
+        account_id,
+        account_name,
+        csm_id,
+        renewal_date
+    FROM {{ ref('stg_accounts') }}
+)
+
+SELECT
+    d.account_id,
+    a.account_name,
+    a.csm_id,
+    d.mrr
+FROM daily_mrr d
+LEFT JOIN account_details a ON d.account_id = a.account_id
+</code></pre>
+<p>If <code>stg_accounts</code> has multiple rows per <code>account_id</code> — historical records, duplicate imports, a staging model that was not deduplicated — the join multiplies rows silently. The <code>mrr</code> column looks reasonable per row. The total in any dashboard that sums it will be wrong.</p>
+<p>Claude flags: aggregation in <code>daily_mrr</code>, join to <code>account_details</code> on <code>account_id</code>, no evidence <code>account_id</code> is unique in <code>stg_accounts</code>. The human reviewer then checks whether a unique test exists on <code>stg_accounts.account_id</code>. If it does, dismiss the finding. If it does not, the PR should not merge until one is added.</p>
+<h3>Hardcoded date literal</h3>
+<pre><code class="language-sql">SELECT *
+FROM {{ ref('fct_revenue') }}
+WHERE revenue_date &gt;= '2025-01-01'
+</code></pre>
+<p>Every quarter, someone writes a model with a hardcoded cutoff date and then forgets about it. Six months later, a new team member runs a backfill that includes pre-2025 data and wonders why it never shows up downstream.</p>
+<p>Claude flags the literal. The fix is a dbt variable:</p>
+<pre><code class="language-sql">WHERE revenue_date &gt;= '{{ var(&quot;revenue_start_date&quot;, &quot;2020-01-01&quot;) }}'
+</code></pre>
+<hr />
+<h2>Where it fails</h2>
+<p><strong>Business logic.</strong> Claude does not know what "active customer" means in your domain, what the correct lookback window for your churn calculation is, or whether a particular join condition reflects a legitimate many-to-many relationship. It cannot evaluate whether a model is <em>correct</em>, only whether it contains known structural problems.</p>
+<p><strong>Schema knowledge.</strong> When it flags a potential non-unique join, it is working from the SQL it can see. If a unique test exists in <code>schema.yml</code> for the joined column, Claude cannot see it unless you include that context in the prompt. False positives on join uniqueness are the most common noise in the output.</p>
+<p><strong>Subtle numeric errors.</strong> Off-by-one period boundaries, wrong window function frames, incorrect <code>ROWS BETWEEN</code> clauses — these are logic errors that require understanding the intended calculation. Claude will not catch them.</p>
+<p><strong>Intentional DISTINCT.</strong> If a model uses <code>DISTINCT</code> deliberately — for example, deduplicating session events by design — Claude may flag it. A one-line comment in the SQL explaining the intent fixes the false positive and communicates the intent to the next human reviewer too.</p>
+<p>In practice: roughly one false positive per five real findings. Still worth it.</p>
+<hr />
+<h2>Three ways to integrate it</h2>
+<h3>1. Manual, during PR review</h3>
+<p>The highest-friction option, but the right place to start. Paste the model SQL into claude.ai with the prompt above. Takes about thirty seconds per model. Worth doing manually for any model touching revenue or subscription data before committing to automation.</p>
+<h3>2. GitHub Actions on PR</h3>
+<p>A workflow that triggers on pull requests touching <code>models/**/*.sql</code>, collects changed files via <code>git diff</code>, and posts Claude's findings as a PR comment:</p>
+<pre><code class="language-yaml">name: SQL quality check
+on:
+  pull_request:
+    paths: ['models/**/*.sql']
+
+jobs:
+  sql-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Review changed SQL models
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/sql_review.py
+</code></pre>
+<p>The <code>sql_review.py</code> script collects changed <code>.sql</code> files from <code>git diff</code>, formats each with the prompt template, calls the Anthropic API, and posts findings as a PR comment via the GitHub API. Use <code>claude-haiku-4-5</code> for this — fast, inexpensive, and sufficient for pattern-matching against a fixed checklist. Cost per PR is negligible.</p>
+<h3>3. Claude Code skill</h3>
+<p>If you use Claude Code for analytics work, the lightest integration is a <code>/sql-review</code> skill. Create <code>.claude/skills/sql-review.md</code>:</p>
+<pre><code class="language-markdown">Read the SQL file at $ARGUMENTS (or ask which file if none given).
+
+Check it for these data correctness issues only — skip style and naming:
+- Incremental model with no is_incremental() WHERE guard
+- Join on a potentially non-unique column
+- Aggregation before join (fanout risk)
+- DISTINCT masking an upstream deduplication problem
+- Unused CTEs
+- Hardcoded date literals
+
+For each issue: quote the lines, name the pattern, one sentence on the consequence.
+If nothing found, say so.
+</code></pre>
+<p>Then from the terminal:</p>
+<pre><code>/sql-review models/intermediate/int_mrr_movements.sql
+</code></pre>
+<p>The skill runs with access to your full project structure, which reduces false positives on the schema knowledge problem — Claude can read neighbouring <code>schema.yml</code> files to verify unique tests.</p>
+<hr />
+<h2>The actual point</h2>
+<p>The patterns that slip through code review are predictable because they are boring. Nobody misses a clever architectural error — those get caught because they are interesting. What gets through is the incremental model copy-pasted from another model without updating the <code>WHERE</code> clause, the join that worked fine on dev data and quietly multiplied rows in production.</p>
+<p>Automating the boring checklist does not make the human reviewer redundant. It makes them more focused. If the structural layer is already checked, the reviewer's attention goes to the question that actually requires their domain knowledge: is this model building the right thing.</p>
+<p>That is the division of labour worth building.</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

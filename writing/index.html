@@ -197,7 +197,6 @@
     .writing-title { font-size: 1.05rem; }
   }
 </style>
-<link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
@@ -223,6 +222,8 @@
     <div class="filter-bar" role="group" aria-label="Filter by tag">
       <button class="filter-btn active" data-tag="all">All</button>
       
+      <button class="filter-btn" data-tag="ai">ai</button>
+      
       <button class="filter-btn" data-tag="analytics-engineering">analytics-engineering</button>
       
       <button class="filter-btn" data-tag="automation">automation</button>
@@ -233,61 +234,24 @@
       
       <button class="filter-btn" data-tag="data-quality">data-quality</button>
       
-      <button class="filter-btn" data-tag="data-engineering">data-engineering</button>
-
       <button class="filter-btn" data-tag="dbt">dbt</button>
-
+      
       <button class="filter-btn" data-tag="sql">sql</button>
-
+      
     </div>
 
     <div class="writing-list" id="writing-list">
       
-      <a href="data-platform-decisions.html" class="writing-item" data-tags="data-platform,analytics-engineering,dbt,snowflake">
-        <div class="writing-item-meta">
-          <span class="writing-tag">data-platform</span>
-          <span class="writing-tag">analytics-engineering</span>
-          <span class="writing-tag">dbt</span>
-          <span class="writing-date">June 2026 · 11 min</span>
-        </div>
-        <h2 class="writing-title">How to build a modern analytics data platform: the decisions nobody documents</h2>
-        <p class="writing-lede">Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</p>
-      </a>
-
-      <a href="governed-ai-warehouse-beats-rag.html" class="writing-item" data-tags="ai,analytics-engineering,dbt,snowflake">
+      <a href="ai-assisted-sql-review-claude-dbt.html" class="writing-item" data-tags="ai,analytics-engineering,dbt,claude-code">
         <div class="writing-item-meta">
           <span class="writing-tag">ai</span>
           <span class="writing-tag">analytics-engineering</span>
           <span class="writing-tag">dbt</span>
-          <span class="writing-tag">snowflake</span>
-          <span class="writing-date">June 2026 · 7 min</span>
-        </div>
-        <h2 class="writing-title">Why governed AI on your warehouse beats RAG on your docs</h2>
-        <p class="writing-lede">Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</p>
-      </a>
-
-      <a href="excel-to-dbt-polish-data-teams.html" class="writing-item" data-tags="dbt,analytics-engineering,sql,career">
-        <div class="writing-item-meta">
-          <span class="writing-tag">dbt</span>
-          <span class="writing-tag">analytics-engineering</span>
-          <span class="writing-tag">sql</span>
-          <span class="writing-tag">career</span>
-          <span class="writing-date">June 2026 · 8 min</span>
-        </div>
-        <h2 class="writing-title">From Excel to dbt: a realistic transition guide for Polish data teams</h2>
-        <p class="writing-lede">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
-      </a>
-      
-      <a href="claude-code-analytics-setup.html" class="writing-item" data-tags="claude-code,analytics-engineering,dbt,automation">
-        <div class="writing-item-meta">
           <span class="writing-tag">claude-code</span>
-          <span class="writing-tag">analytics-engineering</span>
-          <span class="writing-tag">dbt</span>
-          <span class="writing-tag">automation</span>
-          <span class="writing-date">June 2026 · 6 min</span>
+          <span class="writing-date">12 Jun 2026 · 8 min</span>
         </div>
-        <h2 class="writing-title">How I set up Claude Code for analytics engineering work</h2>
-        <p class="writing-lede">Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</p>
+        <h2 class="writing-title">AI-assisted SQL review: using Claude to catch data quality issues before they ship</h2>
+        <p class="writing-lede">Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</p>
       </a>
       
       <a href="dbt-incremental-models-complete-guide.html" class="writing-item" data-tags="dbt,analytics-engineering,data-engineering">
@@ -295,7 +259,7 @@
           <span class="writing-tag">dbt</span>
           <span class="writing-tag">analytics-engineering</span>
           <span class="writing-tag">data-engineering</span>
-          <span class="writing-date">June 2026 · 11 min</span>
+          <span class="writing-date">11 Jun 2026 · 11 min</span>
         </div>
         <h2 class="writing-title">dbt incremental models: the complete guide</h2>
         <p class="writing-lede">Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production.</p>
@@ -307,18 +271,65 @@
           <span class="writing-tag">analytics-engineering</span>
           <span class="writing-tag">data-engineering</span>
           <span class="writing-tag">data-quality</span>
-          <span class="writing-date">June 2026 · 9 min</span>
+          <span class="writing-date">11 Jun 2026 · 9 min</span>
         </div>
         <h2 class="writing-title">Late-arriving data: the silent failure that breaks your incremental models</h2>
         <p class="writing-lede">Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. What late-arriving events are, why they happen, and the patterns that handle them correctly in dbt.</p>
       </a>
 
+      <a href="claude-code-analytics-setup.html" class="writing-item" data-tags="claude-code,analytics-engineering,dbt,automation">
+        <div class="writing-item-meta">
+          <span class="writing-tag">claude-code</span>
+          <span class="writing-tag">analytics-engineering</span>
+          <span class="writing-tag">dbt</span>
+          <span class="writing-tag">automation</span>
+          <span class="writing-date">8 Jun 2026 · 6 min</span>
+        </div>
+        <h2 class="writing-title">How I set up Claude Code for analytics engineering work</h2>
+        <p class="writing-lede">Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</p>
+      </a>
+
+      <a href="data-platform-decisions.html" class="writing-item" data-tags="data-platform,analytics-engineering,dbt,snowflake">
+        <div class="writing-item-meta">
+          <span class="writing-tag">data-platform</span>
+          <span class="writing-tag">analytics-engineering</span>
+          <span class="writing-tag">dbt</span>
+          <span class="writing-date">8 Jun 2026 · 11 min</span>
+        </div>
+        <h2 class="writing-title">How to build a modern analytics data platform: the decisions nobody documents</h2>
+        <p class="writing-lede">Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</p>
+      </a>
+
+      <a href="governed-ai-warehouse-beats-rag.html" class="writing-item" data-tags="ai,analytics-engineering,dbt,snowflake">
+        <div class="writing-item-meta">
+          <span class="writing-tag">ai</span>
+          <span class="writing-tag">analytics-engineering</span>
+          <span class="writing-tag">dbt</span>
+          <span class="writing-tag">snowflake</span>
+          <span class="writing-date">8 Jun 2026 · 7 min</span>
+        </div>
+        <h2 class="writing-title">Why governed AI on your warehouse beats RAG on your docs</h2>
+        <p class="writing-lede">Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</p>
+      </a>
+
+      <a href="excel-to-dbt-polish-data-teams.html" class="writing-item" data-tags="dbt,analytics-engineering,sql,career">
+        <div class="writing-item-meta">
+          <span class="writing-tag">dbt</span>
+          <span class="writing-tag">analytics-engineering</span>
+          <span class="writing-tag">sql</span>
+          <span class="writing-tag">career</span>
+          <span class="writing-date">5 Jun 2026 · 8 min</span>
+        </div>
+        <h2 class="writing-title">From Excel to dbt: a realistic transition guide for Polish data teams</h2>
+        <p class="writing-lede">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
+      </a>
+      
       <a href="dbt-47-models-nobody-trusts.html" class="writing-item" data-tags="dbt,analytics-engineering,data-quality">
         <div class="writing-item-meta">
           <span class="writing-tag">dbt</span>
           <span class="writing-tag">analytics-engineering</span>
           <span class="writing-tag">data-quality</span>
-          <span class="writing-date">June 2026 · 7 min</span>
+          <span class="writing-date">5 Jun 2026 · 7 min</span>
         </div>
         <h2 class="writing-title">Why your dbt project has 47 models and nobody trusts any of them</h2>
         <p class="writing-lede">The dbt trust problem isn't a tooling issue. It's an architectural and process problem — and it shows up in every data team that moved fast and skipped the governance layer.</p>

@@ -1,6 +1,7 @@
 ---
 title: "How I set up Claude Code for analytics engineering work"
 date: 2026-06-08
+published_at: 2026-06-08T10:00:00Z
 slug: claude-code-analytics-setup
 description: "Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently."
 tags: [claude-code, analytics-engineering, dbt, automation]
