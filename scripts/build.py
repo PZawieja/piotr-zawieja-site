@@ -37,6 +37,22 @@ MONTH_ABBR = {
 MD_EXTENSIONS = ["extra", "fenced_code", "tables", "nl2br"]
 
 
+def _dedent_html(text: str) -> str:
+    """Strip leading whitespace from HTML-tag lines.
+
+    Python-Markdown treats lines with 4+ leading spaces as code blocks.
+    Raw HTML extracted from hand-crafted files often carries indentation that
+    triggers this — `    <p>text</p>` renders as a literal code block instead
+    of a paragraph. Strip the indent only from lines whose first non-space
+    character is `<` so markdown content (lists, nested blocks) is unaffected.
+    """
+    result = []
+    for line in text.split("\n"):
+        stripped = line.lstrip()
+        result.append(stripped if stripped.startswith("<") else line)
+    return "\n".join(result)
+
+
 def _parse_published_at(post) -> datetime:
     raw = post.get("published_at")
     if raw:
@@ -58,7 +74,7 @@ def parse_posts() -> list:
         date_formatted = f"{published_at.day} {MONTH_ABBR[published_at.month]} {published_at.year}"
 
         content_html = markdown.markdown(
-            post.content,
+            _dedent_html(post.content),
             extensions=MD_EXTENSIONS,
         )
 
