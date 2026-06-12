@@ -14,11 +14,39 @@
       <description>Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</description>
     </item>
     <item>
+      <title>Late-arriving data: the silent failure that breaks your incremental models</title>
+      <link>https://goldlayer.dev/writing/late-arriving-data-dbt-incremental.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/late-arriving-data-dbt-incremental.html</guid>
+      <pubDate>Thu, 11 Jun 2026 11:00:00 +0000</pubDate>
+      <description>Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. What late-arriving events are, why they happen, and the patterns that handle them correctly in dbt.</description>
+    </item>
+    <item>
+      <title>dbt incremental models: the complete guide</title>
+      <link>https://goldlayer.dev/writing/dbt-incremental-models-complete-guide.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-incremental-models-complete-guide.html</guid>
+      <pubDate>Thu, 11 Jun 2026 10:00:00 +0000</pubDate>
+      <description>Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production.</description>
+    </item>
+    <item>
       <title>How I set up Claude Code for analytics engineering work</title>
       <link>https://goldlayer.dev/writing/claude-code-analytics-setup.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/claude-code-analytics-setup.html</guid>
       <pubDate>Mon, 08 Jun 2026 10:00:00 +0000</pubDate>
       <description>Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</description>
+    </item>
+    <item>
+      <title>Why governed AI on your warehouse beats RAG on your docs</title>
+      <link>https://goldlayer.dev/writing/governed-ai-warehouse-beats-rag.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/governed-ai-warehouse-beats-rag.html</guid>
+      <pubDate>Mon, 08 Jun 2026 09:00:00 +0000</pubDate>
+      <description>Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</description>
+    </item>
+    <item>
+      <title>How to build a modern analytics data platform: the decisions nobody documents</title>
+      <link>https://goldlayer.dev/writing/data-platform-decisions.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/data-platform-decisions.html</guid>
+      <pubDate>Mon, 08 Jun 2026 08:00:00 +0000</pubDate>
+      <description>Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</description>
     </item>
     <item>
       <title>From Excel to dbt: a realistic transition guide for Polish data teams</title>

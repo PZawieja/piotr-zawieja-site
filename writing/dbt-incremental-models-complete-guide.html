@@ -4,7 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>dbt incremental models: the complete guide — Piotr Zawieja</title>
-<meta name="description" content="Everything you need to know about dbt incremental models — strategies, patterns, common failures, and the tips that only surface after you've broken something in production.">
+<meta name="description" content="Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production.">
+<meta property="og:title" content="dbt incremental models: the complete guide">
+<meta property="og:description" content="Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-incremental-models-complete-guide.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -35,6 +41,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* ─── Nav ──────────────────────────────────────────────────── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
     background: rgba(13,13,15,0.88);
@@ -52,8 +59,10 @@
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
+  /* ─── Article layout ───────────────────────────────────────── */
   .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
 
+  /* ─── Header ───────────────────────────────────────────────── */
   .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
 
   .meta-tag {
@@ -79,6 +88,7 @@
     padding-bottom: 2rem; border-bottom: 1px solid var(--border);
   }
 
+  /* ─── Body ─────────────────────────────────────────────────── */
   .article-body { font-size: 1rem; line-height: 1.8; }
 
   .article-body p { margin-bottom: 1.3rem; color: var(--text); }
@@ -104,6 +114,7 @@
     margin: 2.5rem 0;
   }
 
+  /* ─── Code ─────────────────────────────────────────────────── */
   .article-body code {
     font-family: var(--mono); font-size: 0.85em;
     background: var(--surface); border: 1px solid var(--border);
@@ -125,8 +136,8 @@
   .article-body pre .comment { color: var(--dim); }
   .article-body pre .keyword { color: var(--accent2); }
   .article-body pre .string  { color: var(--accent); }
-  .article-body pre .tag     { color: #a8c4a0; }
 
+  /* ─── Lists ────────────────────────────────────────────────── */
   .article-body ul {
     list-style: none; margin: 1rem 0 1.3rem; padding: 0;
     display: flex; flex-direction: column; gap: 0.5rem;
@@ -138,24 +149,7 @@
     color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
   }
 
-  .article-body ol {
-    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
-    counter-reset: list-counter;
-    display: flex; flex-direction: column; gap: 0.5rem;
-  }
-
-  .article-body ol li {
-    padding-left: 1.75rem; position: relative;
-    counter-increment: list-counter;
-  }
-
-  .article-body ol li::before {
-    content: counter(list-counter) '.';
-    position: absolute; left: 0;
-    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
-    font-weight: 600;
-  }
-
+  /* ─── Takeaways ────────────────────────────────────────────── */
   .takeaways {
     background: var(--surface); border: 1px solid var(--border);
     border-left: 3px solid var(--accent2);
@@ -170,47 +164,10 @@
   }
 
   .takeaways ul { margin: 0 !important; }
+
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
-  .callout {
-    background: rgba(200,169,110,0.04); border: 1px solid rgba(200,169,110,0.15);
-    border-radius: 6px; padding: 1rem 1.25rem;
-    margin: 1.5rem 0;
-  }
-
-  .callout p { margin: 0 !important; font-size: 0.9rem; color: var(--muted); }
-  .callout strong { color: var(--accent2) !important; }
-
-  .strategy-grid {
-    display: grid; gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 6px; overflow: hidden;
-    margin: 1.5rem 0;
-    font-size: 0.85rem;
-  }
-
-  .strategy-row {
-    display: grid;
-    grid-template-columns: 1.4fr 2fr 1.8fr;
-    background: var(--bg);
-  }
-
-  .strategy-row.header { background: var(--surface); }
-
-  .strategy-cell {
-    padding: 0.6rem 0.9rem;
-    border-right: 1px solid var(--border);
-    color: var(--text);
-  }
-
-  .strategy-cell:last-child { border-right: none; }
-  .strategy-row.header .strategy-cell {
-    font-family: var(--mono); font-size: 0.7rem;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    color: var(--muted);
-  }
-
+  /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
     border-top: 1px solid var(--border);
@@ -228,11 +185,10 @@
   }
   .back-link:hover { color: var(--accent); }
 
+  /* ─── Mobile ───────────────────────────────────────────────── */
   @media (max-width: 600px) {
     .article-wrap { padding: 5rem 1.25rem 4rem; }
     .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
-    .strategy-grid { font-size: 0.78rem; }
-    .strategy-cell { padding: 0.5rem 0.6rem; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,38 +209,37 @@
   <header>
     <div class="article-meta">
       <span class="meta-tag">dbt</span>
-      <span class="meta-tag">Analytics Engineering</span>
-      <span class="meta-tag">Data Engineering</span>
-      <span class="meta-date">June 2026 · 11 min read</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">data-engineering</span>
+      <span class="meta-date">11 Jun 2026 · 11 min read</span>
     </div>
     <h1 class="article-title">dbt incremental models: the complete guide</h1>
-    <p class="article-lede">Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap that shows up the following week is how you understand them properly. This guide covers both — from first principles to the production patterns most tutorials skip.</p>
+    <p class="article-lede">Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production.</p>
   </header>
 
   <div class="article-body">
-
     <p>Every incremental model story starts the same way. A team builds a dbt model over an events table. It works fine in development. Three months into production, the table has grown to two hundred million rows, the dbt run takes ninety minutes, and someone's weekly Slack message about dashboard freshness has become a daily one.</p>
 
-    <p>The fix is an incremental model. But incremental models have failure modes that basic materializations don't. Understand the mechanism fully, and they're the most powerful tool in your dbt toolkit. Understand them partially, and they'll produce data that looks correct and isn't — which is a worse outcome than a failing run.</p>
+<pre><code>&lt;p&gt;The fix is an incremental model. But incremental models have failure modes that basic materializations don't. Understand the mechanism fully, and they're the most powerful tool in your dbt toolkit. Understand them partially, and they'll produce data that looks correct and isn't — which is a worse outcome than a failing run.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>Why `table` doesn't scale</h2>
+&lt;h2&gt;Why `table` doesn't scale&lt;/h2&gt;
 
-    <p>dbt gives you three core materializations out of the box: <code>view</code>, <code>table</code>, and <code>incremental</code>.</p>
+&lt;p&gt;dbt gives you three core materializations out of the box: &lt;code&gt;view&lt;/code&gt;, &lt;code&gt;table&lt;/code&gt;, and &lt;code&gt;incremental&lt;/code&gt;.&lt;/p&gt;
 
-    <p>A <code>view</code> is nearly free to build — it's just a saved query — but runs the full computation every time it's queried. Fine for simple lookups, slow for anything complex.</p>
+&lt;p&gt;A &lt;code&gt;view&lt;/code&gt; is nearly free to build — it's just a saved query — but runs the full computation every time it's queried. Fine for simple lookups, slow for anything complex.&lt;/p&gt;
 
-    <p>A <code>table</code> pre-computes and stores the result. Fast to query, but every <code>dbt run</code> drops the table and rebuilds it from scratch. On a 10-million-row model with three joins, that's fine. On a 500-million-row event stream running hourly, you're paying for a full warehouse scan every sixty minutes.</p>
+&lt;p&gt;A &lt;code&gt;table&lt;/code&gt; pre-computes and stores the result. Fast to query, but every &lt;code&gt;dbt run&lt;/code&gt; drops the table and rebuilds it from scratch. On a 10-million-row model with three joins, that's fine. On a 500-million-row event stream running hourly, you're paying for a full warehouse scan every sixty minutes.&lt;/p&gt;
 
-    <p>An <code>incremental</code> model solves this by behaving like a <code>table</code> on the first run, then only processing and merging new data on subsequent runs. The expensive full rebuild becomes a cheap incremental load. The tradeoff: the model is now stateful, which introduces complexity you need to manage explicitly.</p>
+&lt;p&gt;An &lt;code&gt;incremental&lt;/code&gt; model solves this by behaving like a &lt;code&gt;table&lt;/code&gt; on the first run, then only processing and merging new data on subsequent runs. The expensive full rebuild becomes a cheap incremental load. The tradeoff: the model is now stateful, which introduces complexity you need to manage explicitly.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>The anatomy of an incremental model</h2>
+&lt;h2&gt;The anatomy of an incremental model&lt;/h2&gt;
 
-    <p>The simplest incremental model looks like this:</p>
-
+&lt;p&gt;The simplest incremental model looks like this:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     unique_key=<span class="string">'event_id'</span>
@@ -302,54 +257,54 @@
 <span class="keyword">WHERE</span> event_time &gt; (<span class="keyword">SELECT MAX</span>(event_time) <span class="keyword">FROM</span> <span class="tag">{{</span> this <span class="tag">}}</span>)
 <span class="tag">{%</span> <span class="keyword">endif</span> <span class="tag">%}</span></code></pre>
 
-    <p>Two things do most of the work here.</p>
+<pre><code>&lt;p&gt;Two things do most of the work here.&lt;/p&gt;
 
-    <p><strong><code>is_incremental()</code></strong> is a Jinja macro that returns <code>true</code> when two conditions are met: the target table already exists in the warehouse, and you are not running with <code>--full-refresh</code>. On the very first run, the table doesn't exist yet, so <code>is_incremental()</code> returns <code>false</code> and the entire source is processed. On every subsequent run, it returns <code>true</code> and only the filtered subset is processed.</p>
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;is_incremental()&lt;/code&gt;&lt;/strong&gt; is a Jinja macro that returns &lt;code&gt;true&lt;/code&gt; when two conditions are met: the target table already exists in the warehouse, and you are not running with &lt;code&gt;--full-refresh&lt;/code&gt;. On the very first run, the table doesn't exist yet, so &lt;code&gt;is_incremental()&lt;/code&gt; returns &lt;code&gt;false&lt;/code&gt; and the entire source is processed. On every subsequent run, it returns &lt;code&gt;true&lt;/code&gt; and only the filtered subset is processed.&lt;/p&gt;
 
-    <p><strong><code>{{ this }}</code></strong> refers to the model's own table in the warehouse. The subquery <code>SELECT MAX(event_time) FROM {{ this }}</code> finds the latest timestamp already loaded — the watermark — and pulls only rows newer than that. This is how dbt knows where the last run left off.</p>
+&lt;p&gt;&lt;strong&gt;&lt;code&gt;{{ this }}&lt;/code&gt;&lt;/strong&gt; refers to the model's own table in the warehouse. The subquery &lt;code&gt;SELECT MAX(event_time) FROM {{ this }}&lt;/code&gt; finds the latest timestamp already loaded — the watermark — and pulls only rows newer than that. This is how dbt knows where the last run left off.&lt;/p&gt;
 
-    <p>That pattern is clean and intuitive. It also has a failure mode we'll come back to in the section on lookback windows.</p>
+&lt;p&gt;That pattern is clean and intuitive. It also has a failure mode we'll come back to in the section on lookback windows.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>Incremental strategies</h2>
+&lt;h2&gt;Incremental strategies&lt;/h2&gt;
 
-    <p>The <code>incremental_strategy</code> config tells dbt what to do with the new rows once it has them. The strategy you choose determines both the correctness guarantees and the performance characteristics of the model.</p>
+&lt;p&gt;The &lt;code&gt;incremental_strategy&lt;/code&gt; config tells dbt what to do with the new rows once it has them. The strategy you choose determines both the correctness guarantees and the performance characteristics of the model.&lt;/p&gt;
 
-    <h3>append</h3>
+&lt;h3&gt;append&lt;/h3&gt;
 
-    <p>The simplest strategy: new rows are inserted and nothing else happens. No deduplication, no updates to existing rows.</p>
-
+&lt;p&gt;The simplest strategy: new rows are inserted and nothing else happens. No deduplication, no updates to existing rows.&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     incremental_strategy=<span class="string">'append'</span>
 ) <span class="tag">}}</span></code></pre>
 
-    <p>Appropriate when you can guarantee the source never sends duplicates and records never change after they're written — immutable event logs with a reliable deduplication upstream. If your pipeline ever retries (and eventually it will), you'll get duplicate rows with no warning. <code>append</code> trusts the source completely.</p>
+<pre><code>&lt;p&gt;Appropriate when you can guarantee the source never sends duplicates and records never change after they're written — immutable event logs with a reliable deduplication upstream. If your pipeline ever retries (and eventually it will), you'll get duplicate rows with no warning. &lt;code&gt;append&lt;/code&gt; trusts the source completely.&lt;/p&gt;
 
-    <h3>merge</h3>
+&lt;h3&gt;merge&lt;/h3&gt;
 
-    <p>The default strategy for most warehouses and the right choice for most production incremental models. For each row in the new batch, if a row with the same <code>unique_key</code> already exists in the target table, update it; otherwise insert it. A proper upsert.</p>
-
+&lt;p&gt;The default strategy for most warehouses and the right choice for most production incremental models. For each row in the new batch, if a row with the same &lt;code&gt;unique_key&lt;/code&gt; already exists in the target table, update it; otherwise insert it. A proper upsert.&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     incremental_strategy=<span class="string">'merge'</span>,
     unique_key=<span class="string">'event_id'</span>
 ) <span class="tag">}}</span></code></pre>
 
-    <p>The <code>unique_key</code> can be a list of columns for a composite natural key:</p>
-
+<pre><code>&lt;p&gt;The &lt;code&gt;unique_key&lt;/code&gt; can be a list of columns for a composite natural key:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     unique_key=[<span class="string">'user_id'</span>, <span class="string">'event_date'</span>, <span class="string">'event_type'</span>]
 ) <span class="tag">}}</span></code></pre>
 
-    <p>Without a <code>unique_key</code>, dbt falls back to <code>append</code> behavior on some adapters even when you've specified <code>merge</code>. Always provide one.</p>
+<pre><code>&lt;p&gt;Without a &lt;code&gt;unique_key&lt;/code&gt;, dbt falls back to &lt;code&gt;append&lt;/code&gt; behavior on some adapters even when you've specified &lt;code&gt;merge&lt;/code&gt;. Always provide one.&lt;/p&gt;
 
-    <h3>delete+insert</h3>
+&lt;h3&gt;delete+insert&lt;/h3&gt;
 
-    <p>Deletes all rows matching the <code>unique_key</code> (or the <code>incremental_predicates</code> range) from the target table, then inserts the new batch. No per-row comparison — a clean replacement of the affected segment.</p>
-
+&lt;p&gt;Deletes all rows matching the &lt;code&gt;unique_key&lt;/code&gt; (or the &lt;code&gt;incremental_predicates&lt;/code&gt; range) from the target table, then inserts the new batch. No per-row comparison — a clean replacement of the affected segment.&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     incremental_strategy=<span class="string">'delete+insert'</span>,
@@ -369,50 +324,50 @@
 
 <span class="keyword">GROUP BY</span> 1, 2</code></pre>
 
-    <p>Works well for aggregation models where you want to replace entire date partitions rather than merge individual rows. On column stores like Snowflake, deleting a partition's worth of rows and re-inserting can be faster than row-level merging.</p>
+<pre><code>&lt;p&gt;Works well for aggregation models where you want to replace entire date partitions rather than merge individual rows. On column stores like Snowflake, deleting a partition's worth of rows and re-inserting can be faster than row-level merging.&lt;/p&gt;
 
-    <h3>insert_overwrite</h3>
+&lt;h3&gt;insert_overwrite&lt;/h3&gt;
 
-    <p>Replaces entire partitions in a single operation. Native to BigQuery and Spark/Databricks. If you're on Snowflake, <code>delete+insert</code> with a date-level key achieves the same result more portably — use that instead.</p>
+&lt;p&gt;Replaces entire partitions in a single operation. Native to BigQuery and Spark/Databricks. If you're on Snowflake, &lt;code&gt;delete+insert&lt;/code&gt; with a date-level key achieves the same result more portably — use that instead.&lt;/p&gt;
 
-    <div class="strategy-grid">
-      <div class="strategy-row header">
-        <div class="strategy-cell">Strategy</div>
-        <div class="strategy-cell">Best for</div>
-        <div class="strategy-cell">Requires</div>
-      </div>
-      <div class="strategy-row">
-        <div class="strategy-cell"><code>append</code></div>
-        <div class="strategy-cell">Immutable event logs, guaranteed-unique sources</div>
-        <div class="strategy-cell">No duplicates at source</div>
-      </div>
-      <div class="strategy-row">
-        <div class="strategy-cell"><code>merge</code></div>
-        <div class="strategy-cell">Most production models, mutable records</div>
-        <div class="strategy-cell"><code>unique_key</code></div>
-      </div>
-      <div class="strategy-row">
-        <div class="strategy-cell"><code>delete+insert</code></div>
-        <div class="strategy-cell">Aggregations by date partition</div>
-        <div class="strategy-cell"><code>unique_key</code> at partition grain</div>
-      </div>
-      <div class="strategy-row">
-        <div class="strategy-cell"><code>insert_overwrite</code></div>
-        <div class="strategy-cell">BigQuery / Spark partition replacement</div>
-        <div class="strategy-cell">Partition column defined</div>
-      </div>
-    </div>
+&lt;div class="strategy-grid"&gt;
+  &lt;div class="strategy-row header"&gt;
+    &lt;div class="strategy-cell"&gt;Strategy&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Best for&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Requires&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="strategy-row"&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;append&lt;/code&gt;&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Immutable event logs, guaranteed-unique sources&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;No duplicates at source&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="strategy-row"&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;merge&lt;/code&gt;&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Most production models, mutable records&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;unique_key&lt;/code&gt;&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="strategy-row"&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;delete+insert&lt;/code&gt;&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Aggregations by date partition&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;unique_key&lt;/code&gt; at partition grain&lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="strategy-row"&gt;
+    &lt;div class="strategy-cell"&gt;&lt;code&gt;insert_overwrite&lt;/code&gt;&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;BigQuery / Spark partition replacement&lt;/div&gt;
+    &lt;div class="strategy-cell"&gt;Partition column defined&lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>on_schema_change — the quiet killer</h2>
+&lt;h2&gt;on_schema_change — the quiet killer&lt;/h2&gt;
 
-    <p>You've been running an incremental model in production for two months. You add a new column to the SELECT. The existing table doesn't have that column yet. What happens?</p>
+&lt;p&gt;You've been running an incremental model in production for two months. You add a new column to the SELECT. The existing table doesn't have that column yet. What happens?&lt;/p&gt;
 
-    <p>By default: <code>on_schema_change='ignore'</code>. dbt runs without error, inserts rows, and silently drops the new column on the way in. You won't get an alert. The column appears nowhere. The first sign will be someone asking why a metric you just added is all nulls.</p>
+&lt;p&gt;By default: &lt;code&gt;on_schema_change='ignore'&lt;/code&gt;. dbt runs without error, inserts rows, and silently drops the new column on the way in. You won't get an alert. The column appears nowhere. The first sign will be someone asking why a metric you just added is all nulls.&lt;/p&gt;
 
-    <p>The four options:</p>
-
+&lt;p&gt;The four options:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     on_schema_change=<span class="string">'fail'</span>          <span class="comment">-- error on any schema difference (safest)</span>
@@ -421,18 +376,18 @@
     <span class="comment">-- on_schema_change='sync_all_columns'    -- adds new and removes deleted columns</span>
 ) <span class="tag">}}</span></code></pre>
 
-    <p>In production, use <code>fail</code> or <code>append_new_columns</code>. <code>fail</code> forces a deliberate <code>--full-refresh</code> whenever the schema changes — a manual gate that keeps you honest. <code>append_new_columns</code> handles the common case of adding columns without drama, but won't handle renames or type changes.</p>
+<pre><code>&lt;p&gt;In production, use &lt;code&gt;fail&lt;/code&gt; or &lt;code&gt;append_new_columns&lt;/code&gt;. &lt;code&gt;fail&lt;/code&gt; forces a deliberate &lt;code&gt;--full-refresh&lt;/code&gt; whenever the schema changes — a manual gate that keeps you honest. &lt;code&gt;append_new_columns&lt;/code&gt; handles the common case of adding columns without drama, but won't handle renames or type changes.&lt;/p&gt;
 
-    <p><code>ignore</code> exists for backwards compatibility, not because it's a sensible default. <code>sync_all_columns</code> will remove columns from the warehouse table if you remove them from your SQL — use with caution in anything accessed by downstream consumers.</p>
+&lt;p&gt;&lt;code&gt;ignore&lt;/code&gt; exists for backwards compatibility, not because it's a sensible default. &lt;code&gt;sync_all_columns&lt;/code&gt; will remove columns from the warehouse table if you remove them from your SQL — use with caution in anything accessed by downstream consumers.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>incremental_predicates — the performance win</h2>
+&lt;h2&gt;incremental_predicates — the performance win&lt;/h2&gt;
 
-    <p>When dbt executes a <code>merge</code>, it compares each row in the incoming batch against the full target table. On a two-billion-row table, even with an indexed join key, this can scan more data than necessary.</p>
+&lt;p&gt;When dbt executes a &lt;code&gt;merge&lt;/code&gt;, it compares each row in the incoming batch against the full target table. On a two-billion-row table, even with an indexed join key, this can scan more data than necessary.&lt;/p&gt;
 
-    <p><code>incremental_predicates</code> adds a filter on the <em>target table</em> side of the merge, telling the warehouse to only consider rows in a specific range. Snowflake, BigQuery, and Databricks can then skip entire micro-partitions or partitions entirely.</p>
-
+&lt;p&gt;&lt;code&gt;incremental_predicates&lt;/code&gt; adds a filter on the &lt;em&gt;target table&lt;/em&gt; side of the merge, telling the warehouse to only consider rows in a specific range. Snowflake, BigQuery, and Databricks can then skip entire micro-partitions or partitions entirely.&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     unique_key=<span class="string">'event_id'</span>,
@@ -441,51 +396,51 @@
     ]
 ) <span class="tag">}}</span></code></pre>
 
-    <p><code>DBT_INTERNAL_DEST</code> is the alias dbt uses for the existing target table in the generated MERGE statement. The predicate above restricts the merge to only consider rows from the last 7 days on the target side, allowing the warehouse to skip everything older. On a Snowflake table clustered on <code>event_time</code>, this is often a 10–50× cost reduction on the merge operation.</p>
+<pre><code>&lt;p&gt;&lt;code&gt;DBT_INTERNAL_DEST&lt;/code&gt; is the alias dbt uses for the existing target table in the generated MERGE statement. The predicate above restricts the merge to only consider rows from the last 7 days on the target side, allowing the warehouse to skip everything older. On a Snowflake table clustered on &lt;code&gt;event_time&lt;/code&gt;, this is often a 10–50× cost reduction on the merge operation.&lt;/p&gt;
 
-    <p>The window in the predicate should be at least as wide as your lookback window in the <code>is_incremental()</code> filter, otherwise you'll silently drop late-arriving rows that fall outside the predicate range.</p>
+&lt;p&gt;The window in the predicate should be at least as wide as your lookback window in the &lt;code&gt;is_incremental()&lt;/code&gt; filter, otherwise you'll silently drop late-arriving rows that fall outside the predicate range.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>The full-refresh flag</h2>
+&lt;h2&gt;The full-refresh flag&lt;/h2&gt;
 
-    <p>Any incremental model can be rebuilt from scratch with:</p>
-
+&lt;p&gt;Any incremental model can be rebuilt from scratch with:&lt;/p&gt;
+</code></pre>
 <pre><code>dbt run --select my_model --full-refresh</code></pre>
 
-    <p>This drops the existing table and rebuilds it entirely, ignoring the <code>is_incremental()</code> filter. Use it when:</p>
+<pre><code>&lt;p&gt;This drops the existing table and rebuilds it entirely, ignoring the &lt;code&gt;is_incremental()&lt;/code&gt; filter. Use it when:&lt;/p&gt;
 
-    <ul>
-      <li>You've changed the model's SELECT significantly and the incremental logic would produce incorrect merged results</li>
-      <li>You've changed <code>on_schema_change</code> to <code>fail</code> and the schema drifted</li>
-      <li>The incremental state is corrupted or the watermark is wrong</li>
-      <li>You're testing the model for the first time and want to verify the full build</li>
-    </ul>
+&lt;ul&gt;
+  &lt;li&gt;You've changed the model's SELECT significantly and the incremental logic would produce incorrect merged results&lt;/li&gt;
+  &lt;li&gt;You've changed &lt;code&gt;on_schema_change&lt;/code&gt; to &lt;code&gt;fail&lt;/code&gt; and the schema drifted&lt;/li&gt;
+  &lt;li&gt;The incremental state is corrupted or the watermark is wrong&lt;/li&gt;
+  &lt;li&gt;You're testing the model for the first time and want to verify the full build&lt;/li&gt;
+&lt;/ul&gt;
 
-    <p>Always test your incremental model with a <code>--full-refresh</code> before trusting it in production. If the full-refresh result doesn't match what you expect, the incremental run won't either — it just fails more subtly.</p>
+&lt;p&gt;Always test your incremental model with a &lt;code&gt;--full-refresh&lt;/code&gt; before trusting it in production. If the full-refresh result doesn't match what you expect, the incremental run won't either — it just fails more subtly.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>Practical patterns</h2>
+&lt;h2&gt;Practical patterns&lt;/h2&gt;
 
-    <h3>The lookback window</h3>
+&lt;h3&gt;The lookback window&lt;/h3&gt;
 
-    <p>The pattern you should add to nearly every incremental model you write. The naive watermark filter <code>WHERE event_time &gt; MAX(event_time)</code> misses any records that arrive late — events that happened three days ago but only reached your pipeline today. Late-arriving data is common enough that building without a buffer is an optimism you'll pay for.</p>
-
+&lt;p&gt;The pattern you should add to nearly every incremental model you write. The naive watermark filter &lt;code&gt;WHERE event_time &amp;gt; MAX(event_time)&lt;/code&gt; misses any records that arrive late — events that happened three days ago but only reached your pipeline today. Late-arriving data is common enough that building without a buffer is an optimism you'll pay for.&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{%</span> <span class="keyword">if</span> is_incremental() <span class="tag">%}</span>
 <span class="keyword">WHERE</span> event_time &gt;= <span class="keyword">DATEADD</span>(day, -3, (<span class="keyword">SELECT MAX</span>(event_time) <span class="keyword">FROM</span> <span class="tag">{{</span> this <span class="tag">}}</span>))
 <span class="tag">{%</span> <span class="keyword">endif</span> <span class="tag">%}</span></code></pre>
 
-    <p>This reprocesses the last 3 days on every run. The <code>merge</code> strategy handles deduplication — rows already present are updated in place, genuinely new rows are inserted. You process a bit more data; in return you don't have unexplained gaps that surface during a quarterly review.</p>
+<pre><code>&lt;p&gt;This reprocesses the last 3 days on every run. The &lt;code&gt;merge&lt;/code&gt; strategy handles deduplication — rows already present are updated in place, genuinely new rows are inserted. You process a bit more data; in return you don't have unexplained gaps that surface during a quarterly review.&lt;/p&gt;
 
-    <p>How wide should the window be? Check the SLA of your slowest upstream source. Webhook retries typically have a 24–72 hour window. Batch exports from third-party systems can be 24–48 hours behind. Three days covers the vast majority of cases. A week is a reasonable conservative choice. Longer than that is usually a sign that something upstream needs fixing.</p>
+&lt;p&gt;How wide should the window be? Check the SLA of your slowest upstream source. Webhook retries typically have a 24–72 hour window. Batch exports from third-party systems can be 24–48 hours behind. Three days covers the vast majority of cases. A week is a reasonable conservative choice. Longer than that is usually a sign that something upstream needs fixing.&lt;/p&gt;
 
-    <p>The companion article on <a href="late-arriving-data-dbt-incremental.html">late-arriving data</a> goes deeper on this — what causes it, why it's dangerous, and the full set of patterns for handling it.</p>
+&lt;p&gt;The companion article on &lt;a href="late-arriving-data-dbt-incremental.html"&gt;late-arriving data&lt;/a&gt; goes deeper on this — what causes it, why it's dangerous, and the full set of patterns for handling it.&lt;/p&gt;
 
-    <h3>Building a surrogate key for deduplication</h3>
+&lt;h3&gt;Building a surrogate key for deduplication&lt;/h3&gt;
 
-    <p>If the source doesn't provide a reliable unique identifier, build one. <code>dbt_utils.generate_surrogate_key</code> hashes a list of columns into a consistent ID:</p>
-
+&lt;p&gt;If the source doesn't provide a reliable unique identifier, build one. &lt;code&gt;dbt_utils.generate_surrogate_key&lt;/code&gt; hashes a list of columns into a consistent ID:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="keyword">SELECT</span>
     <span class="tag">{{</span> dbt_utils.generate_surrogate_key([<span class="string">'user_id'</span>, <span class="string">'event_time'</span>, <span class="string">'event_type'</span>]) <span class="tag">}}</span> <span class="keyword">AS</span> event_id
     , user_id
@@ -495,12 +450,12 @@
     , properties
 <span class="keyword">FROM</span> <span class="tag">{{</span> source(<span class="string">'app'</span>, <span class="string">'raw_events'</span>) <span class="tag">}}</span></code></pre>
 
-    <p>Use this as the <code>unique_key</code> in the config. The merge strategy will handle deduplication on re-runs. Be careful that the columns you choose actually define uniqueness — two clicks at exactly the same millisecond by the same user on the same event type should be rare, but if it happens you'll lose one row silently.</p>
+<pre><code>&lt;p&gt;Use this as the &lt;code&gt;unique_key&lt;/code&gt; in the config. The merge strategy will handle deduplication on re-runs. Be careful that the columns you choose actually define uniqueness — two clicks at exactly the same millisecond by the same user on the same event type should be rare, but if it happens you'll lose one row silently.&lt;/p&gt;
 
-    <h3>event_time vs ingested_at</h3>
+&lt;h3&gt;event_time vs ingested_at&lt;/h3&gt;
 
-    <p>Most incremental filters use <code>event_time</code> — when the event happened. But there are two timestamps worth storing:</p>
-
+&lt;p&gt;Most incremental filters use &lt;code&gt;event_time&lt;/code&gt; — when the event happened. But there are two timestamps worth storing:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="keyword">SELECT</span>
     event_id
     , user_id
@@ -509,14 +464,14 @@
     , _fivetran_synced        <span class="keyword">AS</span> ingested_at  <span class="comment">-- when the pipeline received it</span>
 <span class="keyword">FROM</span> <span class="tag">{{</span> source(<span class="string">'app'</span>, <span class="string">'raw_events'</span>) <span class="tag">}}</span></code></pre>
 
-    <p>Your incremental filter should use <code>ingested_at</code> if you want to guarantee you process everything the pipeline received since the last run, regardless of when the events happened. Your business logic uses <code>event_time</code> — counting events by the window in which they actually occurred.</p>
+<pre><code>&lt;p&gt;Your incremental filter should use &lt;code&gt;ingested_at&lt;/code&gt; if you want to guarantee you process everything the pipeline received since the last run, regardless of when the events happened. Your business logic uses &lt;code&gt;event_time&lt;/code&gt; — counting events by the window in which they actually occurred.&lt;/p&gt;
 
-    <p>Filtering on <code>ingested_at</code> for the incremental logic and <code>event_time</code> for aggregations is the correct split. Using <code>event_time</code> for both looks simpler and will miss late arrivals.</p>
+&lt;p&gt;Filtering on &lt;code&gt;ingested_at&lt;/code&gt; for the incremental logic and &lt;code&gt;event_time&lt;/code&gt; for aggregations is the correct split. Using &lt;code&gt;event_time&lt;/code&gt; for both looks simpler and will miss late arrivals.&lt;/p&gt;
 
-    <h3>Incremental on a daily aggregation model</h3>
+&lt;h3&gt;Incremental on a daily aggregation model&lt;/h3&gt;
 
-    <p>Incremental models work on aggregated grains too, not just row-level event tables. Here's a daily subscription revenue model that uses <code>delete+insert</code> to rebuild the last seven days on every run:</p>
-
+&lt;p&gt;Incremental models work on aggregated grains too, not just row-level event tables. Here's a daily subscription revenue model that uses &lt;code&gt;delete+insert&lt;/code&gt; to rebuild the last seven days on every run:&lt;/p&gt;
+</code></pre>
 <pre><code><span class="tag">{{</span> config(
     materialized=<span class="string">'incremental'</span>,
     incremental_strategy=<span class="string">'delete+insert'</span>,
@@ -536,50 +491,51 @@
 
 <span class="keyword">GROUP BY</span> 1</code></pre>
 
-    <p>On each run, the last 7 days are deleted and rebuilt from the staging model. This handles late-arriving subscription updates correctly and keeps historical dates stable beyond the 7-day window.</p>
+<pre><code>&lt;p&gt;On each run, the last 7 days are deleted and rebuilt from the staging model. This handles late-arriving subscription updates correctly and keeps historical dates stable beyond the 7-day window.&lt;/p&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>Common mistakes</h2>
+&lt;h2&gt;Common mistakes&lt;/h2&gt;
 
-    <ol>
-      <li><strong>No lookback window.</strong> The <code>&gt; MAX(event_time)</code> filter misses late-arriving records. Add a buffer of at least 1–3 days in every incremental filter you write.</li>
-      <li><strong>Using <code>on_schema_change='ignore'</code> in production.</strong> The default silently drops new columns. Switch to <code>fail</code> or <code>append_new_columns</code>. Discovering this after a week of missing data is educational but avoidable.</li>
-      <li><strong>No <code>unique_key</code> with merge strategy.</strong> Without one, dbt falls back to append behavior on most adapters and you accumulate duplicates with no error to investigate.</li>
-      <li><strong>Not running <code>--full-refresh</code> after structural changes.</strong> If you significantly alter the SELECT, incremental logic will merge new-shape rows into old-shape rows. Run a full rebuild after any meaningful schema or logic change.</li>
-      <li><strong>Incremental on small tables.</strong> Tables under a few million rows don't benefit from incrementals. The merge overhead can exceed the savings. Use <code>table</code> materialization and remove the complexity entirely.</li>
-      <li><strong>Joining two incremental models together.</strong> If <code>model_a</code> is incremental and joins <code>model_b</code> (also incremental), <code>model_a</code> only processes its own new rows — it won't pick up historical corrections from <code>model_b</code> that changed rows already in <code>model_a</code>. Plan join dependencies carefully or use a wider lookback window.</li>
-    </ol>
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;No lookback window.&lt;/strong&gt; The &lt;code&gt;&amp;gt; MAX(event_time)&lt;/code&gt; filter misses late-arriving records. Add a buffer of at least 1–3 days in every incremental filter you write.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Using &lt;code&gt;on_schema_change='ignore'&lt;/code&gt; in production.&lt;/strong&gt; The default silently drops new columns. Switch to &lt;code&gt;fail&lt;/code&gt; or &lt;code&gt;append_new_columns&lt;/code&gt;. Discovering this after a week of missing data is educational but avoidable.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;No &lt;code&gt;unique_key&lt;/code&gt; with merge strategy.&lt;/strong&gt; Without one, dbt falls back to append behavior on most adapters and you accumulate duplicates with no error to investigate.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Not running &lt;code&gt;--full-refresh&lt;/code&gt; after structural changes.&lt;/strong&gt; If you significantly alter the SELECT, incremental logic will merge new-shape rows into old-shape rows. Run a full rebuild after any meaningful schema or logic change.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Incremental on small tables.&lt;/strong&gt; Tables under a few million rows don't benefit from incrementals. The merge overhead can exceed the savings. Use &lt;code&gt;table&lt;/code&gt; materialization and remove the complexity entirely.&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Joining two incremental models together.&lt;/strong&gt; If &lt;code&gt;model_a&lt;/code&gt; is incremental and joins &lt;code&gt;model_b&lt;/code&gt; (also incremental), &lt;code&gt;model_a&lt;/code&gt; only processes its own new rows — it won't pick up historical corrections from &lt;code&gt;model_b&lt;/code&gt; that changed rows already in &lt;code&gt;model_a&lt;/code&gt;. Plan join dependencies carefully or use a wider lookback window.&lt;/li&gt;
+&lt;/ol&gt;
 
-    <hr>
+&lt;hr&gt;
 
-    <h2>When NOT to use incremental</h2>
+&lt;h2&gt;When NOT to use incremental&lt;/h2&gt;
 
-    <p>Incremental models are powerful, but they add stateful complexity. There are scenarios where simpler materializations are the better choice.</p>
+&lt;p&gt;Incremental models are powerful, but they add stateful complexity. There are scenarios where simpler materializations are the better choice.&lt;/p&gt;
 
-    <p><strong>Type 2 slowly changing dimensions.</strong> SCD Type 2 requires comparing every current record against incoming data to detect changes and open/close validity periods. That's a full comparison of the current state — not incremental logic. Use <code>dbt snapshot</code> for this, which is designed exactly for it.</p>
+&lt;p&gt;&lt;strong&gt;Type 2 slowly changing dimensions.&lt;/strong&gt; SCD Type 2 requires comparing every current record against incoming data to detect changes and open/close validity periods. That's a full comparison of the current state — not incremental logic. Use &lt;code&gt;dbt snapshot&lt;/code&gt; for this, which is designed exactly for it.&lt;/p&gt;
 
-    <p><strong>Aggregations that correct history.</strong> If you have a daily MRR model and a late-arriving subscription update changes a value from two weeks ago, an incremental model with a 3-day window won't reach back and fix it. For aggregations where historical correctness matters more than speed, use <code>table</code> materialization and accept the full rebuild cost, or use <code>delete+insert</code> with a wide enough window.</p>
+&lt;p&gt;&lt;strong&gt;Aggregations that correct history.&lt;/strong&gt; If you have a daily MRR model and a late-arriving subscription update changes a value from two weeks ago, an incremental model with a 3-day window won't reach back and fix it. For aggregations where historical correctness matters more than speed, use &lt;code&gt;table&lt;/code&gt; materialization and accept the full rebuild cost, or use &lt;code&gt;delete+insert&lt;/code&gt; with a wide enough window.&lt;/p&gt;
 
-    <p><strong>Small or medium reference tables.</strong> If the full build takes under 30 seconds, incremental adds complexity without meaningful savings. Simplicity is a feature. A model that a new team member can understand in two minutes is worth more than a model that saves three seconds of compute.</p>
+&lt;p&gt;&lt;strong&gt;Small or medium reference tables.&lt;/strong&gt; If the full build takes under 30 seconds, incremental adds complexity without meaningful savings. Simplicity is a feature. A model that a new team member can understand in two minutes is worth more than a model that saves three seconds of compute.&lt;/p&gt;
 
-    <p><strong>When you're uncertain.</strong> Start with <code>table</code> and optimise later when the cost becomes visible. Starting with incremental and discovering the edge cases in production is a more expensive lesson.</p>
+&lt;p&gt;&lt;strong&gt;When you're uncertain.&lt;/strong&gt; Start with &lt;code&gt;table&lt;/code&gt; and optimise later when the cost becomes visible. Starting with incremental and discovering the edge cases in production is a more expensive lesson.&lt;/p&gt;
 
-    <div class="takeaways">
-      <h2>Takeaways</h2>
-      <ul>
-        <li><strong>Incremental models are stateful</strong> — they remember where they left off, which makes them powerful and requires you to manage that state deliberately.</li>
-        <li><strong>Always set <code>on_schema_change: fail</code> or <code>append_new_columns</code></strong> — the <code>ignore</code> default silently drops new columns. You will not get an error. You will get nulls in production.</li>
-        <li><strong>Add a lookback window to every incremental filter</strong> — <code>&gt; MAX(event_time)</code> alone misses late arrivals. Three days is a reasonable default; match it to your source SLA.</li>
-        <li><strong>Use <code>merge</code> + <code>unique_key</code> as your production default</strong> — it handles both new inserts and updates correctly, with predictable deduplication behaviour.</li>
-        <li><strong><code>incremental_predicates</code> unlocks partition pruning on the target table</strong> — essential for large Snowflake or BigQuery tables where a full merge scan is cost-prohibitive.</li>
-        <li><strong>Test with <code>--full-refresh</code> before trusting the incremental path</strong> — if the full build is wrong, the incremental run will be wrong in a way that's harder to notice.</li>
-        <li><strong>Start with <code>table</code> and migrate to incremental when the cost appears</strong> — premature incremental optimization adds complexity before you understand the failure modes.</li>
-      </ul>
-    </div>
+&lt;div class="takeaways"&gt;
+  &lt;h2&gt;Takeaways&lt;/h2&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Incremental models are stateful&lt;/strong&gt; — they remember where they left off, which makes them powerful and requires you to manage that state deliberately.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Always set &lt;code&gt;on_schema_change: fail&lt;/code&gt; or &lt;code&gt;append_new_columns&lt;/code&gt;&lt;/strong&gt; — the &lt;code&gt;ignore&lt;/code&gt; default silently drops new columns. You will not get an error. You will get nulls in production.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Add a lookback window to every incremental filter&lt;/strong&gt; — &lt;code&gt;&amp;gt; MAX(event_time)&lt;/code&gt; alone misses late arrivals. Three days is a reasonable default; match it to your source SLA.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Use &lt;code&gt;merge&lt;/code&gt; + &lt;code&gt;unique_key&lt;/code&gt; as your production default&lt;/strong&gt; — it handles both new inserts and updates correctly, with predictable deduplication behaviour.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;&lt;code&gt;incremental_predicates&lt;/code&gt; unlocks partition pruning on the target table&lt;/strong&gt; — essential for large Snowflake or BigQuery tables where a full merge scan is cost-prohibitive.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Test with &lt;code&gt;--full-refresh&lt;/code&gt; before trusting the incremental path&lt;/strong&gt; — if the full build is wrong, the incremental run will be wrong in a way that's harder to notice.&lt;/li&gt;
+    &lt;li&gt;&lt;strong&gt;Start with &lt;code&gt;table&lt;/code&gt; and migrate to incremental when the cost appears&lt;/strong&gt; — premature incremental optimization adds complexity before you understand the failure modes.&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/div&gt;
 
-    <p>The next layer of complexity is late-arriving data — events that happened days ago and are only now reaching your pipeline. The incremental model structure above handles it partially; the <a href="late-arriving-data-dbt-incremental.html">companion article on late-arriving data</a> covers the full set of patterns and why it matters more than most teams realise.</p>
-
+&lt;p&gt;The next layer of complexity is late-arriving data — events that happened days ago and are only now reaching your pipeline. The incremental model structure above handles it partially; the &lt;a href="late-arriving-data-dbt-incremental.html"&gt;companion article on late-arriving data&lt;/a&gt; covers the full set of patterns and why it matters more than most teams realise.&lt;/p&gt;
+</code></pre>
+</div>
   </div>
 
   <footer class="article-footer">
