@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dbt Semantic Layer vs. homegrown metric marts: when to use which — Piotr Zawieja</title>
+<meta name="description" content="A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.">
+<meta property="og:title" content="dbt Semantic Layer vs. homegrown metric marts: when to use which">
+<meta property="og:description" content="A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-semantic-layer-vs-metric-marts.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">data-modeling</span>
+      <span class="meta-tag">ai</span>
+      <span class="meta-date">12 Jun 2026 · 7 min read</span>
+    </div>
+    <h1 class="article-title">dbt Semantic Layer vs. homegrown metric marts: when to use which</h1>
+    <p class="article-lede">A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</p>
+  </header>
+
+  <div class="article-body">
+    <p>MetricFlow is production-ready. The dbt Semantic Layer has been generally available for a while now, and most analytics teams have at least one Slack thread about it. What's still missing for a lot of teams is a clear mental model for when to migrate and when a good old mart table is still the right call.</p>
+<p>This post is that decision framework. Both approaches are valid. Both solve real problems. The question is which one fits your current situation — not which one is theoretically superior.</p>
+<hr />
+<h2>What metric marts are</h2>
+<p>A metric mart is a pre-aggregated table: <code>fct_mrr</code>, <code>fct_arr</code>, <code>fct_churn_cohorts</code>. You compute the metric in a dbt model using SQL, materialise it as a table or incremental model, and downstream consumers — BI tools, Python notebooks, Airflow pipelines — query it directly.</p>
+<p>The definition of the metric lives in the SQL. The result lives in the warehouse.</p>
+<pre><code class="language-sql">-- models/marts/finance/fct_mrr.sql
+with subscriptions as (
+    select
+          subscription_id
+        , customer_id
+        , plan_id
+        , date_trunc('month', started_at)   as cohort_month
+        , date_trunc('month', cancelled_at) as churn_month
+        , monthly_amount_usd
+    from {{ ref('stg_subscriptions') }}
+    where status in ('active', 'cancelled')
+)
+
+, spine as (
+    select
+          dateadd('month', seq4(), '2022-01-01'::date) as month_start
+    from table(generator(rowcount =&gt; 48))
+)
+
+select
+      s.month_start
+    , sub.customer_id
+    , sub.plan_id
+    , sub.monthly_amount_usd                          as mrr
+from spine s
+inner join subscriptions sub
+    on s.month_start &gt;= sub.cohort_month
+    and (sub.churn_month is null or s.month_start &lt; sub.churn_month)
+</code></pre>
+<p>The appeal is real: this is just SQL. Anyone on the team can open it, read it, run it, and debug it. Query time is fast because the aggregation already happened at materialisation. And your BI tool does not need to know anything about MetricFlow or semantic models — it just selects from a table.</p>
+<hr />
+<h2>What the dbt Semantic Layer is</h2>
+<p>The dbt Semantic Layer moves the metric definition out of SQL and into YAML. You declare a <code>semantic_model</code> on top of a grain-level model, define measures and dimensions, then define metrics that reference those measures. At query time, MetricFlow translates a metric query into SQL and runs it against the warehouse.</p>
+<p>The definition lives in YAML. The result is computed on demand.</p>
+<pre><code class="language-yaml"># models/marts/finance/_semantic_models.yml
+semantic_models:
+  - name: subscriptions
+    description: One row per subscription per month
+    model: ref('fct_subscriptions_monthly')
+    defaults:
+      agg_time_dimension: month_start
+
+    dimensions:
+      - name: month_start
+        type: time
+        type_params:
+          time_granularity: month
+      - name: plan_id
+        type: categorical
+      - name: customer_segment
+        type: categorical
+
+    measures:
+      - name: mrr
+        description: Monthly recurring revenue in USD
+        agg: sum
+        expr: monthly_amount_usd
+
+metrics:
+  - name: mrr
+    description: Total MRR across active subscriptions
+    type: simple
+    type_params:
+      measure: mrr
+</code></pre>
+<p>Once that definition is in place, the same <code>mrr</code> metric is queryable from the dbt Cloud IDE, from Tableau via the semantic layer connector, from a Python script using the MetricFlow SDK, and — and this is the part that matters — from an LLM-backed querying layer like Cortex Analyst.</p>
+<hr />
+<h2>The key difference</h2>
+<p>This sounds like a technical implementation detail, but it is actually a fundamental shift in where truth lives.</p>
+<p>With a metric mart, truth is encoded in SQL and manifested as rows in a table. If your definition of MRR changes, you update the SQL, run the model, and the table changes. Every consumer gets the updated number automatically — but they were also all querying a single materialised artifact that you controlled.</p>
+<p>With the Semantic Layer, truth is encoded in YAML and executed at query time. If your definition of MRR changes, you update the YAML. Every consumer — regardless of which tool they're using — immediately gets the new definition applied to their next query. No table refresh required. But also no pre-computed result. The warehouse does the work every time someone asks.</p>
+<hr />
+<h2>When to use metric marts</h2>
+<p>Metric marts are the right call when your situation looks like this:</p>
+<p><strong>Small team, single BI tool, stable definitions.</strong> If you have one Tableau server and five dashboards, and MRR has not changed definition in two years, a mart table works perfectly. The complexity of MetricFlow is not justified.</p>
+<p><strong>Sub-second query requirements.</strong> Metric marts on large datasets with proper clustering will outperform query-time aggregation. If you have a dashboard that loads in 400ms and your stakeholders have noticed, do not swap it for a semantic query.</p>
+<p><strong>Downstream consumers that cannot query MetricFlow.</strong> Legacy pipelines, external vendors, read replicas with restricted access — if your consumer cannot speak MetricFlow, the Semantic Layer cannot help them.</p>
+<hr />
+<h2>When to use the Semantic Layer</h2>
+<p>The Semantic Layer starts to pay off when your situation looks like this:</p>
+<p><strong>Multiple consumers using different tools.</strong> When Tableau, a Python model-scoring script, and a product analytics notebook all need the same MRR figure, keeping three separate implementations consistent is a maintenance tax. One YAML definition pays that tax once.</p>
+<p><strong>Metric definitions change often.</strong> If your revenue team redefines "active subscription" twice a quarter, updating three mart tables plus their downstream tests is painful. A single semantic model change propagates everywhere.</p>
+<p><strong>You are building an AI querying layer.</strong> This is the case where the Semantic Layer goes from "nice to have" to "architectural requirement."</p>
+<hr />
+<h2>The AI querying angle</h2>
+<p>An LLM that can write SQL against your raw mart tables will eventually write wrong SQL. It will join the wrong grain, miss a filter, double-count on a fan-out. The hallucination risk is high because the LLM is operating on schema metadata alone — it has no understanding of what the measures actually represent.</p>
+<p>A semantic model is a structured interface. The LLM reasons about metric names, dimensions, and time grains — all of which have explicit definitions. MetricFlow then translates that intent into SQL. The LLM never writes SQL directly.</p>
+<pre><code class="language-python"># Querying the Semantic Layer via MetricFlow SDK (simplified)
+from dbt_metricflow.api import MetricFlowClient
+
+client = MetricFlowClient.from_project(&quot;/path/to/dbt/project&quot;)
+
+result = client.query(
+    metrics=[&quot;mrr&quot;],
+    group_by=[&quot;metric_time__month&quot;, &quot;customer_segment&quot;],
+    where=&quot;metric_time__month &gt;= '2025-01-01'&quot;,
+)
+
+df = result.result_df
+</code></pre>
+<p>This is the architecture behind Cortex Analyst and similar governed natural-language query products. The LLM gets a governed interface. It can ask "MRR by segment for Q1" and get a correct answer because MetricFlow enforces the definition. Contrast that with an LLM generating ad-hoc SQL against <code>fct_mrr</code> — the surface area for silent errors is much larger.</p>
+<hr />
+<h2>Migrating incrementally</h2>
+<p>You do not need to port your entire mart layer to the Semantic Layer at once. Start with one metric that has multiple consumers or that changes definition frequently. Validate that MetricFlow produces the same results as your mart table. Then expand.</p>
+<p>Keep both approaches in production simultaneously during the transition. There is no reason to delete <code>fct_mrr</code> the day you add a semantic model for MRR. Retire the mart table when you are confident every consumer has migrated.</p>
+<pre><code class="language-yaml"># dbt_project.yml — run semantic models alongside marts with no conflict
+models:
+  my_project:
+    marts:
+      +materialized: table
+      +tags: [&quot;mart&quot;]
+    semantic:
+      +materialized: view   # grain-level source models for semantic_models
+      +tags: [&quot;semantic-layer&quot;]
+</code></pre>
+<p>The two approaches are not mutually exclusive during migration. That flexibility is worth using.</p>
+<hr />
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Metric marts encode truth in SQL; the Semantic Layer encodes it in YAML</strong> — this is not a style preference, it determines how and when changes propagate to consumers.</li>
+<li><strong>Metric marts win on query performance and simplicity</strong> — if you have one BI tool, stable definitions, and latency requirements, pre-aggregation is still the right call.</li>
+<li><strong>The Semantic Layer wins when consumers multiply</strong> — three tools querying the same metric definition from one YAML file is strictly better than three copies of the same SQL.</li>
+<li><strong>For AI querying layers, the Semantic Layer is an architectural requirement, not a preference</strong> — a governed interface dramatically reduces the hallucination risk versus LLM-generated ad-hoc SQL.</li>
+<li><strong>Migrate incrementally, starting with one high-churn metric</strong> — pick the metric whose definition changes most often, validate parity with your mart, then expand.</li>
+</ul>
+</div>
+
+<hr />
+<p>Has your team adopted the Semantic Layer? What was the metric that finally made you switch — or what's blocking you from moving?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

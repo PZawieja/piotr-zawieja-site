@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake Cortex Analyst in practice: what the demo doesn't show you — Piotr Zawieja</title>
+<meta name="description" content="Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.">
+<meta property="og:title" content="Snowflake Cortex Analyst in practice: what the demo doesn't show you">
+<meta property="og:description" content="Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.">
+<meta property="og:url" content="https://goldlayer.dev/writing/snowflake-cortex-analyst-in-practice.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">snowflake</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">ai</span>
+      <span class="meta-tag">cortex</span>
+      <span class="meta-date">12 Jun 2026 · 6 min read</span>
+    </div>
+    <h1 class="article-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</h1>
+    <p class="article-lede">Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</p>
+  </header>
+
+  <div class="article-body">
+    <p>The Snowflake Cortex Analyst demo is a good demo. Curated schema, hand-picked questions, a semantic model that has been tuned to answer exactly the things the presenter is about to ask. The SQL it generates is clean. The answers are right. The audience nods.</p>
+<p>Week two looks different. You point Cortex Analyst at your actual warehouse — the one with three overlapping definitions of "active customer," mart models whose column descriptions were last updated when the model was first built, and a pipeline that lands data at 6 AM but is sometimes an hour late. Suddenly the generated SQL is plausible-looking but wrong, or right on a metric nobody uses, or right but returning yesterday's numbers.</p>
+<p>This post is about the gap between the demo and production. Not to say Cortex Analyst is bad — it is genuinely useful when set up correctly — but to lay out the problems you will hit and the practical steps that make it reliable.</p>
+<h2>What Cortex Analyst actually is</h2>
+<p>Cortex Analyst takes a natural language question and returns SQL, using a semantic model YAML you define and store in Snowflake. The semantic model describes your tables, columns, metrics, and relationships. Cortex reads it, interprets the question against it, and generates a query. You approve or run the query; Cortex does not execute anything directly unless you wire it up to do so.</p>
+<p>The semantic model is the entire ballgame. Here is a minimal example for a subscriptions table:</p>
+<pre><code class="language-yaml">name: subscription_metrics
+description: &quot;Core subscription and MRR metrics for the B2B customer base.&quot;
+tables:
+  - name: fct_subscriptions
+    description: &quot;One row per active subscription per month. Source of truth for MRR and churn.&quot;
+    base_table:
+      database: ANALYTICS
+      schema: MARTS
+      table: fct_subscriptions
+    dimensions:
+      - name: customer_id
+        description: &quot;Unique identifier for the customer account.&quot;
+        expr: customer_id
+        data_type: VARCHAR
+      - name: plan_name
+        description: &quot;Subscription plan at time of snapshot. Values: starter, growth, enterprise.&quot;
+        expr: plan_name
+        data_type: VARCHAR
+      - name: subscription_status
+        description: &quot;Current subscription state. Use 'active' for live subscriptions only.&quot;
+        expr: subscription_status
+        data_type: VARCHAR
+    time_dimensions:
+      - name: snapshot_month
+        description: &quot;First day of the month this snapshot represents.&quot;
+        expr: snapshot_month
+        data_type: DATE
+    measures:
+      - name: mrr
+        description: &quot;Monthly recurring revenue in USD. Sum across active subscriptions.&quot;
+        expr: mrr_usd
+        data_type: NUMBER
+        default_aggregation: sum
+</code></pre>
+<p>That YAML is what Cortex reads when you ask "what was MRR last month." The description fields are not decoration — they are instructions.</p>
+<h2>Why the demo looks easy</h2>
+<p><strong>Problem 1: Missing or vague dbt documentation.</strong> Cortex Analyst reads your column descriptions to understand what each field means. If your schema.yml says <code>description: "the plan"</code> instead of something specific, Cortex guesses. It will usually guess something reasonable. It will sometimes guess wrong. In a demo, the semantic model has been written carefully. In production, you have 40 models, some documented in 2022, some not at all.</p>
+<p><strong>Problem 2: Metric ambiguity.</strong> "Active customers" probably exists in more than one mart. You might have it in <code>fct_subscriptions</code>, <code>fct_accounts</code>, and <code>dim_customers</code>, and each version filters slightly differently — one uses subscription status, one uses last login date, one counts billing accounts. Cortex Analyst picks one based on what your semantic model exposes. It does not tell the user which definition it used. The user sees a number and assumes it is the right one.</p>
+<p><strong>Problem 3: Multi-join queries with window functions.</strong> This is where generated SQL goes quietly wrong. Ask Cortex something like "show me MRR growth rate for customers who churned in Q1 and then reactivated," and you will get SQL that compiles and runs. It might even look right at a glance. Here is an example of the shape of query that tends to produce plausible-but-incorrect results:</p>
+<pre><code class="language-sql">-- Cortex-generated SQL — looks reasonable, has a subtle window framing issue
+WITH churned AS (
+    SELECT
+        customer_id
+        ,MIN(snapshot_month) AS churn_month
+    FROM fct_subscriptions
+    WHERE subscription_status = 'churned'
+    GROUP BY customer_id
+),
+reactivated AS (
+    SELECT
+        s.customer_id
+        ,s.snapshot_month
+        ,s.mrr_usd
+        ,LAG(s.mrr_usd) OVER (
+            PARTITION BY s.customer_id
+            ORDER BY s.snapshot_month
+            -- Missing: no filter on status = 'active' before the window
+        ) AS prev_mrr
+    FROM fct_subscriptions s
+    INNER JOIN churned c ON s.customer_id = c.customer_id
+    WHERE s.snapshot_month &gt; c.churn_month
+)
+SELECT
+    customer_id
+    ,(mrr_usd - prev_mrr) / NULLIF(prev_mrr, 0) AS mrr_growth_rate
+FROM reactivated
+WHERE prev_mrr IS NOT NULL
+</code></pre>
+<p>The window function runs over all rows after churn, including rows where the subscription is still dormant. The growth rate calculation is technically executing; the denominator just includes the wrong baseline. Nobody notices until someone compares the output to a manually built cohort.</p>
+<p><strong>Problem 4: Data freshness.</strong> Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale." It returns numbers with no timestamp context, and the user assumes they are current.</p>
+<h2>What actually works</h2>
+<p><strong>Start with your mart layer, not raw or intermediate models.</strong> Your marts are governed, tested, and documented. They are also the layer where your business definitions are already encoded. Pointing Cortex at raw Salesforce tables or intermediate staging models is a fast path to wrong answers.</p>
+<p><strong>Write semantic model descriptions as if you are writing instructions for a new analyst.</strong> The descriptions Cortex reads need to be unambiguous. Vague column names with vague descriptions produce vague SQL. The more precise your language, the more constrained the interpretation.</p>
+<p>Here is the difference in practice:</p>
+<pre><code class="language-yaml"># Unhelpful — Cortex will guess
+- name: arr
+  description: &quot;ARR value.&quot;
+  expr: arr_usd
+  data_type: NUMBER
+
+# Helpful — Cortex has a specific instruction
+- name: arr
+  description: &gt;
+    Annual recurring revenue in USD. Calculated as MRR * 12.
+    Includes active subscriptions only. Excludes one-time fees and
+    professional services. Use this metric for board and investor reporting.
+  expr: arr_usd
+  data_type: NUMBER
+  default_aggregation: sum
+</code></pre>
+<p><strong>Constrain what your semantic model exposes.</strong> You do not have to include every mart in the semantic model. Include the marts that are well-documented, well-tested, and answer a clear set of questions. Leave out marts that are in flux or that require context a business user is unlikely to provide in a natural language question.</p>
+<p><strong>Build a lightweight freshness indicator into your semantic model.</strong> One approach is to expose a <code>data_as_of</code> dimension that pulls from a pipeline metadata table. Users can query it directly, and you can surface it in your UI layer:</p>
+<pre><code class="language-python"># Simple Streamlit snippet — surface freshness before showing results
+import snowflake.connector
+import streamlit as st
+
+conn = snowflake.connector.connect(**st.secrets[&quot;snowflake&quot;])
+
+freshness_query = &quot;&quot;&quot;
+    SELECT MAX(snapshot_month) AS latest_snapshot
+    FROM analytics.marts.fct_subscriptions
+&quot;&quot;&quot;
+cursor = conn.cursor()
+cursor.execute(freshness_query)
+latest = cursor.fetchone()[0]
+
+st.caption(f&quot;Data current through: {latest}. Pipeline runs daily at 06:00 UTC.&quot;)
+</code></pre>
+<p>Not elegant, but it gives users the information they need before they act on a number.</p>
+<p><strong>The correct mental model:</strong> Cortex Analyst is a natural language front-end for a governed query layer. It is not a replacement for that layer. The better your dbt semantic layer — complete descriptions, tested metrics, clean mart boundaries — the better Cortex Analyst performs. You are not configuring an AI product. You are improving your data documentation and then attaching an interface to it.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>The semantic model is the product</strong> — Cortex Analyst output quality is a direct function of how well you have documented your metrics and columns. Treat the YAML like production code.</li>
+<li><strong>Scope the semantic model to your best marts</strong> — start with two or three well-governed, well-tested models rather than exposing everything at once.</li>
+<li><strong>Write descriptions as unambiguous instructions</strong> — include what a metric includes, what it excludes, and which business context it belongs to. Vague descriptions produce vague SQL.</li>
+<li><strong>Multi-join and window function queries need human review</strong> — generated SQL that compiles is not guaranteed to be correct. Add a review step for any query pattern more complex than a simple aggregation.</li>
+<li><strong>Surface data freshness explicitly</strong> — Cortex has no pipeline awareness. Build a freshness indicator into your UI layer so users know what "current" actually means before they act on a number.</li>
+</ul>
+</div>
+
+<p>What is the first question you would give Cortex Analyst access to answer — and what is the one you would never let it near?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

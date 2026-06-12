@@ -7,6 +7,27 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>How to write dbt tests that catch real business logic errors (not just nulls)</title>
+      <link>https://goldlayer.dev/writing/dbt-tests-business-logic-errors.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-tests-business-logic-errors.html</guid>
+      <pubDate>Fri, 12 Jun 2026 13:00:00 +0000</pubDate>
+      <description>Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</description>
+    </item>
+    <item>
+      <title>dbt Semantic Layer vs. homegrown metric marts: when to use which</title>
+      <link>https://goldlayer.dev/writing/dbt-semantic-layer-vs-metric-marts.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-semantic-layer-vs-metric-marts.html</guid>
+      <pubDate>Fri, 12 Jun 2026 12:00:00 +0000</pubDate>
+      <description>A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</description>
+    </item>
+    <item>
+      <title>Snowflake Cortex Analyst in practice: what the demo doesn't show you</title>
+      <link>https://goldlayer.dev/writing/snowflake-cortex-analyst-in-practice.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-cortex-analyst-in-practice.html</guid>
+      <pubDate>Fri, 12 Jun 2026 11:00:00 +0000</pubDate>
+      <description>Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</description>
+    </item>
+    <item>
       <title>AI-assisted SQL review: using Claude to catch data quality issues before they ship</title>
       <link>https://goldlayer.dev/writing/ai-assisted-sql-review-claude-dbt.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/ai-assisted-sql-review-claude-dbt.html</guid>

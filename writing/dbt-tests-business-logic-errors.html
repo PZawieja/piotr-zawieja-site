@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to write dbt tests that catch real business logic errors (not just nulls) — Piotr Zawieja</title>
+<meta name="description" content="Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.">
+<meta property="og:title" content="How to write dbt tests that catch real business logic errors (not just nulls)">
+<meta property="og:description" content="Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-tests-business-logic-errors.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">data-quality</span>
+      <span class="meta-tag">sql</span>
+      <span class="meta-date">12 Jun 2026 · 6 min read</span>
+    </div>
+    <h1 class="article-title">How to write dbt tests that catch real business logic errors (not just nulls)</h1>
+    <p class="article-lede">Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</p>
+  </header>
+
+  <div class="article-body">
+    <p>The test suite is green. CI passed. The model ran clean. Then the weekly business review starts and someone says "these numbers look wrong."</p>
+<p>You pull the query. The data is there, not null, no duplicates, all foreign keys resolve. Everything your tests checked is fine. The numbers are still wrong — a filter on the wrong date field, a metric that excludes a subscription type added last month, a calculation that silently started returning zero for a cohort nobody thought to check.</p>
+<p>This is the dbt testing gap. Most projects test data shape. Very few test data meaning. <code>not_null</code> and <code>unique</code> are necessary — without them you are flying completely blind. But they are not sufficient, and in practice they give teams a false sense of coverage that makes the wrong-number conversation much more painful than it needs to be.</p>
+<h2>What most dbt test suites actually cover</h2>
+<p>The default dbt test vocabulary — <code>not_null</code>, <code>unique</code>, <code>accepted_values</code>, <code>relationships</code> — maps almost perfectly onto infrastructure failures. Missing data. Duplicate keys. Broken foreign keys. Values outside an enumerated set.</p>
+<p>These tests answer the question: did the pipeline run correctly? They do not answer the question: did the pipeline produce the right output?</p>
+<p>A column can be not-null, unique, and completely wrong from a business perspective. A revenue figure can be populated with plausible-looking numbers that are off by 30% because a new product line was excluded from the mart filter. A churn rate can be technically non-null and technically within an accepted value range while being calculated against the wrong date boundary for three months running.</p>
+<p>The tests that catch infrastructure failures are worth keeping. The gap is the layer above them.</p>
+<h2>Three categories of tests that matter</h2>
+<h3>Category 1: Range and threshold tests</h3>
+<p>The first place to add business logic coverage is financial and metric columns. Use <code>dbt_utils.accepted_range</code> to set floor and ceiling values that reflect what the number should actually be — not just that it exists.</p>
+<pre><code class="language-yaml"># models/marts/schema.yml
+models:
+  - name: fct_subscriptions
+    columns:
+      - name: monthly_amount
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100000
+              severity: error
+      - name: mrr_growth_pct
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: -1.0
+              max_value: 0.5
+              severity: warn
+              config:
+                where: &quot;status = 'active'&quot;
+</code></pre>
+<p>The <code>monthly_amount</code> test will catch a bug that sets subscription amounts to zero — a case that passes <code>not_null</code> cleanly. The <code>mrr_growth_pct</code> test uses <code>severity: warn</code> because growth above 50% month-over-month is unusual but not impossible; you want a flag in the logs, not a build failure.</p>
+<h3>Category 2: Business rule tests</h3>
+<p>Some domain invariants cannot be expressed as range checks. They are rules: every active subscription must have a start date in the past; every cancelled subscription must have a cancellation date. These belong in custom generic tests.</p>
+<pre><code class="language-sql">-- tests/generic/assert_active_subscription_start_date_in_past.sql
+{% test assert_active_subscription_start_date_in_past(model, column_name) %}
+
+select
+    {{ column_name }}
+from {{ model }}
+where status = 'active'
+  and {{ column_name }} &gt; current_date
+
+{% endtest %}
+</code></pre>
+<p>Wire it up in the schema YAML alongside an explicit <code>accepted_values</code> list for status:</p>
+<pre><code class="language-yaml"># models/marts/schema.yml
+models:
+  - name: fct_subscriptions
+    columns:
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['active', 'cancelled', 'paused', 'trialing']
+              severity: error
+      - name: start_date
+        tests:
+          - assert_active_subscription_start_date_in_past
+</code></pre>
+<p>The <code>accepted_values</code> test on <code>status</code> is doing more work than it looks like here. If someone adds a <code>'suspended'</code> status upstream without updating the mart logic, this test fails immediately. Without the explicit list, <code>'suspended'</code> subscriptions flow silently into your active customer count.</p>
+<h3>Category 3: Cross-model reconciliation tests</h3>
+<p>This is the category most projects skip entirely, and it is where the most expensive errors hide. The idea is simple: the same business metric calculated two different ways should produce the same result within a defined tolerance.</p>
+<pre><code class="language-sql">-- tests/assert_mrr_reconciles_to_invoices.sql
+{% set tolerance_pct = 0.01 %}
+
+with mrr_total as (
+    select sum(mrr) as total
+    from {{ ref('fct_mrr') }}
+    where month_start = date_trunc('month', current_date - interval '1 month')
+),
+
+invoice_total as (
+    select sum(amount) as total
+    from {{ ref('stg_invoices') }}
+    where status = 'paid'
+      and invoice_date &gt;= date_trunc('month', current_date - interval '1 month')
+      and invoice_date &lt; date_trunc('month', current_date)
+),
+
+comparison as (
+    select
+        mrr_total.total as mrr_sum,
+        invoice_total.total as invoice_sum,
+        abs(mrr_total.total - invoice_total.total) / nullif(invoice_total.total, 0) as diff_pct
+    from mrr_total
+    cross join invoice_total
+)
+
+select *
+from comparison
+where diff_pct &gt; {{ tolerance_pct }}
+</code></pre>
+<p>This test catches the scenario that causes the most damage in practice: a new subscription type is added, the staging model picks it up, but the mart filter was not updated. The mart and the source diverge. Every downstream metric is wrong. The test fails on the first run after the gap appears, not three weeks later in a business review.</p>
+<h2>What to prioritise</h2>
+<p>Not every column needs a business logic test. Prioritising is straightforward: start with anything that ends up in an executive dashboard or board report. That is the content where wrong numbers have the highest cost.</p>
+<p>For revenue columns, the minimum bar is a range test plus a cross-model reconciliation. For status columns, an explicit <code>accepted_values</code> list rather than just <code>not_null</code>. For date columns on historical facts, a check that the value is not in the future.</p>
+<pre><code class="language-yaml"># models/marts/schema.yml — date sanity example
+      - name: event_date
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              max_value: &quot;cast(current_date as date)&quot;
+              severity: error
+</code></pre>
+<p>One production note worth taking seriously: use <code>severity: warn</code> for tests you want visibility on without failing the build, and <code>severity: error</code> only for tests that represent data you genuinely cannot trust downstream. If everything is <code>error</code>, teams start ignoring the red builds or disabling tests to get deploys through. Build fatigue is real, and a ignored test suite is worse than a small one.</p>
+<p>The goal is a suite where a green build means something. Where the pass signal carries information. That requires being deliberate about what you test and how loudly each failure should ring.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>not_null and unique test infrastructure, not meaning</strong> — a column can pass both and contain values that are completely wrong from a business perspective.</li>
+<li><strong>Range tests on financial columns catch silent zeroing bugs</strong> — use dbt_utils.accepted_range with realistic min/max values on any column that feeds a revenue metric.</li>
+<li><strong>Explicit accepted_values lists are load-bearing</strong> — they fail immediately when a new status is added upstream without a corresponding update to mart logic, rather than silently polluting aggregates.</li>
+<li><strong>Cross-model reconciliation tests catch the most expensive errors</strong> — comparing the same metric across two models flags divergence the moment it appears, not weeks later in a business review.</li>
+<li><strong>Reserve severity: error for tests that represent genuinely untrustworthy data</strong> — overusing error severity causes build fatigue, which leads to disabled tests and no coverage at all.</li>
+</ul>
+</div>
+
+<hr />
+<p>What is the most expensive data error you have caught — or not caught in time — with a dbt test?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
