@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""
+check.py — pre-publish validation for goldlayer.dev.
+
+Run after build.py (or via publish.py --check) to catch formatting
+and consistency issues before pushing. Exits non-zero if any check fails.
+
+Usage:
+    python scripts/check.py            # check all published posts
+    python scripts/check.py <slug>     # check a single post by slug
+"""
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+
+import frontmatter
+
+ROOT = Path(__file__).parent.parent
+POSTS_DIR = ROOT / "content" / "posts"
+WRITING_DIR = ROOT / "writing"
+TEMPLATE = ROOT / "templates" / "post.html"
+INDEX_HTML = ROOT / "index.html"
+
+REQUIRED_FIELDS = ["title", "date", "published_at", "slug", "description", "tags", "read_time", "status"]
+
+errors: list[str] = []
+warnings: list[str] = []
+
+
+def fail(msg: str) -> None:
+    errors.append(msg)
+    print(f"  FAIL  {msg}")
+
+
+def warn(msg: str) -> None:
+    warnings.append(msg)
+    print(f"  WARN  {msg}")
+
+
+def ok(msg: str) -> None:
+    print(f"  ok    {msg}")
+
+
+# ── helpers ──────────────────────────────────────────────────────────
+
+def _css_classes_in_template() -> set[str]:
+    text = TEMPLATE.read_text(encoding="utf-8")
+    return set(re.findall(r"\.([\w-]+)\s*\{", text))
+
+
+def _body_html(article_html: str) -> str:
+    m = re.search(r'class="article-body">(.*?)</div>', article_html, re.DOTALL)
+    return m.group(1) if m else article_html
+
+
+def _classes_in_body(body: str) -> set[str]:
+    return set(re.findall(r'class="([\w-]+)"', body))
+
+# ── checks ────────────────────────────────────────────────────────────
+
+def check_frontmatter(md_file: Path) -> dict | None:
+    post = frontmatter.load(md_file)
+    missing = [f for f in REQUIRED_FIELDS if post.get(f) is None]
+    if missing:
+        fail(f"{md_file.name}: missing frontmatter fields: {missing}")
+        return None
+    if post["status"] != "published":
+        return None
+    raw_ts = post["published_at"]
+    if not isinstance(raw_ts, datetime):
+        iso_re = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$")
+        if not iso_re.match(str(raw_ts).strip()):
+            fail(f"{md_file.name}: published_at is not ISO format: {raw_ts!r}")
+    return post
+
+
+def check_rendered_html(slug: str, template_classes: set[str]) -> None:
+    html_file = WRITING_DIR / f"{slug}.html"
+    if not html_file.exists():
+        fail(f"{slug}.html: rendered file missing — did you run build.py?")
+        return
+
+    html = html_file.read_text(encoding="utf-8")
+    body = _body_html(html)
+
+    # escaped tags mean markdown treated HTML lines as code blocks
+    escaped = re.findall(r"&lt;(p|h[1-6]|ul|ol|li|div|pre|code|hr|table|tr|td|th)\b", body)
+    if escaped:
+        fail(f"{slug}.html: {len(escaped)} escaped HTML tag(s) in body: {sorted(set(escaped))}")
+    else:
+        ok(f"{slug}.html: no escaped HTML tags")
+
+    # custom classes in body that have no CSS in template
+    body_classes = _classes_in_body(body)
+    # ignore classes that are inherently structural or come from code highlighting
+    ignored = {
+        "article-body", "article-wrap", "article-meta", "article-title",
+        "article-lede", "article-footer", "meta-tag", "meta-date",
+        "byline", "back-link", "nav-brand", "nav-back",
+        "codehilite", "highlight",
+        "language-sql", "language-python", "language-yaml",
+        "language-bash", "language-shell", "language-markdown",
+        "language-text", "language-jinja2", "language-dbt",
+        "hll", "c", "err", "g", "k", "l", "n", "o", "p", "cm", "cp",
+        "cpf", "c1", "cs", "gd", "ge", "gr", "gh", "gi", "go", "gp",
+        "gs", "gu", "gt", "kc", "kd", "kn", "kp", "kr", "kt", "ld",
+        "m", "s", "na", "nb", "nc", "no", "nd", "ni", "ne", "nf",
+        "nl", "nn", "nx", "py", "nt", "nv", "ow", "pm", "w", "mb",
+        "mf", "mh", "mi", "mo", "sa", "sb", "sc", "dl", "sd", "s2",
+        "se", "sh", "si", "sx", "sr", "ss", "bp", "fm", "vc", "vg",
+        "vi", "vm", "il",
+    }
+    unstyled = body_classes - template_classes - ignored
+    if unstyled:
+        fail(f"{slug}.html: classes used in body with no CSS in post.html: {sorted(unstyled)}")
+    else:
+        ok(f"{slug}.html: all body CSS classes are defined")
+
+
+def check_index_html() -> None:
+    text = INDEX_HTML.read_text(encoding="utf-8")
+
+    # exactly one "View all" link in the writing section
+    writing_block = re.search(
+        r"<!-- WRITING_START -->(.*?)<!-- WRITING_END -->", text, re.DOTALL
+    )
+    if not writing_block:
+        fail("index.html: WRITING_START/END markers missing")
+        return
+
+    view_all_count = text.count("View all")
+    if view_all_count == 0:
+        warn("index.html: no 'View all' link found in writing section")
+    elif view_all_count > 1:
+        fail(f"index.html: 'View all' link appears {view_all_count} times (expected 1)")
+    else:
+        ok("index.html: exactly one 'View all' link")
+
+    # count articles listed in writing section
+    articles_in_index = len(re.findall(r'class="writing-item"', writing_block.group(1)))
+    ok(f"index.html: {articles_in_index} article(s) listed in writing section")
+
+
+def check_orphans() -> None:
+    """Every writing/*.html (except index) should have a markdown source."""
+    html_slugs = {f.stem for f in WRITING_DIR.glob("*.html") if f.stem != "index"}
+    md_slugs = set()
+    for md_file in POSTS_DIR.glob("*.md"):
+        post = frontmatter.load(md_file)
+        if post.get("status") == "published":
+            md_slugs.add(post.get("slug", ""))
+
+    orphans = html_slugs - md_slugs
+    if orphans:
+        fail(f"orphan HTML file(s) with no markdown source: {sorted(orphans)}")
+    else:
+        ok(f"no orphan HTML files ({len(html_slugs)} article(s) all have sources)")
+
+
+def check_writing_index(published_slugs: list[str]) -> None:
+    wi = WRITING_DIR / "index.html"
+    if not wi.exists():
+        fail("writing/index.html missing — run build.py")
+        return
+    text = wi.read_text(encoding="utf-8")
+    count = len(re.findall(r'class="writing-item"', text))
+    if count != len(published_slugs):
+        fail(
+            f"writing/index.html lists {count} articles but {len(published_slugs)} "
+            f"published posts exist — run build.py"
+        )
+    else:
+        ok(f"writing/index.html: {count} articles listed (matches published count)")
+
+
+# ── main ──────────────────────────────────────────────────────────────
+
+def main() -> None:
+    slug_filter = sys.argv[1] if len(sys.argv) > 1 else None
+    template_classes = _css_classes_in_template()
+
+    published: list[dict] = []
+    md_files = sorted(POSTS_DIR.glob("*.md"))
+    if slug_filter:
+        md_files = [f for f in md_files if slug_filter in f.name]
+        if not md_files:
+            print(f"No post found matching: {slug_filter}")
+            sys.exit(1)
+
+    print("Checking goldlayer.dev...\n")
+
+    print("── Frontmatter ──")
+    for md_file in md_files:
+        post = frontmatter.load(md_file)
+        result = check_frontmatter(md_file)
+        if result and result["status"] == "published":
+            published.append(result)
+
+    print("\n── Rendered HTML ──")
+    for post in published:
+        check_rendered_html(post["slug"], template_classes)
+
+    if not slug_filter:
+        print("\n── Site structure ──")
+        check_index_html()
+        check_orphans()
+        check_writing_index([p["slug"] for p in published])
+
+    print()
+    if errors:
+        print(f"{'─'*50}")
+        print(f"FAILED — {len(errors)} error(s), {len(warnings)} warning(s)")
+        sys.exit(1)
+    elif warnings:
+        print(f"PASSED with {len(warnings)} warning(s)")
+    else:
+        print(f"All checks passed ({len(published)} post(s) verified)")
+
+
+if __name__ == "__main__":
+    main()
