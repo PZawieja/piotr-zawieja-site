@@ -4,7 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Piotr Zawieja — Analytics Engineer</title>
-<meta name="description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, open to remote.">
+<meta name="description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
+<meta property="og:title" content="Piotr Zawieja — Analytics Engineer">
+<meta property="og:description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
+<meta property="og:url" content="https://goldlayer.dev/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="goldlayer.dev">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Piotr Zawieja — Analytics Engineer">
+<meta name="twitter:description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
 <style>
   /* ─── Reset & Base ─────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -310,10 +319,11 @@
     font-family: var(--mono);
     font-size: 0.75rem;
     color: var(--dim);
-    transition: color 0.15s;
+    transition: color 0.15s, transform 0.2s;
+    display: inline-block;
   }
 
-  .project-card:hover .project-link-icon { color: var(--accent2); }
+  .project-card:hover .project-link-icon { color: var(--accent2); transform: translate(3px, -3px); }
 
   .project-card h3 { font-size: 0.95rem; color: var(--white); }
   .project-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.55; flex: 1; }
@@ -548,23 +558,105 @@
   /* ─── Divider line accent ──────────────────────────────────── */
   .rule { width: 40px; height: 1px; background: var(--accent2); margin: 1rem 0; }
 
+  /* ─── Section subtitle ─────────────────────────────────────── */
+  .section-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+    max-width: 640px;
+    line-height: 1.6;
+  }
+
+  /* ─── Metric badges (project cards) ────────────────────────── */
+  .metric-badge {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    border-radius: 3px;
+    padding: 0.2rem 0.5rem;
+    white-space: nowrap;
+  }
+
+  .project-metric-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  /* ─── CTA block (contact section) ──────────────────────────── */
+  .cta-block { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    border: 1px solid rgba(200,169,110,0.3);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    transition: all 0.15s;
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  .cta-link:hover { background: rgba(200,169,110,0.1); color: var(--accent); border-color: var(--accent2); }
+
   /* ─── Mobile ───────────────────────────────────────────────── */
-  @media (max-width: 680px) {
+  @media (max-width: 768px) {
     .nav-links { display: none; }
     .about-grid { grid-template-columns: 1fr; }
-    .projects-grid { grid-template-columns: 1fr; }
+    .projects-grid { grid-template-columns: 1fr !important; }
     .contact-inner { grid-template-columns: 1fr; }
-    .achievements-table { font-size: 0.82rem; }
-    .achievements-table td:first-child { display: none; }
-    section { padding: 3.5rem 0; }
-    #hero { padding-top: 6rem; }
+    section { padding: 3rem 0; }
+    #hero { padding-top: 5.5rem; }
     .hero-actions { flex-direction: column; }
     .btn { justify-content: center; }
+    .writing-item-meta { gap: 0.4rem; }
+    .writing-date { margin-left: 0; }
+    .footer-inner { flex-direction: column; text-align: center; }
+    .footer-polish { text-align: center; }
+
+    /* Achievements table → stacked cards on mobile */
+    .achievements-table thead { display: none; }
+    .achievements-table,
+    .achievements-table tbody,
+    .achievements-table tr,
+    .achievements-table td { display: block; width: 100%; }
+    .achievements-table tr {
+      background: var(--surface);
+      border: 1px solid var(--border) !important;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .achievements-table tr:last-child { border-bottom: 1px solid var(--border) !important; }
+    .achievements-table tbody tr:hover { background: var(--surface); }
+    .achievements-table td { padding: 0.2rem 0; border: none; }
+    .achievements-table td:first-child {
+      display: block;
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent2);
+      padding-left: 0;
+      margin-bottom: 0.35rem;
+      white-space: normal;
+    }
   }
 
   @media (max-width: 480px) {
     .stack-grid { grid-template-columns: 1fr 1fr; }
     .learning-grid { grid-template-columns: 1fr; }
+    h1 { font-size: clamp(1.9rem, 9vw, 2.5rem); }
+    .container { padding: 0 1rem; }
+    .contact-note { padding: 1rem; }
+    .hero-sub { font-size: 0.95rem; }
+    .project-metric-row { gap: 0.3rem; }
   }
 </style>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -595,7 +687,7 @@
   <div class="container">
     <div class="hero-meta">
       <span class="hero-dot"></span>
-      <span class="hero-status">Open to Senior / Principal Analytics Engineer roles · Berlin &amp; Poland &amp; remote</span>
+      <span class="hero-status">Based in Poland · Available for Fully Remote Roles (EU/UK/US timezones) · B2B Contract</span>
     </div>
 
     <h1 class="hero-title">
@@ -691,9 +783,7 @@
         <p class="stack-card-label">Languages</p>
         <div class="stack-card-items">
           <span class="tag">Python</span>
-          <span class="tag">pandas</span>
-          <span class="tag">SQLAlchemy</span>
-          <span class="tag">scikit-learn</span>
+          <span class="tag">SQL (Snowflake / BigQuery)</span>
         </div>
       </div>
       <div class="stack-card">
@@ -744,6 +834,10 @@
         <p>
           End-to-end SaaS revenue modeling — MRR waterfall, NRR cohort analysis, ARR bridge, churn by tenure. All five revenue motions defined, tested, and enforced in a single dbt intermediate model. Streamlit dashboard included.
         </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">5 revenue motions · 1 source of truth</span>
+          <span class="metric-badge">CI-tested contracts</span>
+        </div>
         <div class="project-tags">
           <span class="tag">dbt</span>
           <span class="tag">DuckDB</span>
@@ -762,6 +856,10 @@
         <p>
           Governance-first AI demo for Customer Success teams. LLM queries are restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Mirrors how I'd build this in production.
         </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Zero free-form SQL</span>
+          <span class="metric-badge">Intent → pre-approved template</span>
+        </div>
         <div class="project-tags">
           <span class="tag">dbt</span>
           <span class="tag">DuckDB</span>
@@ -780,6 +878,10 @@
         <p>
           Production-grade A/B testing pipeline. Assignment and exposure tracked as separate events, daily exposure quality monitoring, explicit ITT vs exposure-based cohort selection. Statistical output only after integrity checks pass.
         </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">ITT + exposure cohorts</span>
+          <span class="metric-badge">Integrity-gated output</span>
+        </div>
         <div class="project-tags">
           <span class="tag">dbt</span>
           <span class="tag">DuckDB</span>
@@ -797,6 +899,10 @@
         <p>
           Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern used in production revenue monitoring systems.
         </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Live ADS-B · 4 European cities</span>
+          <span class="metric-badge">Observe → baseline → flag</span>
+        </div>
         <div class="project-tags">
           <span class="tag">Python</span>
           <span class="tag">DuckDB</span>
@@ -814,6 +920,10 @@
         <p>
           Behavioural event pipeline from raw stream to governed self-service layer. Clean staging → intermediate → mart separation prevents raw event schemas from bleeding into BI tools.
         </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Raw stream → governed marts</span>
+          <span class="metric-badge">Schema isolation enforced</span>
+        </div>
         <div class="project-tags">
           <span class="tag">Python</span>
           <span class="tag">dbt</span>
@@ -918,6 +1028,14 @@
 <!-- WRITING_START -->
     <div class="writing-list">
 
+      <a href="writing/claude-code-analytics-setup.html" class="writing-item">
+        <div class="writing-item-meta">
+          <span class="writing-tag">ai</span><span class="writing-tag">analytics-engineering</span><span class="writing-tag">tooling</span>
+          <span class="writing-date">13 Jun 2026 · 5 min read</span>
+        </div>
+        <h3 class="writing-title">How I set up Claude Code for analytics engineering work</h3>
+        <p class="writing-lede">Most analytics engineers spend the first 5 minutes of every AI session re-explaining their stack. CLAUDE.md, AGENTS.md, and a handful of skills fix that permanently.</p>
+      </a>
       <a href="writing/dbt-tests-business-logic-errors.html" class="writing-item">
         <div class="writing-item-meta">
           <span class="writing-tag">dbt</span><span class="writing-tag">analytics-engineering</span><span class="writing-tag">data-quality</span>
@@ -1113,8 +1231,8 @@
 
       <div class="contact-note">
         <strong>What I'm looking for</strong>
-        Senior or Principal Analytics Engineer roles where the work is hard, the data is messy, and there's a real engineering culture around how analytics gets built. B2B SaaS preferred — ideally subscription/revenue domain.<br><br>
-        Warsaw or Kraków hybrid, or fully remote with a European team. Open to full-time, consulting, and freelance engagements.
+        Senior or Principal Analytics Engineer engagements on a <strong>B2B contract basis</strong> — fully remote, for EU/UK/US-timezone teams. I bring production-ready dbt and Snowflake expertise with a strong track record in revenue analytics, post-merger data integration, and governed AI on warehouse assets.<br><br>
+        B2B SaaS preferred, subscription/revenue domain. Fully remote only — no relocation. I operate across EU, UK, and US working hours.
       </div>
     </div>
   </div>
