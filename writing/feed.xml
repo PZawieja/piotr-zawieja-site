@@ -7,6 +7,20 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>dbt packages worth using in 2026</title>
+      <link>https://goldlayer.dev/writing/dbt-packages-worth-using-2026.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-packages-worth-using-2026.html</guid>
+      <pubDate>Sun, 14 Jun 2026 12:19:55 +0000</pubDate>
+      <description>An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</description>
+    </item>
+    <item>
+      <title>Dimensional modeling in dbt: the patterns that don't fit the textbook</title>
+      <link>https://goldlayer.dev/writing/dimensional-modeling-dbt-practical-patterns.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dimensional-modeling-dbt-practical-patterns.html</guid>
+      <pubDate>Sun, 14 Jun 2026 12:19:51 +0000</pubDate>
+      <description>The Kimball framework tells you what to build. dbt gives you the tools to build it. The gap between those two is where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</description>
+    </item>
+    <item>
       <title>How to write dbt tests that catch real business logic errors (not just nulls)</title>
       <link>https://goldlayer.dev/writing/dbt-tests-business-logic-errors.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-tests-business-logic-errors.html</guid>

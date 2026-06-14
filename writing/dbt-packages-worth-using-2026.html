@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dbt packages worth using in 2026 — Piotr Zawieja</title>
+<meta name="description" content="An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.">
+<meta property="og:title" content="dbt packages worth using in 2026">
+<meta property="og:description" content="An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-packages-worth-using-2026.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">data-quality</span>
+      <span class="meta-date">14 Jun 2026 · 7 min read</span>
+    </div>
+    <h1 class="article-title">dbt packages worth using in 2026</h1>
+    <p class="article-lede">An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</p>
+  </header>
+
+  <div class="article-body">
+    <p>The dbt Hub has a lot of packages. Most projects use two or three consistently and ignore the rest. The question worth answering is not "which packages exist" but "which ones earn their dependency weight" — meaning they reduce complexity, eliminate boilerplate, or catch errors that would otherwise reach production.</p>
+<p>Here is an honest assessment of the packages that do, and the ones that don't.</p>
+<hr />
+<h2>dbt_utils — the baseline</h2>
+<p>Almost every dbt project should have dbt_utils installed. It solves problems that are unavoidable.</p>
+<p><strong><code>generate_surrogate_key</code></strong> is the most-used macro in the package. When a source table lacks a reliable primary key, this hashes a list of columns into a consistent surrogate:</p>
+<pre><code class="language-sql">SELECT
+      {{ dbt_utils.generate_surrogate_key(['order_id', 'line_number']) }} AS order_line_id
+    , order_id
+    , line_number
+    , product_id
+    , quantity
+FROM {{ source('app', 'order_lines') }}
+</code></pre>
+<p><strong><code>date_spine</code></strong> generates a complete sequence of dates — essential for cohort analyses and any model that needs to produce a row for every date in a range, including dates with no activity:</p>
+<pre><code class="language-sql">WITH spine AS (
+    {{ dbt_utils.date_spine(
+        datepart=&quot;day&quot;,
+        start_date=&quot;cast('2024-01-01' as date)&quot;,
+        end_date=&quot;cast(current_date as date)&quot;
+    ) }}
+)
+
+SELECT date_day
+FROM spine
+</code></pre>
+<p><strong><code>get_column_values</code></strong> enables dynamic pivots — querying the distinct values in a column at compile time and generating a CASE WHEN per value:</p>
+<pre><code class="language-sql">{% set plan_types = dbt_utils.get_column_values(ref('stg_subscriptions'), 'plan_type') %}
+
+SELECT
+      customer_id
+    {% for plan in plan_types %}
+    , SUM(CASE WHEN plan_type = '{{ plan }}' THEN mrr ELSE 0 END)
+        AS mrr_{{ plan | lower | replace(' ', '_') }}
+    {% endfor %}
+FROM {{ ref('stg_subscriptions') }}
+GROUP BY 1
+</code></pre>
+<p><code>union_relations</code> and <code>star</code> are valuable in specific situations — merging identically-shaped tables across schemas, selecting all columns except a few — but don't see daily use.</p>
+<p>One macro to avoid: <code>dbt_utils.accepted_range</code>. It was moved to <code>dbt_expectations</code> in later versions and the version pinning gets messy if you use both packages. Use <code>dbt_expectations.expect_column_values_to_be_between</code> instead.</p>
+<hr />
+<h2>dbt_expectations — better testing</h2>
+<p>dbt_expectations ports the Great Expectations library into dbt test syntax. It earns its dependency weight primarily through four tests.</p>
+<p><strong><code>expect_column_values_to_be_between</code></strong> — the correct replacement for <code>accepted_range</code>:</p>
+<pre><code class="language-yaml">- name: monthly_amount_usd
+  tests:
+    - dbt_expectations.expect_column_values_to_be_between:
+        min_value: 0
+        max_value: 100000
+        row_condition: &quot;status = 'active'&quot;
+</code></pre>
+<p><strong><code>expect_column_pair_values_A_to_be_greater_than_B</code></strong> — catches date ordering invariants without custom tests:</p>
+<pre><code class="language-yaml">- name: cancelled_at
+  tests:
+    - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+        column_B: started_at
+        or_equal: False
+        row_condition: &quot;status = 'cancelled'&quot;
+</code></pre>
+<p><strong><code>expect_table_row_count_to_be_between</code></strong> — a sanity check that catches empty models and unexpected row count explosions:</p>
+<pre><code class="language-yaml">models:
+  - name: fct_orders
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000
+          max_value: 10000000
+</code></pre>
+<p><strong><code>expect_column_to_exist</code></strong> — confirms that source columns you depend on haven't been renamed or removed:</p>
+<pre><code class="language-yaml">sources:
+  - name: app
+    tables:
+      - name: orders
+        columns:
+          - name: order_id
+            tests:
+              - dbt_expectations.expect_column_to_exist
+</code></pre>
+<p>What dbt_expectations does not do well: the test syntax is verbose compared to plain dbt generic tests, and error messages are harder to parse. Use it for test categories that don't have clean built-in equivalents — don't replace <code>not_null</code> or <code>unique</code> with expectations versions just for consistency.</p>
+<hr />
+<h2>audit_helper — for migrations</h2>
+<p>audit_helper is the most underused package in the ecosystem. It solves a specific problem: you've rewritten a model and need to verify the new version produces the same results before retiring the old one.</p>
+<p>The core workflow is a comparison query:</p>
+<pre><code class="language-sql">-- analyses/compare_revenue_models.sql
+{% set old_model = ref('fct_orders_legacy') %}
+{% set new_model = ref('fct_orders_v2') %}
+
+{{ audit_helper.compare_relations(
+    a_relation=old_model,
+    b_relation=new_model,
+    primary_key='order_id'
+) }}
+</code></pre>
+<p>This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration.</p>
+<p>Reach for it when refactoring staging models, consolidating two marts, or migrating from a legacy pipeline. Do not add it to CI as ongoing test infrastructure — the comparison queries are designed for one-time validation, not for running in every PR.</p>
+<hr />
+<h2>codegen — eliminating boilerplate</h2>
+<p>codegen generates dbt YAML from database metadata. Two macros are actually useful.</p>
+<p><strong><code>generate_source</code></strong> — inspects a schema and generates a <code>sources:</code> YAML block with all tables and columns:</p>
+<pre><code class="language-bash">dbt run-operation codegen.generate_source \
+  --args '{&quot;schema_name&quot;: &quot;raw_app&quot;, &quot;generate_columns&quot;: true}'
+</code></pre>
+<p><strong><code>generate_base_model</code></strong> — generates a staging model SQL file from a source table's column list:</p>
+<pre><code class="language-bash">dbt run-operation codegen.generate_base_model \
+  --args '{&quot;source_name&quot;: &quot;app&quot;, &quot;table_name&quot;: &quot;orders&quot;}'
+</code></pre>
+<p>Both macros output to stdout. You copy the output, paste it into a file, and edit from there. They do not write files directly — this is intentional, since the output always needs adjustment.</p>
+<p>The honest assessment: codegen is most valuable when onboarding a new source with many tables. For a 20-table schema, generating source YAML and base models by hand would take an hour; codegen reduces it to fifteen minutes of editing. For a single new table, writing the YAML directly is faster than looking up the macro syntax.</p>
+<hr />
+<h2>dbt_project_evaluator — meta-testing</h2>
+<p>dbt_project_evaluator tests your dbt project structure against a set of best practices. It runs as a dbt model — it queries the dbt graph metadata and flags violations.</p>
+<p>Checks it runs:<br />
+- Models without <code>not_null</code> tests on primary keys<br />
+- Staging models that reference other staging models (violates layer conventions)<br />
+- Sources that are not referenced by any model<br />
+- Models with no descriptions<br />
+- Marts that join directly to sources, skipping the staging layer</p>
+<pre><code class="language-yaml"># packages.yml
+packages:
+  - package: dbt-labs/dbt_project_evaluator
+    version: [&quot;&gt;=0.8.0&quot;, &quot;&lt;1.0.0&quot;]
+</code></pre>
+<p>After installing, run <code>dbt build --select package:dbt_project_evaluator</code> and review the output tables in your warehouse.</p>
+<p>The practical limitation: the default rules are opinionated and not all of them apply to every project. You will need to configure exceptions — the package provides a seed file mechanism for this. The setup investment is worth it on projects with multiple contributors where convention drift is a real risk. On a solo project, it is more rules than you need.</p>
+<hr />
+<h2>What's not worth it</h2>
+<p><strong>dbt-osmosis</strong> — auto-propagates column descriptions from parent models to children. Sounds useful; in practice the propagation logic creates maintenance confusion when descriptions should diverge downstream, and the behavior on re-runs is surprising.</p>
+<p><strong>dbt-profiler</strong> — generates column-level profiling statistics as dbt models. Useful for initial source exploration; not worth keeping as an ongoing dependency. Profile a new source once with ad-hoc queries and move on.</p>
+<p><strong>re_data</strong> — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>dbt_utils is the only genuinely universal package</strong> — generate_surrogate_key, date_spine, and get_column_values solve problems every project eventually hits; install it from the start.</li>
+<li><strong>dbt_expectations earns its weight for four specific tests</strong> — value ranges, column pair ordering, row count bounds, and column existence checks that lack clean built-in equivalents.</li>
+<li><strong>audit_helper is a migration tool, not a test framework</strong> — reach for it when rewriting a model and validating parity; don't add it to CI as ongoing test infrastructure.</li>
+<li><strong>codegen pays off at onboarding scale</strong> — for a new source with 15+ tables it saves meaningful time; for a single table, writing YAML by hand is faster than looking up the macro syntax.</li>
+<li><strong>dbt_project_evaluator is worth it on multi-contributor projects</strong> — enforces structural conventions that drift without enforcement; configure exceptions for rules that don't fit your project rather than disabling them entirely.</li>
+<li><strong>Most other packages solve problems better addressed with standalone tooling</strong> — for profiling, one-off queries; for observability, a dedicated platform rather than a materialisation-layer workaround.</li>
+</ul>
+</div>
+
+<hr />
+<p>Which packages does your team actually use in production?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

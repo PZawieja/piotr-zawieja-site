@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dimensional modeling in dbt: the patterns that don't fit the textbook — Piotr Zawieja</title>
+<meta name="description" content="The Kimball framework tells you what to build. dbt gives you the tools to build it. The gap between those two is where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.">
+<meta property="og:title" content="Dimensional modeling in dbt: the patterns that don't fit the textbook">
+<meta property="og:description" content="The Kimball framework tells you what to build. dbt gives you the tools to build it. The gap between those two is where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dimensional-modeling-dbt-practical-patterns.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-tag">analytics-engineering</span>
+      <span class="meta-tag">data-modeling</span>
+      <span class="meta-tag">sql</span>
+      <span class="meta-date">14 Jun 2026 · 9 min read</span>
+    </div>
+    <h1 class="article-title">Dimensional modeling in dbt: the patterns that don't fit the textbook</h1>
+    <p class="article-lede">The Kimball framework tells you what to build. dbt gives you the tools to build it. The gap between those two is where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</p>
+  </header>
+
+  <div class="article-body">
+    <p>The textbook version of dimensional modeling is clean. Fact tables at the center, dimension tables surrounding them, foreign keys connecting them, surrogate keys disambiguating natural keys from different source systems. Every row in <code>fct_orders</code> points to a row in <code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>. Star schema. Done.</p>
+<p>Reality is messier. Customers change their email address. Products move between categories. The same date dimension needs to be referenced three times on the same fact table for order date, ship date, and return date. Orders can have multiple promotional codes.</p>
+<p>dbt gives you the primitives to handle all of this, but the documentation mostly covers the clean cases. This post covers the patterns that show up in real projects — where the textbook diagram and the actual data don't quite match.</p>
+<hr />
+<h2>SCD Type 2: use dbt snapshots, not incremental models</h2>
+<p>Slowly changing dimensions are the most common place teams reach for an incremental model and get it wrong. The instinct is understandable — incremental models process new and changed data, which sounds exactly right. But a merge incremental model will simply overwrite the old value with the new one. You lose history.</p>
+<p>Type 2 slowly changing dimensions require a different approach: when a dimension attribute changes, close the existing record and open a new one. The dimension table carries all versions of the record, each with a validity window. This is what <code>dbt snapshot</code> is built for.</p>
+<pre><code class="language-sql">-- snapshots/snap_customers.sql
+{% snapshot snap_customers %}
+
+{{
+    config(
+        target_schema='snapshots',
+        strategy='updated_at',
+        unique_key='customer_id',
+        updated_at='updated_at',
+        invalidate_hard_deletes=True
+    )
+}}
+
+SELECT
+      customer_id
+    , email
+    , plan
+    , country
+    , updated_at
+FROM {{ source('app', 'customers') }}
+
+{% endsnapshot %}
+</code></pre>
+<p>The <code>strategy='updated_at'</code> tells dbt to check for changes by comparing the <code>updated_at</code> column. On each run, if <code>updated_at</code> has advanced for a given <code>customer_id</code>, dbt closes the current record (sets <code>dbt_valid_to</code> to the current timestamp) and inserts a new open record (with <code>dbt_valid_to</code> as NULL).</p>
+<p>The alternative strategy is <code>check</code>:</p>
+<pre><code class="language-sql">{{
+    config(
+        strategy='check',
+        check_cols=['email', 'plan', 'country'],
+        unique_key='customer_id'
+    )
+}}
+</code></pre>
+<p><code>check</code> compares the listed columns directly rather than relying on an <code>updated_at</code> column. Slower on large tables — it hashes the column values — but necessary when the source doesn't provide a reliable updated timestamp.</p>
+<hr />
+<h2>Querying snapshots correctly</h2>
+<p>The snapshot creates a history table. Most downstream consumers want either current state or point-in-time state, and the query patterns are different.</p>
+<p><strong>Current state</strong> — all records where the validity window is still open:</p>
+<pre><code class="language-sql">-- models/marts/dim_customers.sql
+SELECT
+      customer_id
+    , email
+    , plan
+    , country
+    , dbt_valid_from  AS effective_from
+FROM {{ ref('snap_customers') }}
+WHERE dbt_valid_to IS NULL
+</code></pre>
+<p><strong>Point-in-time state</strong> — the record that was current as of a given fact event:</p>
+<pre><code class="language-sql">-- models/intermediate/int_orders_with_customer_at_order_date.sql
+SELECT
+      o.order_id
+    , o.customer_id
+    , o.ordered_at
+    , c.plan     AS customer_plan_at_order
+    , c.country  AS customer_country_at_order
+FROM {{ ref('fct_orders') }} o
+LEFT JOIN {{ ref('snap_customers') }} c
+    ON  o.customer_id  = c.customer_id
+    AND o.ordered_at  &gt;= c.dbt_valid_from
+    AND (o.ordered_at  &lt; c.dbt_valid_to OR c.dbt_valid_to IS NULL)
+</code></pre>
+<p>This join pattern — matching on the entity key and filtering where the fact timestamp falls within the validity window — is the fundamental one for any historical analysis that needs to know what a dimension looked like at the time of a fact event. Customer plan at the time of purchase. Product price at the time of the transaction. Account tier at the time of a support ticket.</p>
+<hr />
+<h2>Degenerate dimensions</h2>
+<p>A degenerate dimension is a dimension attribute that lives on the fact table rather than in a separate dimension table. The most common example is <code>order_id</code> on a line item fact.</p>
+<p>The line item fact is at the product-per-order grain:</p>
+<pre><code class="language-sql">-- models/marts/fct_order_lines.sql
+SELECT
+      {{ dbt_utils.generate_surrogate_key(['order_id', 'product_id']) }} AS order_line_id
+    , order_id       -- degenerate dimension
+    , product_id
+    , customer_id
+    , ordered_at
+    , quantity
+    , unit_price
+    , quantity * unit_price  AS line_total
+FROM {{ ref('stg_order_lines') }}
+</code></pre>
+<p><code>order_id</code> is a degenerate dimension. There is no separate <code>dim_orders</code> table — the order itself has no attributes beyond those that already belong to the line items or to the customer. The order identifier lives directly on the fact row.</p>
+<p>When should you promote a degenerate dimension to a full dimension table? When the "header" entity starts acquiring attributes that don't belong on the line. If orders have shipping addresses, discount codes, channel sources, and fulfillment statuses — those are order-level attributes that warrant a <code>dim_orders</code> table. If an order is nothing more than a grouping key for line items, keep it degenerate.</p>
+<hr />
+<h2>Role-playing dimensions</h2>
+<p><code>dim_date</code> typically appears once in a star schema diagram. In practice it appears three or four times on the same fact table.</p>
+<pre><code class="language-sql">-- models/marts/fct_orders.sql
+SELECT
+      order_id
+    , customer_id
+    , product_id
+
+    , ordered_at::DATE    AS order_date_key
+    , shipped_at::DATE    AS ship_date_key
+    , returned_at::DATE   AS return_date_key
+
+    , quantity
+    , revenue
+FROM {{ ref('stg_orders') }}
+</code></pre>
+<p>Each date key is a foreign key to <code>dim_date</code>, but playing a different role. In your BI tool, <code>order_date_key</code> joins to <code>dim_date</code> aliased as "Order Date", <code>ship_date_key</code> to the same table aliased as "Ship Date". The dimension is the same; the roles differ.</p>
+<p>dbt doesn't need to do anything special here — you store the keys on the fact table and the joins happen in the BI layer. What you do need is clarity in your schema YAML about what each key represents:</p>
+<pre><code class="language-yaml"># models/marts/schema.yml
+models:
+  - name: fct_orders
+    columns:
+      - name: order_date_key
+        description: &quot;Date the order was placed. Foreign key to dim_date.&quot;
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+      - name: ship_date_key
+        description: &quot;Date the order shipped. Null if not yet shipped.&quot;
+        tests:
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+</code></pre>
+<p>The <code>relationships</code> test on <code>ship_date_key</code> does not include <code>not_null</code> — unshipped orders legitimately have a null ship date. This is correct behavior, not a data quality issue.</p>
+<hr />
+<h2>Bridge tables</h2>
+<p>A fact row relates to exactly one customer, one product, one date — that's the standard case. Bridge tables handle the exception: when a fact or dimension relates to multiple members of another dimension.</p>
+<p>Common examples:<br />
+- A customer with multiple tags or segments<br />
+- A product in multiple categories<br />
+- An order with multiple applied promotions</p>
+<p>The bridge table is a narrow join table at the relationship grain:</p>
+<pre><code class="language-sql">-- models/marts/brd_customer_tags.sql
+SELECT
+      customer_id
+    , tag_id
+    , tagged_at
+FROM {{ ref('stg_customer_tags') }}
+</code></pre>
+<p>Querying through the bridge introduces fanout risk — if a customer has five tags and you join <code>fct_orders</code> to <code>brd_customer_tags</code>, each order row duplicates five times. Handle this deliberately:</p>
+<pre><code class="language-sql">-- Option A: aggregate before joining (preserves fact grain)
+WITH customer_tag_list AS (
+    SELECT
+          customer_id
+        , ARRAY_AGG(tag_id ORDER BY tagged_at) AS tags
+    FROM {{ ref('brd_customer_tags') }}
+    GROUP BY 1
+)
+
+SELECT
+      o.order_id
+    , o.revenue
+    , t.tags
+FROM {{ ref('fct_orders') }} o
+LEFT JOIN customer_tag_list t USING (customer_id)
+
+
+-- Option B: filter to one tag before joining (intentionally changes grain)
+SELECT
+      o.order_id
+    , o.revenue
+FROM {{ ref('fct_orders') }} o
+INNER JOIN {{ ref('brd_customer_tags') }} t
+    ON  o.customer_id = t.customer_id
+    AND t.tag_id = 'enterprise'
+</code></pre>
+<p>Option A preserves the fact grain and returns all tags as an array. Option B intentionally scopes to a subset — only orders from enterprise-tagged customers. Both are valid; the choice depends on what the downstream consumer needs.</p>
+<hr />
+<h2>When to skip dimensional modeling</h2>
+<p>Dimensional modeling is the right default for analytical data products with multiple downstream consumers and evolving query patterns. It is not the right default for everything.</p>
+<p>A single-purpose dashboard with three metrics and one analyst querying it may not need a <code>dim_customer</code> and a <code>fct_orders</code> with a surrogate key and a bridge table for tags. A wide mart — one row per customer, all the attributes you care about as columns — is simpler, faster to build, and easier to debug.</p>
+<p>The test is not "is this theoretically the right model?" It is "does the complexity of this model serve the people using it?" A properly normalized star schema that nobody on the team can interpret adds as much risk as a wide flat table that grows unmanageable. Start simple; add structure when the complexity is justified by actual query patterns, not anticipated ones.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Use dbt snapshots for SCD Type 2, not incremental models</strong> — incremental models overwrite history; snapshots preserve it with validity windows and are the correct tool for tracking dimension changes over time.</li>
+<li><strong>The point-in-time join pattern is the fundamental SCD query</strong> — joining a fact to a snapshot on both the entity key and where the fact timestamp falls within the validity window gives you dimension attributes as they were when the fact occurred.</li>
+<li><strong>Degenerate dimensions stay on the fact table until they acquire their own attributes</strong> — promote order_id to a dim_orders table only when orders have header-level attributes (shipping address, discount codes, channel) that don't belong on line items.</li>
+<li><strong>Role-playing dimensions need no special dbt handling</strong> — store multiple date keys on the fact table and let the BI layer alias the joins; document each key in schema.yml so the roles are unambiguous.</li>
+<li><strong>Bridge tables introduce fanout — aggregate or filter before joining</strong> — joining a fact through a bridge without controlling the grain produces duplicate rows with no warning.</li>
+<li><strong>A wide mart is often the right answer for simple use cases</strong> — dimensional modeling is the correct default for multi-consumer analytical products, not a requirement for every model you build.</li>
+</ul>
+</div>
+
+<hr />
+<p>What dimensional pattern have you found hardest to implement cleanly in dbt?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
