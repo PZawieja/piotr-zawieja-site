@@ -4,7 +4,7 @@ date: 2026-06-05
 published_at: 2026-06-05T11:00:00Z
 slug: excel-to-dbt-polish-data-teams
 description: "A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip."
-tags: [dbt, analytics-engineering, sql, career]
+tags: [dbt]
 read_time: 8
 status: published
 ---

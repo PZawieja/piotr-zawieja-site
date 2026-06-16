@@ -4,7 +4,7 @@ date: 2026-06-08
 published_at: 2026-06-08T09:00:00Z
 slug: governed-ai-warehouse-beats-rag
 description: "Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead."
-tags: [ai, analytics-engineering, dbt]
+tags: [AI, dbt]
 read_time: 7
 status: published
 ---

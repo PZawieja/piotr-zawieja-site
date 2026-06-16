@@ -7,11 +7,7 @@ published_at: '2026-06-14T12:19:51Z'
 read_time: 9
 slug: dimensional-modeling-dbt-practical-patterns
 status: published
-tags:
-- dbt
-- analytics-engineering
-- data-modeling
-- sql
+tags: [dbt]
 title: 'Dimensional modeling in dbt: the patterns that don''t fit the textbook'
 ---
 

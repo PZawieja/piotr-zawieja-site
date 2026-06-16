@@ -4,7 +4,7 @@ date: 2026-06-11
 published_at: 2026-06-11T10:00:00Z
 slug: dbt-incremental-models-complete-guide
 description: "Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production."
-tags: [dbt, analytics-engineering, data-engineering]
+tags: [dbt]
 read_time: 11
 status: published
 ---

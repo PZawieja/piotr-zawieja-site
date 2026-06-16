@@ -4,7 +4,7 @@ date: 2026-06-08
 published_at: 2026-06-08T08:00:00Z
 slug: data-platform-decisions
 description: "Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding."
-tags: [data-platform, analytics-engineering, dbt]
+tags: [dbt]
 read_time: 11
 status: published
 ---

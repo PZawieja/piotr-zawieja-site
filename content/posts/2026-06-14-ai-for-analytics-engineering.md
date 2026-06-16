@@ -7,11 +7,7 @@ published_at: '2026-06-14T12:31:51Z'
 read_time: 8
 slug: ai-for-analytics-engineering
 status: published
-tags:
-- ai
-- analytics-engineering
-- claude-code
-- dbt
+tags: [AI]
 title: 'AI for analytics engineering: where it actually helps and where it doesn''t'
 ---
 

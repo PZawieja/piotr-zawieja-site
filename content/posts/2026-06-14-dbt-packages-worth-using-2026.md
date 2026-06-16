@@ -6,10 +6,7 @@ published_at: '2026-06-14T12:19:55Z'
 read_time: 7
 slug: dbt-packages-worth-using-2026
 status: published
-tags:
-- dbt
-- analytics-engineering
-- data-quality
+tags: [dbt]
 title: dbt packages worth using in 2026
 ---
 

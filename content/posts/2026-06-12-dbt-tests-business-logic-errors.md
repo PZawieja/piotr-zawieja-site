@@ -4,7 +4,7 @@ date: 2026-06-12
 published_at: 2026-06-12T13:00:00Z
 slug: dbt-tests-business-logic-errors
 description: "Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews."
-tags: [dbt, analytics-engineering, data-quality, sql]
+tags: [dbt, data-quality]
 read_time: 6
 status: published
 ---

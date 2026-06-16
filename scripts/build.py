@@ -11,6 +11,7 @@ Writes: writing/[slug].html, writing/index.html, writing/feed.xml
 """
 import re
 import sys
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -108,8 +109,9 @@ def build_posts(posts: list, env: Environment) -> None:
 
 def build_writing_index(posts: list, env: Environment) -> None:
     template = env.get_template("writing.html")
-    all_tags = sorted({tag for p in posts for tag in p["tags"]})
-    html = template.render(posts=posts, all_tags=all_tags)
+    tag_counts = Counter(tag for p in posts for tag in p["tags"])
+    all_tags = sorted(tag_counts.keys())
+    html = template.render(posts=posts, all_tags=all_tags, tag_counts=tag_counts)
     out = WRITING_DIR / "index.html"
     out.write_text(html, encoding="utf-8")
     print("  ✓ writing/index.html")

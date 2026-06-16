@@ -4,7 +4,7 @@ date: 2026-06-12
 published_at: 2026-06-12T11:00:00Z
 slug: snowflake-cortex-analyst-in-practice
 description: "Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two."
-tags: [snowflake, analytics-engineering, ai, cortex]
+tags: [Snowflake, AI]
 read_time: 6
 status: published
 ---

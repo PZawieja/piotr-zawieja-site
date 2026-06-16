@@ -4,7 +4,7 @@ date: 2026-06-12
 published_at: 2026-06-12T10:00:00Z
 slug: ai-assisted-sql-review-claude-dbt
 description: "Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs."
-tags: [ai, analytics-engineering, dbt, claude-code]
+tags: [AI, dbt]
 read_time: 8
 status: published
 ---

@@ -4,7 +4,7 @@ date: 2026-06-12
 published_at: 2026-06-12T12:00:00Z
 slug: dbt-semantic-layer-vs-metric-marts
 description: "A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow."
-tags: [dbt, analytics-engineering, data-modeling, ai]
+tags: [dbt, AI]
 read_time: 7
 status: published
 ---
