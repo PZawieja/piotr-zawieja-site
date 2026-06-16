@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Idempotency in dbt: the one pipeline property worth obsessing over — Piotr Zawieja</title>
+<meta name="description" content="Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.">
+<meta property="og:title" content="Idempotency in dbt: the one pipeline property worth obsessing over">
+<meta property="og:description" content="Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-idempotency-pipelines.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">dbt</span>
+      <span class="meta-date">16 Jun 2026 · 8 min read</span>
+    </div>
+    <h1 class="article-title">Idempotency in dbt: the one pipeline property worth obsessing over</h1>
+    <p class="article-lede">Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</p>
+  </header>
+
+  <div class="article-body">
+    <p>You re-ran the pipeline last night because a source table was late. This morning, Finance is asking why revenue is 12% higher than yesterday's close. Your incremental model ran twice on the same data. The numbers are wrong. The pipeline passed all tests.</p>
+<p>This is an idempotency failure. It is the most common silent bug in dbt projects, and it is almost never caught by dbt tests because tests run on the current state, not across multiple runs.</p>
+<p>Idempotency means: running the same pipeline multiple times with the same inputs produces the same output as running it once. An idempotent model can be re-run after a failure, a backfill, or an accidental double-trigger, and the result is always correct. A non-idempotent model can't make that promise.</p>
+<hr />
+<h2>Why dbt makes this easy to get wrong</h2>
+<p>dbt has two common materialization modes: <code>table</code> and <code>incremental</code>. Tables are always idempotent — they rebuild from scratch on every run. Incremental models are not idempotent by default, and that is where most problems live.</p>
+<p>The core issue: incremental models accumulate rows. Without an explicit deduplication strategy, running the same source data twice appends it twice.</p>
+<pre><code class="language-sql">{{ config(materialized='incremental') }}
+
+SELECT
+    order_id,
+    customer_id,
+    order_date,
+    revenue
+FROM {{ source('ecommerce', 'orders') }}
+{% if is_incremental() %}
+    WHERE order_date &gt;= (SELECT MAX(order_date) FROM {{ this }})
+{% endif %}
+</code></pre>
+<p>This model has three idempotency problems. The <code>WHERE</code> clause uses <code>MAX(order_date)</code> from the target table — if a run fails midway, or if source data lands late for a date already past the watermark, re-running will either duplicate rows or silently drop late-arriving records. A forced re-run after a bug fix repulls everything and appends it all again.</p>
+<hr />
+<h2>Four patterns that break idempotency</h2>
+<h3>Watermark-based filtering without deduplication</h3>
+<p>The most common pattern. The model filters new rows using the maximum timestamp or date from the target table. This works only if every source row arrives exactly once, the source never updates existing rows, and runs never overlap.</p>
+<p>In practice, none of those hold consistently. Source tables get corrected. Pipelines get retriggered. Late data arrives. The watermark approach gives you the appearance of an incremental strategy without the safety.</p>
+<h3>Append-only incrementals with no unique_key</h3>
+<p>dbt's <code>unique_key</code> config triggers a merge or upsert instead of a plain append. Without it, every incremental run adds rows unconditionally.</p>
+<pre><code class="language-sql">-- Appends unconditionally — running twice doubles the rows
+{{ config(materialized='incremental') }}
+
+-- Upserts on order_id — running twice is safe
+{{ config(
+    materialized='incremental',
+    unique_key='order_id'
+) }}
+</code></pre>
+<p>The difference is one config line. Most projects start without <code>unique_key</code> and add it only after the first incident.</p>
+<h3>Non-deterministic column values</h3>
+<p>Columns whose values change between runs break idempotency even when the source data is identical.</p>
+<pre><code class="language-sql">SELECT
+    order_id,
+    revenue,
+    CURRENT_TIMESTAMP() AS loaded_at
+FROM {{ source('ecommerce', 'orders') }}
+</code></pre>
+<p><code>loaded_at</code> populated with <code>CURRENT_TIMESTAMP()</code> is a common offender. So is <code>SYSDATE()</code> or <code>NOW()</code>. If your merge key doesn't include this column, duplicate rows accumulate. If it does, rows that haven't changed get updated unnecessarily, complicating change detection downstream.</p>
+<p>Fix: use a deterministic timestamp from the source data itself — <code>updated_at</code>, <code>created_at</code>, or <code>_fivetran_synced</code> — never from the pipeline execution clock.</p>
+<h3>Row-order dependencies</h3>
+<p>Models using <code>ROW_NUMBER()</code> or <code>RANK()</code> without a fully deterministic <code>ORDER BY</code> can produce different results across runs if the warehouse doesn't guarantee source ordering.</p>
+<pre><code class="language-sql">-- Non-deterministic when created_at has ties
+SELECT
+    *,
+    ROW_NUMBER() OVER (
+        PARTITION BY customer_id
+        ORDER BY created_at
+    ) AS row_num
+FROM orders
+</code></pre>
+<p>When <code>created_at</code> has ties, which row gets rank 1 is arbitrary and may differ between runs on Snowflake virtual warehouses with different node counts. Always add a tiebreaker — a source-provided ID or surrogate key — to make the ordering deterministic.</p>
+<hr />
+<h2>The patterns that restore idempotency</h2>
+<h3>unique_key with merge strategy</h3>
+<p>Set <code>unique_key</code> on every incremental model. This is the single highest-leverage change in a dbt project for idempotency.</p>
+<pre><code class="language-sql">{{ config(
+    materialized='incremental',
+    unique_key='order_id',
+    incremental_strategy='merge'
+) }}
+
+SELECT
+    order_id,
+    customer_id,
+    order_date,
+    revenue,
+    updated_at
+FROM {{ source('ecommerce', 'orders') }}
+{% if is_incremental() %}
+    WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})
+{% endif %}
+</code></pre>
+<p>With <code>unique_key</code>, if a row with the same <code>order_id</code> already exists in the target, it gets updated rather than duplicated. Re-running is safe regardless of how many times the pipeline triggers.</p>
+<p><code>incremental_strategy='merge'</code> is supported on Snowflake, BigQuery, and Databricks. On Postgres and Redshift, dbt uses delete+insert instead, which is equally safe from an idempotency standpoint.</p>
+<h3>Surrogate keys for composite natural keys</h3>
+<p>When the natural key is composite, define a surrogate key in staging rather than passing a multi-column tuple as <code>unique_key</code>. The <code>generate_surrogate_key()</code> macro from <code>dbt-utils</code> handles this cleanly:</p>
+<pre><code class="language-sql">-- models/staging/stg_order_lines.sql
+SELECT
+    {{ dbt_utils.generate_surrogate_key(['order_id', 'line_item_id']) }} AS order_line_sk,
+    order_id,
+    line_item_id,
+    quantity,
+    unit_price,
+    line_total
+FROM {{ source('ecommerce', 'order_lines') }}
+</code></pre>
+<p>Then the incremental model merges on one column:</p>
+<pre><code class="language-sql">{{ config(
+    materialized='incremental',
+    unique_key='order_line_sk'
+) }}
+
+SELECT *
+FROM {{ ref('stg_order_lines') }}
+{% if is_incremental() %}
+    WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})
+{% endif %}
+</code></pre>
+<p>One deterministic column, safe to merge on, easy to test with a <code>unique</code> test on the staging model.</p>
+<h3>Partition replacement for large fact tables</h3>
+<p>For large event or transaction tables where a full merge is expensive, partition replacement gives you idempotency at partition granularity. The entire partition is replaced atomically on each run.</p>
+<p>On BigQuery:</p>
+<pre><code class="language-sql">{{ config(
+    materialized='incremental',
+    incremental_strategy='insert_overwrite',
+    partition_by={
+        'field': 'event_date',
+        'data_type': 'date'
+    }
+) }}
+
+SELECT
+    event_id,
+    event_date,
+    user_id,
+    event_type
+FROM {{ source('analytics', 'events') }}
+{% if is_incremental() %}
+    WHERE event_date &gt;= DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)
+{% endif %}
+</code></pre>
+<p>Re-running this always produces the same partition contents for the last 3 days. Late-arriving records and source corrections are handled automatically. The tradeoff: you reprocess 3 days of data on every run, which is more than a pure incremental but far less than a full refresh.</p>
+<p>On Snowflake, <code>incremental_strategy='delete+insert'</code> with a <code>unique_key</code> achieves the same effect — it deletes matching rows in the target partition and reinserts the current version.</p>
+<h3>Wrapping all incremental filters in is_incremental()</h3>
+<p><code>is_incremental()</code> evaluates to <code>false</code> on a <code>--full-refresh</code> run. This is your escape hatch when you need to rebuild from scratch after a bug fix or data correction.</p>
+<p>The rule: every filter that scopes data to the current increment must live inside <code>{% if is_incremental() %}</code>. A filter outside this block runs even on full refresh, silently truncating history.</p>
+<pre><code class="language-sql">-- Wrong: the hard-coded date cutoff applies even on full-refresh
+SELECT *
+FROM {{ source('ecommerce', 'orders') }}
+WHERE order_date &gt;= '2026-01-01'
+{% if is_incremental() %}
+    AND updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})
+{% endif %}
+</code></pre>
+<pre><code class="language-sql">-- Correct: all incremental scoping is inside the block
+SELECT *
+FROM {{ source('ecommerce', 'orders') }}
+{% if is_incremental() %}
+    WHERE updated_at &gt; (SELECT MAX(updated_at) FROM {{ this }})
+{% endif %}
+</code></pre>
+<p>The first version will silently drop all pre-2026 history every time someone runs <code>dbt run --full-refresh</code>.</p>
+<hr />
+<h2>How to test idempotency</h2>
+<p>dbt's built-in tests — <code>unique</code>, <code>not_null</code>, <code>relationships</code> — run on the current state of a model. They verify the state is correct after one run. They don't verify that a second run leaves the state unchanged.</p>
+<p>The manual test is simple:</p>
+<ol>
+<li>Run <code>dbt run --select &lt;model&gt;</code></li>
+<li>Record the row count: <code>SELECT COUNT(*) FROM &lt;schema&gt;.&lt;model&gt;</code></li>
+<li>Run <code>dbt run --select &lt;model&gt;</code> again without <code>--full-refresh</code></li>
+<li>Record the row count again</li>
+</ol>
+<p>If the count increased, the model is not idempotent. Do this for every new incremental model before it reaches production.</p>
+<p>For models that update existing rows, also check for duplicates:</p>
+<pre><code class="language-sql">SELECT
+    order_id,
+    COUNT(*) AS n
+FROM fct_orders
+GROUP BY order_id
+HAVING n &gt; 1
+</code></pre>
+<p>This should always return zero rows. If it returns rows after any re-run, your <code>unique_key</code> isn't covering all the paths by which duplicate source data can arrive.</p>
+<p>A more durable approach is a singular test that materializes the model twice against a fixed seed or source and asserts the outputs are identical. More setup, but it becomes a permanent regression guard that runs in CI.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Table materializations are idempotent by default — incremental models are not</strong> — every incremental model needs an explicit deduplication strategy, not just a watermark filter.</li>
+<li><strong>unique_key is the highest-leverage single change</strong> — it converts append semantics to upsert semantics and makes re-runs safe without changing anything else about the model logic.</li>
+<li><strong>Never use CURRENT_TIMESTAMP() in incremental logic</strong> — use source-provided timestamps; execution-time values create non-determinism that compounds across re-runs.</li>
+<li><strong>Partition replacement trades compute for safety</strong> — replacing the last N partitions on every run is more expensive than a pure incremental but fully safe to re-run and handles late data naturally.</li>
+<li><strong>Every incremental filter must live inside is_incremental()</strong> — a filter outside the block silently drops historical data on full refresh.</li>
+<li><strong>Test idempotency by running twice</strong> — built-in dbt tests do not catch this; a second run with a row count comparison is the only reliable check.</li>
+</ul>
+</div>
+
+<p>How many of your incremental models could you re-run right now without checking the row counts afterward?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
