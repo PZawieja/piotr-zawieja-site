@@ -5,7 +5,7 @@ published_at: 2026-06-11T10:00:00Z
 slug: dbt-incremental-models-complete-guide
 description: "Full refresh on a 200-million-row events table is how you discover incremental models. The silent data gap the following week is how you understand them. Strategies, patterns, and the tips that only surface after something breaks in production."
 tags: [dbt]
-read_time: 11
+read_time: 14
 status: published
 ---
 
@@ -110,12 +110,12 @@ status: published
 <span class="keyword">FROM</span> <span class="tag">{{</span> source(<span class="string">'app'</span>, <span class="string">'raw_events'</span>) <span class="tag">}}</span>
 
 <span class="tag">{%</span> <span class="keyword">if</span> is_incremental() <span class="tag">%}</span>
-<span class="keyword">WHERE</span> event_date &gt;= <span class="keyword">DATEADD</span>(day, -3, <span class="keyword">CURRENT_DATE</span>)
+<span class="keyword">WHERE</span> event_date &gt;= <span class="keyword">DATEADD</span>(day, -3, (<span class="keyword">SELECT MAX</span>(event_date) <span class="keyword">FROM</span> <span class="tag">{{</span> this <span class="tag">}}</span>))
 <span class="tag">{%</span> <span class="keyword">endif</span> <span class="tag">%}</span>
 
 <span class="keyword">GROUP BY</span> 1, 2</code></pre>
 
-    <p>Works well for aggregation models where you want to replace entire date partitions rather than merge individual rows. On column stores like Snowflake, deleting a partition's worth of rows and re-inserting can be faster than row-level merging.</p>
+    <p>Works well for aggregation models where you want to replace entire date partitions rather than merge individual rows. On column stores like Snowflake, deleting a partition's worth of rows and re-inserting can be faster than row-level merging. Note the anchor is <code>MAX(event_date) FROM {{ this }}</code>, not <code>CURRENT_DATE</code> — if the pipeline fails and re-runs a day later, the window stays anchored to the last date in the target, not to today's wall clock.</p>
 
     <h3>insert_overwrite</h3>
 
@@ -277,12 +277,12 @@ status: published
 <span class="keyword">WHERE</span> status = <span class="string">'active'</span>
 
 <span class="tag">{%</span> <span class="keyword">if</span> is_incremental() <span class="tag">%}</span>
-<span class="keyword">AND</span> billing_date &gt;= <span class="keyword">DATEADD</span>(day, -7, <span class="keyword">CURRENT_DATE</span>)
+<span class="keyword">AND</span> billing_date &gt;= <span class="keyword">DATEADD</span>(day, -7, (<span class="keyword">SELECT MAX</span>(mrr_date) <span class="keyword">FROM</span> <span class="tag">{{</span> this <span class="tag">}}</span>))
 <span class="tag">{%</span> <span class="keyword">endif</span> <span class="tag">%}</span>
 
 <span class="keyword">GROUP BY</span> 1</code></pre>
 
-    <p>On each run, the last 7 days are deleted and rebuilt from the staging model. This handles late-arriving subscription updates correctly and keeps historical dates stable beyond the 7-day window.</p>
+    <p>On each run, the last 7 days of partitions are deleted and rebuilt from the staging model. The anchor is <code>MAX(mrr_date)</code> from the target table — not <code>CURRENT_DATE</code>. If the pipeline fails on Monday and re-runs on Tuesday, the window is still "7 days before the last date we successfully loaded," not "7 days before today." This handles late-arriving subscription updates correctly and keeps historical dates stable beyond the window.</p>
 
     <hr>
 
@@ -290,6 +290,7 @@ status: published
 
     <ol>
       <li><strong>No lookback window.</strong> The <code>&gt; MAX(event_time)</code> filter misses late-arriving records. Add a buffer of at least 1–3 days in every incremental filter you write.</li>
+      <li><strong>Anchoring the lookback window to <code>CURRENT_DATE</code> instead of <code>MAX(target_column)</code>.</strong> <code>DATEADD(day, -3, CURRENT_DATE)</code> shifts the window every day. If a pipeline fails Monday night and re-runs Tuesday morning, Monday's tail data falls outside the new window and is permanently missed. Always anchor to <code>(SELECT MAX(ts_col) FROM {{ this }})</code> — it stays fixed to where you actually left off, regardless of when the re-run happens.</li>
       <li><strong>Using <code>on_schema_change='ignore'</code> in production.</strong> The default silently drops new columns. Switch to <code>fail</code> or <code>append_new_columns</code>. Discovering this after a week of missing data is educational but avoidable.</li>
       <li><strong>No <code>unique_key</code> with merge strategy.</strong> Without one, dbt falls back to append behavior on most adapters and you accumulate duplicates with no error to investigate.</li>
       <li><strong>Not running <code>--full-refresh</code> after structural changes.</strong> If you significantly alter the SELECT, incremental logic will merge new-shape rows into old-shape rows. Run a full rebuild after any meaningful schema or logic change.</li>
