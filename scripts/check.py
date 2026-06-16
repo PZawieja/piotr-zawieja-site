@@ -24,6 +24,8 @@ INDEX_HTML = ROOT / "index.html"
 
 REQUIRED_FIELDS = ["title", "date", "published_at", "slug", "description", "tags", "read_time", "status"]
 
+CANONICAL_TAGS = {"dbt", "AI", "Snowflake", "data-quality"}
+
 errors: list[str] = []
 warnings: list[str] = []
 
@@ -40,6 +42,71 @@ def warn(msg: str) -> None:
 
 def ok(msg: str) -> None:
     print(f"  ok    {msg}")
+
+
+# ── checks ───────────────────────────────────────────────────────────
+
+def check_tags(post) -> None:
+    slug = post.get("slug", "?")
+    tags = post.get("tags") or []
+    if not tags:
+        fail(f"{slug}: no tags — every post needs at least one canonical tag")
+        return
+    primary = tags[0]
+    if primary not in CANONICAL_TAGS:
+        fail(f"{slug}: primary tag '{primary}' is not canonical — must be one of {sorted(CANONICAL_TAGS)}")
+    for tag in tags[1:]:
+        if tag not in CANONICAL_TAGS:
+            fail(f"{slug}: tag '{tag}' is not canonical — consolidate into {sorted(CANONICAL_TAGS)}")
+    if primary in CANONICAL_TAGS and all(t in CANONICAL_TAGS for t in tags):
+        ok(f"{slug}: tags valid — {tags}")
+
+
+def check_read_time(md_file: Path, post) -> None:
+    slug = post.get("slug", "?")
+    raw = md_file.read_text(encoding="utf-8")
+    body = raw.split("---", 2)[2] if raw.startswith("---") and raw.count("---") >= 2 else raw
+    words = len(body.split())
+    estimated = max(1, round(words / 200))
+    declared = int(post.get("read_time") or 0)
+    if abs(estimated - declared) > 2:
+        warn(f"{slug}: read_time {declared} min but ~{estimated} min estimated ({words} words) — update frontmatter")
+    else:
+        ok(f"{slug}: read_time {declared} min ({words} words, ~{estimated} min)")
+
+
+def check_takeaways(slug: str) -> None:
+    html_file = WRITING_DIR / f"{slug}.html"
+    if not html_file.exists():
+        return
+    if 'class="takeaways"' not in html_file.read_text(encoding="utf-8"):
+        warn(f"{slug}.html: no takeaways block found — add <div class=\"takeaways\"> at end of article")
+    else:
+        ok(f"{slug}.html: takeaways block present")
+
+
+def check_duplicate_slugs() -> None:
+    slugs: dict[str, list[str]] = {}
+    for md_file in POSTS_DIR.glob("*.md"):
+        post = frontmatter.load(md_file)
+        slug = post.get("slug")
+        if slug:
+            slugs.setdefault(slug, []).append(md_file.name)
+    dupes = {s: fs for s, fs in slugs.items() if len(fs) > 1}
+    if dupes:
+        for slug, files in dupes.items():
+            fail(f"duplicate slug '{slug}' in: {files}")
+    else:
+        ok(f"no duplicate slugs ({len(slugs)} posts)")
+
+
+def check_description_length(post) -> None:
+    slug = post.get("slug", "?")
+    desc = post.get("description", "") or ""
+    if len(desc) > 160:
+        warn(f"{slug}: description {len(desc)} chars — OG tags truncate at ~160")
+    else:
+        ok(f"{slug}: description length {len(desc)} chars")
 
 
 # ── helpers ──────────────────────────────────────────────────────────
@@ -180,7 +247,7 @@ def main() -> None:
     slug_filter = sys.argv[1] if len(sys.argv) > 1 else None
     template_classes = _css_classes_in_template()
 
-    published: list[dict] = []
+    published: list[tuple[Path, dict]] = []
     md_files = sorted(POSTS_DIR.glob("*.md"))
     if slug_filter:
         md_files = [f for f in md_files if slug_filter in f.name]
@@ -192,20 +259,27 @@ def main() -> None:
 
     print("── Frontmatter ──")
     for md_file in md_files:
-        post = frontmatter.load(md_file)
         result = check_frontmatter(md_file)
         if result and result["status"] == "published":
-            published.append(result)
+            check_tags(result)
+            check_description_length(result)
+            published.append((md_file, result))
+
+    print("\n── Content ──")
+    for md_file, post in published:
+        check_read_time(md_file, post)
 
     print("\n── Rendered HTML ──")
-    for post in published:
+    for _, post in published:
         check_rendered_html(post["slug"], template_classes)
+        check_takeaways(post["slug"])
 
     if not slug_filter:
         print("\n── Site structure ──")
         check_index_html()
         check_orphans()
-        check_writing_index([p["slug"] for p in published])
+        check_duplicate_slugs()
+        check_writing_index([p["slug"] for _, p in published])
 
     print()
     if errors:

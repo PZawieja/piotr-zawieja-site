@@ -66,7 +66,7 @@ def main() -> None:
 
     post["status"] = "published"
     post["published_at"] = now
-    md_file.write_text(frontmatter.dumps(post), encoding="utf-8")
+    md_file.write_text(frontmatter.dumps(post, sort_keys=False), encoding="utf-8")
 
     print(f"Published: {md_file.name}")
     print(f"Timestamp: {now}\n")
