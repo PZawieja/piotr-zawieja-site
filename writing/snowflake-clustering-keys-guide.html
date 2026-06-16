@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snowflake clustering keys: what they are, when they help, and when to skip them — Piotr Zawieja</title>
+<meta name="description" content="Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.">
+<meta property="og:title" content="Snowflake clustering keys: what they are, when they help, and when to skip them">
+<meta property="og:description" content="Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.">
+<meta property="og:url" content="https://goldlayer.dev/writing/snowflake-clustering-keys-guide.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Playfair Display', 'Georgia', serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">Snowflake</span>
+      <span class="meta-date">16 Jun 2026 · 9 min read</span>
+    </div>
+    <h1 class="article-title">Snowflake clustering keys: what they are, when they help, and when to skip them</h1>
+    <p class="article-lede">Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Your Snowflake UI recommended adding a clustering key to a large events table. You did. One dashboard query went from 45 seconds to 12. Then your credit bill came in and compute costs were up 18% for the month.</p>
+<p>Was it worth it? The answer requires understanding what clustering keys actually do — and what they keep doing, every time you load new data.</p>
+<hr />
+<h2>How Snowflake stores data</h2>
+<p>Snowflake stores table data in <strong>micro-partitions</strong>: immutable, compressed files of roughly 50–500 MB of uncompressed data each. Every time you load data, Snowflake writes new micro-partitions in the order the rows arrive.</p>
+<p>Alongside each micro-partition, Snowflake stores metadata: for every column, the minimum and maximum value in that partition. This is what makes pruning possible. When a query runs <code>WHERE event_date = '2026-05-01'</code>, Snowflake checks the metadata for all micro-partitions and skips any partition whose <code>event_date</code> range doesn't include that date — without reading the partition itself.</p>
+<p>This metadata-driven pruning is the core of Snowflake's performance model. Clustering keys only matter insofar as they improve it.</p>
+<p><strong>Natural clustering</strong> is what you get for free. When you bulk-load an events table one day at a time, data for each day lands in a small number of micro-partitions with a narrow date range. Queries filtering on that date will prune well without any explicit clustering. When you load from a CDC feed or backfill historical data, rows for many different dates get mixed into the same micro-partitions, pruning degrades, and queries slow down.</p>
+<hr />
+<h2>What a clustering key changes</h2>
+<p>A clustering key tells Snowflake to keep rows with similar values for the key column(s) co-located in the same micro-partitions. Snowflake's <strong>Automatic Clustering</strong> service — separate from your query warehouses — does this work in the background, rearranging data after loads to maintain good clustering depth.</p>
+<pre><code class="language-sql">ALTER TABLE events CLUSTER BY (event_date);
+</code></pre>
+<p>After this, Snowflake continuously monitors the table. When new data loads and degrades the clustering, the service re-sorts affected data into new micro-partitions. A query filtering on <code>event_date</code> now finds far fewer overlapping partitions to read.</p>
+<p>The cost: the clustering service runs on serverless compute and charges credits whenever it reclusters. Those credits are charged to your account separately from your query warehouses. On a high-write table, this is not a one-time cost — it is ongoing.</p>
+<hr />
+<h2>Measuring clustering health before deciding</h2>
+<p>Never add a clustering key without first measuring whether clustering is actually the problem. The function to use:</p>
+<pre><code class="language-sql">SELECT SYSTEM$CLUSTERING_INFORMATION('events', '(event_date)');
+</code></pre>
+<p>This returns JSON. The two numbers that matter:</p>
+<ul>
+<li><strong><code>average_overlaps</code></strong>: how many other micro-partitions overlap in range with a typical micro-partition. A value near 0 means good clustering — most micro-partitions have a narrow, non-overlapping range. A value of 50 means any given partition's range overlaps with 50 others, so a point lookup scans 51 partitions instead of 1.</li>
+<li><strong><code>average_depth</code></strong>: the average number of micro-partitions that must be scanned to find all rows for a single value. Depth of 1 is perfect. Depth of 20 means your query is scanning 20× more data than necessary.</li>
+</ul>
+<pre><code class="language-sql">-- Run this before and after adding a clustering key
+SELECT
+    PARSE_JSON(
+        SYSTEM$CLUSTERING_INFORMATION('events', '(event_date)')
+    )['average_overlaps']::FLOAT AS avg_overlaps,
+    PARSE_JSON(
+        SYSTEM$CLUSTERING_INFORMATION('events', '(event_date)')
+    )['average_depth']::FLOAT    AS avg_depth;
+</code></pre>
+<p>If <code>average_depth</code> is already close to 1, your data is naturally well-clustered on that column. Adding an explicit clustering key will achieve nothing except an ongoing credit cost.</p>
+<hr />
+<h2>When clustering earns its cost</h2>
+<p><strong>Table is large and data arrives out of natural order.</strong> The threshold where clustering becomes meaningful is roughly 500 GB of uncompressed data (Snowflake's own documentation suggests 1 TB, but degraded clustering on a 500 GB table can be measurable). Below that, full table scans are fast enough that pruning improvement doesn't matter.</p>
+<p>For tables over 1 TB where <code>SYSTEM$CLUSTERING_INFORMATION</code> shows <code>average_depth</code> above 10, explicit clustering will meaningfully reduce bytes scanned on filtered queries.</p>
+<p><strong>Queries consistently filter on the same column.</strong> A clustering key is a bet: you pay to co-locate data by one dimension so that queries filtering on that dimension scan less. If 80% of your queries filter on <code>event_date</code>, clustering on <code>event_date</code> is a good bet. If queries filter on <code>event_date</code>, <code>customer_id</code>, <code>product_id</code>, and <code>region</code> roughly equally, no single clustering key satisfies them all — you are paying credits to help one query pattern while doing nothing for the others.</p>
+<p><strong>Recency queries on an append-only table with backfill.</strong> The hardest case for natural clustering. You have a 2 TB events table where you frequently backfill late-arriving events from 30 days ago. Every backfill load scatters old-date rows across new micro-partitions. <code>SYSTEM$CLUSTERING_INFORMATION</code> will show high overlap on <code>event_date</code>. This is exactly where explicit clustering pays off.</p>
+<hr />
+<h2>When to skip it</h2>
+<p><strong>The table is under 500 GB.</strong> At this size, Snowflake's full scan is fast enough that pruning improvement rarely justifies the continuous reclustering cost. Use a larger warehouse instead — it is cheaper per query and has no ongoing overhead.</p>
+<p><strong>Write rates are high.</strong> If the table receives continuous small loads — streaming inserts, Fivetran syncs every 5 minutes, Kafka connectors — the clustering service will trigger frequently. On a 1 TB table with hourly loads, this can cost more credits than the query savings recover. Use <code>SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS</code> to check before committing. The function requires a clustering key to already be defined, so the practical workflow is: add the key, suspend reclustering immediately, estimate, then decide.</p>
+<pre><code class="language-sql">ALTER TABLE events CLUSTER BY (event_date);
+ALTER TABLE events SUSPEND RECLUSTER;
+
+SELECT SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS('events');
+</code></pre>
+<p>If the estimate is higher than what you're currently spending on queries against this table (visible in <code>QUERY_HISTORY</code>), drop the key: <code>ALTER TABLE events DROP CLUSTERING KEY</code>.</p>
+<p><strong>Low-cardinality columns.</strong> Clustering on a boolean column or a column with 5 distinct values doesn't help. Each micro-partition will still contain a wide value range. Use <code>accepted_values</code> tests for those columns instead and forget about clustering.</p>
+<p><strong>The table already has good natural clustering.</strong> If data is loaded in chronological order and queries filter on the load timestamp or date, the natural insertion order provides good clustering for free. Verify with <code>SYSTEM$CLUSTERING_INFORMATION</code> — if <code>average_depth</code> is already under 3, leave it alone.</p>
+<hr />
+<h2>The cost model for Automatic Clustering</h2>
+<p>Once you add a clustering key, Snowflake runs Automatic Clustering continuously. The cost is:</p>
+<ol>
+<li><strong>Initial reclustering</strong>: when you first add the key, Snowflake rearranges the entire table. For a 1 TB table this can be significant — run it during low-traffic hours and watch the credit meter.</li>
+<li><strong>Ongoing maintenance</strong>: every time new data loads and degrades clustering, the service reclusters the affected micro-partitions. Cost scales with write volume, not just table size.</li>
+</ol>
+<p>You can pause clustering if you need to temporarily suspend costs or are running a bulk load:</p>
+<pre><code class="language-sql">ALTER TABLE events SUSPEND RECLUSTER;
+
+-- run bulk load
+
+ALTER TABLE events RESUME RECLUSTER;
+</code></pre>
+<p>During <code>SUSPEND RECLUSTER</code>, new data loads without triggering the clustering service. Clustering depth will degrade. Resume when the load is complete and clustering will catch up.</p>
+<hr />
+<h2>Using clustering keys with dbt</h2>
+<p>dbt exposes Snowflake clustering through the <code>cluster_by</code> config on <code>table</code> and <code>incremental</code> materializations:</p>
+<pre><code class="language-sql">{{ config(
+    materialized='incremental',
+    unique_key='event_id',
+    cluster_by=['event_date']
+) }}
+
+SELECT
+    event_id,
+    event_date,
+    user_id,
+    event_type,
+    revenue
+FROM {{ source('events', 'raw_events') }}
+{% if is_incremental() %}
+    WHERE event_date &gt;= (SELECT MAX(event_date) FROM {{ this }})
+{% endif %}
+</code></pre>
+<p>For <code>incremental</code> materializations, dbt applies <code>ALTER TABLE ... CLUSTER BY</code> after the initial table creation. For <code>table</code> materializations, the key is included in the <code>CREATE OR REPLACE TABLE</code> DDL directly. Either way, Automatic Clustering takes over once the key is set.</p>
+<p>One caution: <code>cluster_by</code> on an <code>incremental</code> model doesn't undo poor natural clustering that accumulated before you added it. If you add clustering to an existing large incremental model, verify with <code>SYSTEM$CLUSTERING_INFORMATION</code> that depth actually improves — the initial recluster of a large table can take time.</p>
+<p>For <code>table</code> materializations, dbt rebuilds the table from scratch on every run. The rebuild produces naturally ordered micro-partitions from the query result, so clustering is implicitly reset each run. Adding <code>cluster_by</code> on a <code>table</code> materialization rarely has measurable impact unless the query itself produces non-ordered output for the key column.</p>
+<hr />
+<h2>The decision checklist</h2>
+<p>Before adding a clustering key to any table:</p>
+<ol>
+<li>Run <code>SYSTEM$CLUSTERING_INFORMATION</code> — if <code>average_depth</code> &lt; 5, stop here.</li>
+<li>Confirm the table is &gt; 500 GB uncompressed.</li>
+<li>Confirm &gt; 60% of expensive queries filter on the same column(s).</li>
+<li>Run <code>SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS</code> — compare against current query spend on this table.</li>
+<li>Add the key, let it recluster, measure <code>average_depth</code> again and run the same queries with <code>ALTER SESSION SET USE_CACHED_RESULT = FALSE</code>.</li>
+<li>If query improvement doesn't justify the ongoing credit cost, drop the key with <code>ALTER TABLE events DROP CLUSTERING KEY</code> — no data is lost, only the clustering metadata.</li>
+</ol>
+<p>Clustering keys are easy to add and easy to remove. The mistake is adding them reflexively and never checking whether the spend is justified.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Clustering keys improve micro-partition pruning — but cost credits continuously</strong> — the Automatic Clustering service reclusters data after every load, as an ongoing charge separate from your query warehouses.</li>
+<li><strong>Measure first with SYSTEM$CLUSTERING_INFORMATION</strong> — if <code>average_depth</code> is already under 5, your data is naturally well-clustered and an explicit key will cost money for no gain.</li>
+<li><strong>The table needs to be large to justify clustering</strong> — under 500 GB, full scans are fast enough that pruning improvement doesn't recover the reclustering cost.</li>
+<li><strong>A clustering key is a bet on one query pattern</strong> — if your queries filter on multiple different columns, no single key helps all of them; you pay for one and leave the others unchanged.</li>
+<li><strong>Estimate the ongoing cost before committing</strong> — <code>SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS</code> gives you the credit forecast; compare it against actual query spend on the table before proceeding.</li>
+<li><strong>Use SUSPEND/RESUME RECLUSTER around bulk loads</strong> — triggering reclustering on every batch in a large bulk load is expensive; suspend, load, then let the service catch up once.</li>
+</ul>
+</div>
+
+<p>How many clustering keys in your Snowflake account were added speculatively and never had their credit cost checked?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
