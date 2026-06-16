@@ -374,7 +374,7 @@
 
 <p><strong><code>{{ this }}</code></strong> refers to the model's own table in the warehouse. The subquery <code>SELECT MAX(event_time) FROM {{ this }}</code> finds the latest timestamp already loaded — the watermark — and pulls only rows newer than that. This is how dbt knows where the last run left off.</p>
 
-<p>That pattern is clean and intuitive. It also has a failure mode we'll come back to in the section on lookback windows.</p>
+<p>The strict <code>&gt;</code> here means the exact watermark row won't be reprocessed. In production you'll want <code>&gt;=</code> combined with a lookback window (covered below) so late-arriving events don't fall through the gap.</p>
 
 <hr>
 
@@ -410,7 +410,7 @@
     unique_key=[<span class="string">'user_id'</span>, <span class="string">'event_date'</span>, <span class="string">'event_type'</span>]
 ) <span class="tag">}}</span></code></pre>
 
-<p>Without a <code>unique_key</code>, dbt falls back to <code>append</code> behavior on some adapters even when you've specified <code>merge</code>. Always provide one.</p>
+<p>On Snowflake and BigQuery, omitting <code>unique_key</code> with <code>merge</code> is a compile-time error — dbt won't run at all. On older adapters it may silently fall back to <code>append</code>. Either way the result is wrong. Always provide one.</p>
 
 <h3>delete+insert</h3>
 
@@ -469,6 +469,51 @@
 </div>
 </div>
 
+<h3>Which strategy should you use?</h3>
+
+<p>Three questions determine the answer: do source records ever change after creation, is the model row-level or aggregated, and which warehouse are you on?</p>
+
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<div class="tradeoff-cell">Source records</div>
+<div class="tradeoff-cell">Model type</div>
+<div class="tradeoff-cell">Warehouse</div>
+<div class="tradeoff-cell">Strategy</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Immutable — never change after creation, source never resends</div>
+<div class="tradeoff-cell">Row-level</div>
+<div class="tradeoff-cell">Any</div>
+<div class="tradeoff-cell"><code>append</code></div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Mutable — records update after creation (orders, users, subscriptions), or source may resend</div>
+<div class="tradeoff-cell">Row-level</div>
+<div class="tradeoff-cell">Any</div>
+<div class="tradeoff-cell"><code>merge</code></div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Either</div>
+<div class="tradeoff-cell">Aggregated by date (daily SUM / COUNT)</div>
+<div class="tradeoff-cell">Snowflake, Redshift, Postgres</div>
+<div class="tradeoff-cell"><code>delete+insert</code></div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Either</div>
+<div class="tradeoff-cell">Aggregated by date (daily SUM / COUNT)</div>
+<div class="tradeoff-cell">BigQuery, Spark / Databricks</div>
+<div class="tradeoff-cell"><code>insert_overwrite</code></div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Either</div>
+<div class="tradeoff-cell">Any — table is small or full build is fast</div>
+<div class="tradeoff-cell">Any</div>
+<div class="tradeoff-cell"><code>table</code> — skip incremental entirely</div>
+</div>
+</div>
+
+<p>If in doubt between <code>append</code> and <code>merge</code>, use <code>merge</code>. The merge overhead is small, and the protection against re-runs and source retries is not.</p>
+
 <hr>
 
 <h2>on_schema_change — the quiet killer</h2>
@@ -509,7 +554,9 @@
 
 <p><code>DBT_INTERNAL_DEST</code> is the alias dbt uses for the existing target table in the generated MERGE statement. The predicate above restricts the merge to only consider rows from the last 7 days on the target side, allowing the warehouse to skip everything older. On a Snowflake table clustered on <code>event_time</code>, this is often a 10–50× cost reduction on the merge operation.</p>
 
-<p>The window in the predicate should be at least as wide as your lookback window in the <code>is_incremental()</code> filter, otherwise you'll silently drop late-arriving rows that fall outside the predicate range.</p>
+<p>The window in the predicate should be at least as wide as your lookback window in the <code>is_incremental()</code> filter. If you pull 3 days of source rows but only search 2 days of the target for matches, rows in the gap get inserted as duplicates instead of updated.</p>
+
+<p>Note that <code>current_timestamp</code> here is intentional — unlike the lookback anchor in your <code>is_incremental()</code> WHERE clause, this predicate is a <em>performance hint to the warehouse about which target partitions to scan</em>, not a data completeness guarantee. A slightly stale value just means the warehouse scans a few extra micro-partitions; it doesn't cause data loss. The anchor that matters for correctness is always the one in your model's WHERE clause.</p>
 
 <hr>
 
