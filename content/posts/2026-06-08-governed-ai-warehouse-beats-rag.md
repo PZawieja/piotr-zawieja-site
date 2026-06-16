@@ -5,7 +5,7 @@ published_at: 2026-06-08T09:00:00Z
 slug: governed-ai-warehouse-beats-rag
 description: "Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead."
 tags: [AI, dbt]
-read_time: 7
+read_time: 10
 status: published
 ---
 
@@ -166,7 +166,11 @@ QUERY_TEMPLATES = {
 <span class="keyword">def</span> run_intent(intent: str, params: dict, conn) -&gt; list[dict]:
     <span class="keyword">if</span> intent <span class="keyword">not in</span> QUERY_TEMPLATES:
         <span class="keyword">raise</span> ValueError(f<span class="string">"Unknown intent: {intent}"</span>)
-    sql = QUERY_TEMPLATES[intent].format(**params)
+    safe_params = {
+        k: int(v) <span class="keyword">if</span> k == <span class="string">"limit"</span> <span class="keyword">else</span> str(v)
+        <span class="keyword">for</span> k, v <span class="keyword">in</span> params.items()
+    }
+    sql = QUERY_TEMPLATES[intent].format(**safe_params)
     cursor = conn.cursor(snowflake.connector.DictCursor)
     cursor.execute(sql)
     <span class="keyword">return</span> cursor.fetchall()</code></pre>

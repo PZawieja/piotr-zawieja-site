@@ -210,7 +210,7 @@ jobs:
         run: python scripts/sql_review.py
 ```
 
-The `sql_review.py` script collects changed `.sql` files from `git diff`, formats each with the prompt template, calls the Anthropic API, and posts findings as a PR comment via the GitHub API. Use `claude-haiku-4-5` for this — fast, inexpensive, and sufficient for pattern-matching against a fixed checklist. Cost per PR is negligible.
+The `sql_review.py` script collects changed `.sql` files from `git diff`, formats each with the prompt template, calls the Anthropic API, and posts findings as a PR comment via the GitHub API. Use `claude-haiku-4-5-20251001` for this — fast, inexpensive, and sufficient for pattern-matching against a fixed checklist. Pin the versioned model ID rather than using an unversioned alias so the workflow doesn't pick up behavior changes when a new snapshot ships. Cost per PR is negligible.
 
 ### 3. Claude Code skill
 
@@ -246,5 +246,16 @@ The skill runs with access to your full project structure, which reduces false p
 The patterns that slip through code review are predictable because they are boring. Nobody misses a clever architectural error — those get caught because they are interesting. What gets through is the incremental model copy-pasted from another model without updating the `WHERE` clause, the join that worked fine on dev data and quietly multiplied rows in production.
 
 Automating the boring checklist does not make the human reviewer redundant. It makes them more focused. If the structural layer is already checked, the reviewer's attention goes to the question that actually requires their domain knowledge: is this model building the right thing.
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Automate the boring checklist, not the judgment</strong> — Claude reliably catches structural patterns (missing is_incremental() guards, fanout joins, hardcoded dates); business logic still requires a human.</li>
+<li><strong>A constrained prompt outperforms an open-ended one</strong> — asking for specific failure modes only, with "say nothing if nothing found," eliminates noise and makes findings actionable.</li>
+<li><strong>False positives are mostly schema knowledge gaps</strong> — when Claude flags a potentially non-unique join, check whether a unique test exists in schema.yml. If it does, dismiss the finding.</li>
+<li><strong>Pin the model ID in CI</strong> — use <code>claude-haiku-4-5-20251001</code> rather than an unversioned alias so your workflow doesn't pick up behavior changes when a new snapshot ships.</li>
+<li><strong>The Claude Code skill integration reduces false positives</strong> — Claude can read neighbouring schema.yml files to verify unique tests, which the GitHub Actions version cannot do without extra scaffolding.</li>
+</ul>
+</div>
 
 That is the division of labour worth building.

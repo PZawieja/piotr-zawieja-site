@@ -1,8 +1,6 @@
 ---
 date: 2026-06-14
-description: Not a hype piece. A practical map of where AI tools earn their place
-  in an analytics engineering workflow — and the categories where they consistently
-  fall short.
+description: Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.
 published_at: '2026-06-14T12:31:51Z'
 read_time: 8
 slug: ai-for-analytics-engineering

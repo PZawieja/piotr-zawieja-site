@@ -64,7 +64,7 @@ GROUP BY 1
 
 `union_relations` and `star` are valuable in specific situations — merging identically-shaped tables across schemas, selecting all columns except a few — but don't see daily use.
 
-One macro to avoid: `dbt_utils.accepted_range`. It was moved to `dbt_expectations` in later versions and the version pinning gets messy if you use both packages. Use `dbt_expectations.expect_column_values_to_be_between` instead.
+One note on `dbt_utils.accepted_range`: it is still in dbt-utils 1.x and works fine. If you also have `dbt_expectations` installed, prefer `expect_column_values_to_be_between` there instead — it supports a `row_condition` filter and strict/non-strict bounds. If you only need basic range checks and don't want the full `dbt_expectations` dependency, `dbt_utils.accepted_range` is sufficient.
 
 ---
 

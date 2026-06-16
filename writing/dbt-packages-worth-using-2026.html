@@ -368,7 +368,7 @@ FROM {{ ref('stg_subscriptions') }}
 GROUP BY 1
 </code></pre>
 <p><code>union_relations</code> and <code>star</code> are valuable in specific situations — merging identically-shaped tables across schemas, selecting all columns except a few — but don't see daily use.</p>
-<p>One macro to avoid: <code>dbt_utils.accepted_range</code>. It was moved to <code>dbt_expectations</code> in later versions and the version pinning gets messy if you use both packages. Use <code>dbt_expectations.expect_column_values_to_be_between</code> instead.</p>
+<p>One note on <code>dbt_utils.accepted_range</code>: it is still in dbt-utils 1.x and works fine. If you also have <code>dbt_expectations</code> installed, prefer <code>expect_column_values_to_be_between</code> there instead — it supports a <code>row_condition</code> filter and strict/non-strict bounds. If you only need basic range checks and don't want the full <code>dbt_expectations</code> dependency, <code>dbt_utils.accepted_range</code> is sufficient.</p>
 <hr />
 <h2>dbt_expectations — better testing</h2>
 <p>dbt_expectations ports the Great Expectations library into dbt test syntax. It earns its dependency weight primarily through four tests.</p>

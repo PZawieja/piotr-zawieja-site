@@ -1,8 +1,6 @@
 ---
 date: 2026-06-14
-description: The Kimball framework tells you what to build. dbt gives you the tools
-  to build it. The gap between those two is where SCD Type 2 snapshots, bridge tables,
-  and role-playing dimensions actually live.
+description: Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.
 published_at: '2026-06-14T12:19:51Z'
 read_time: 9
 slug: dimensional-modeling-dbt-practical-patterns

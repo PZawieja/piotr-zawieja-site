@@ -3,9 +3,9 @@ title: "Late-arriving data: the silent failure that breaks your incremental mode
 date: 2026-06-11
 published_at: 2026-06-11T11:00:00Z
 slug: late-arriving-data-dbt-incremental
-description: "Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. What late-arriving events are, why they happen, and the patterns that handle them correctly in dbt."
+description: "Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. Late-arriving events and the dbt patterns that handle them correctly."
 tags: [dbt, data-quality]
-read_time: 9
+read_time: 15
 status: published
 ---
 
@@ -156,6 +156,7 @@ status: published
 
 <span class="tag">{%</span> <span class="keyword">if</span> is_incremental() <span class="tag">%}</span>
 <span class="keyword">WHERE</span> _fivetran_synced &gt;= <span class="keyword">DATEADD</span>(day, -7, <span class="keyword">CURRENT_DATE</span>)
+    <span class="keyword">AND</span> DATE(event_time) &gt;= <span class="keyword">DATEADD</span>(day, -7, <span class="keyword">CURRENT_DATE</span>)
 <span class="tag">{%</span> <span class="keyword">endif</span> <span class="tag">%}</span>
 
 <span class="keyword">GROUP BY</span> 1, 2</code></pre>
@@ -164,7 +165,9 @@ status: published
 
     <p>The <code>incremental_predicates</code> limits the DELETE statement to the same 7-day window, so the warehouse doesn't scan the full history on every run.</p>
 
-    <p>Important: the partition key (<code>event_date</code>) must be derived from <code>event_time</code>, not from <code>ingested_at</code>. You want to correct the business date of the event, not the date it arrived. An event that happened on Monday arriving on Wednesday should land in Monday's partition.</p>
+    <p>Both filters in the WHERE clause are required. The <code>_fivetran_synced</code> filter captures recently ingested records; the <code>DATE(event_time)</code> filter ensures the SELECT only produces <code>event_date</code> values that fall within the same window as the DELETE predicate. Without the second filter, a late-arriving record with <code>event_time</code> from 30 days ago would produce an aggregate row for that old partition — but the DELETE step would skip it (outside the 7-day window), leaving a duplicate partition row in the target.</p>
+
+    <p>Important: the partition key (<code>event_date</code>) must be derived from <code>event_time</code>, not from <code>ingested_at</code>. You want to correct the business date of the event, not the date it arrived. An event that happened on Monday arriving on Wednesday should land in Monday's partition — as long as Monday is still within the lookback window.</p>
 
     <h3>Pattern 3: The explicit watermark</h3>
 
@@ -193,6 +196,7 @@ status: published
     materialized=<span class="string">'incremental'</span>,
     incremental_strategy=<span class="string">'microbatch'</span>,
     event_time=<span class="string">'event_time'</span>,
+    begin=<span class="string">'2024-01-01'</span>,
     batch_size=<span class="string">'day'</span>,
     lookback=3
 ) <span class="tag">}}</span>
@@ -204,7 +208,7 @@ status: published
     , event_time
 <span class="keyword">FROM</span> <span class="tag">{{</span> source(<span class="string">'app'</span>, <span class="string">'raw_events'</span>) <span class="tag">}}</span></code></pre>
 
-    <p>dbt executes a separate query per batch window (day, hour, etc.) and retries failed batches automatically. The <code>lookback: 3</code> setting reprocesses the last 3 days on every run, incorporating late arrivals. No manual <code>is_incremental()</code> filter needed — the framework handles it.</p>
+    <p>dbt executes a separate query per batch window (day, hour, etc.) and retries failed batches automatically. The <code>lookback: 3</code> setting reprocesses the last 3 days on every run, incorporating late arrivals. The <code>begin</code> date is required — it tells dbt where to start when building the target table for the first time. No manual <code>is_incremental()</code> filter needed — the framework handles the windowing.</p>
 
     <p>Microbatch is the direction the dbt ecosystem is moving, and it's worth adopting if you're on 1.9 or later. The caveat: <code>event_time</code> must be reliable end-to-end. If the source sends events with incorrect timestamps, microbatch will partition them into the wrong windows with no way to override. The patterns above give you more control when the timestamp can't be trusted.</p>
 
@@ -345,5 +349,3 @@ status: published
     </div>
 
     <p>Every data platform reaches a point where the source SLAs, pipeline architecture, and business expectations need to be aligned. Late-arriving data is often where that conversation finally surfaces — usually because someone noticed the numbers don't add up. Better to design for it explicitly than to discover it under pressure.</p>
-
-  </div>

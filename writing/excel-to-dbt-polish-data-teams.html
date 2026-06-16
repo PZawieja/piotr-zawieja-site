@@ -366,7 +366,7 @@ SELECT
     id                                         AS customer_id
     , name                                     AS customer_name
     , status                                   AS subscription_status
-    , CAST(mrr_cents AS FLOAT64) / 100         AS mrr
+    , mrr_cents / 100.0                        AS mrr
     , CAST(created_at AS TIMESTAMP)            AS created_at
     , CAST(cancelled_at AS TIMESTAMP)          AS cancelled_at
 FROM {{ source('crm', 'customers') }}
