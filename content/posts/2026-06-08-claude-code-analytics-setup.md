@@ -11,6 +11,8 @@ status: published
 
 Every session starts the same way. You open a new chat, paste a model, and spend the first five minutes re-explaining: we use Snowflake, commas go at the start of lines, staging is one-to-one with sources, marts follow a specific naming convention. The AI helps. It just doesn't know your project yet.
 
+If you've seen *Memento*, you know the condition: Leonard can't form new memories, so he tattoos the important rules onto his own body and leaves Polaroids everywhere, because relying on someone to re-explain his situation every five minutes isn't a system — it's chaos held together by Post-its. A fresh Claude Code chat has the same problem. It's extremely capable and remembers nothing about your last conversation. CLAUDE.md and AGENTS.md are the tattoos — the rules written down permanently so the agent doesn't wake up and ask "wait, what's our staging convention again?" for the fortieth time.
+
 Claude Code can fix this — but not out of the box. With CLAUDE.md, AGENTS.md, and a handful of skills, it stops being a generic assistant and starts behaving like a senior engineer who already read your style guide. Here's the exact setup.
 
 ---
@@ -39,6 +41,30 @@ dbt-project/
 ```
 
 Three layers. CLAUDE.md is short and points to AGENTS.md. AGENTS.md is the brain — it holds the conventions that would otherwise live only in your head or in a Notion doc nobody reads. The `docs/` files are lazy-loaded: a skill reads them explicitly when needed, which keeps the context window clean on simple tasks.
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree: where does this go?</p>
+<div class="decision-step">
+<span class="decision-q">One-time orientation note</span>
+<span class="decision-a"><strong>CLAUDE.md</strong> — under 20 lines, just enough to point elsewhere.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Stack/convention every task needs</span>
+<span class="decision-a"><strong>AGENTS.md</strong> — loaded every session, so keep it tight.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Reference material only some tasks need</span>
+<span class="decision-a"><strong>.claude/docs/*.md</strong> — lazy-loaded by a skill, not by default.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A repeatable multi-step workflow</span>
+<span class="decision-a">A <strong>skill</strong> (<code>.claude/skills/*.md</code>) — declarative, versioned, diffable.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Must never modify files, only report</span>
+<span class="decision-a">A <strong>sub-agent</strong> with that constraint stated explicitly — don't rely on it being implied.</span>
+</div>
+</div>
 
 ---
 
@@ -113,7 +139,7 @@ Short, declarative, repeatable. No ambiguity about what gets read, what gets wri
 
 **Before:** `write me a dbt model for MRR`
 
-Claude invents column names, picks an arbitrary CTE style, skips the YAML, and uses a subquery because it doesn't know you've banned them.
+Claude invents column names, picks an arbitrary CTE style, skips the YAML, and uses a subquery because it doesn't know you've banned them — confidently, too, which is somehow worse.
 
 **After:** `/develop fct_mrr mart`
 
@@ -173,7 +199,7 @@ That's the full loop. The first run will catch two or three gaps. Fix the skill,
 
 ## What it doesn't solve
 
-It still needs your judgment on business logic. If your MRR definition has edge cases, or your subscription data has non-standard states, the agent doesn't know that unless you document it. Hallucination on complex multi-join SQL is real. Review the output before pushing to main — the skill reduces the surface area of what can go wrong, it doesn't eliminate it.
+It still needs your judgment on business logic. If your MRR definition has edge cases, or your subscription data has non-standard states, the agent doesn't know that unless you document it. Hallucination on complex multi-join SQL is real, and it sounds exactly as confident when it's wrong as when it's right — that part hasn't been fixed by any model generation yet. Review the output before pushing to main — the skill reduces the surface area of what can go wrong, it doesn't eliminate it.
 
 ---
 

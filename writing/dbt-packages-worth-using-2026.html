@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -331,6 +384,7 @@
   <div class="article-body">
     <p>The dbt Hub has a lot of packages. Most projects use two or three consistently and ignore the rest. The question worth answering is not "which packages exist" but "which ones earn their dependency weight" — meaning they reduce complexity, eliminate boilerplate, or catch errors that would otherwise reach production.</p>
 <p>Here is an honest assessment of the packages that do, and the ones that don't.</p>
+<p>Every package you add to <code>packages.yml</code> is a bit like the gadget aisle at a kitchen store. The avocado slicer looks essential in the demo. Six months later it's the thing wedged behind the colander, and you're back to using a knife. A dbt package earns a permanent spot in the kitchen drawer when it solves a problem you hit on every project, not just the one you happened to be reading about when you installed it.</p>
 <hr />
 <h2>dbt_utils — the baseline</h2>
 <p>Almost every dbt project should have dbt_utils installed. It solves problems that are unavoidable.</p>
@@ -421,7 +475,7 @@ GROUP BY 1
     primary_key='order_id'
 ) }}
 </code></pre>
-<p>This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration.</p>
+<p>This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration — the equivalent of counting your boxes before and after the movers leave, instead of just trusting that everything that left the old apartment arrived at the new one.</p>
 <p>Reach for it when refactoring staging models, consolidating two marts, or migrating from a legacy pipeline. Do not add it to CI as ongoing test infrastructure — the comparison queries are designed for one-time validation, not for running in every PR.</p>
 <hr />
 <h2>codegen — eliminating boilerplate</h2>
@@ -456,7 +510,35 @@ packages:
 <h2>What's not worth it</h2>
 <p><strong>dbt-osmosis</strong> — auto-propagates column descriptions from parent models to children. Sounds useful; in practice the propagation logic creates maintenance confusion when descriptions should diverge downstream, and the behavior on re-runs is surprising.</p>
 <p><strong>dbt-profiler</strong> — generates column-level profiling statistics as dbt models. Useful for initial source exploration; not worth keeping as an ongoing dependency. Profile a new source once with ad-hoc queries and move on.</p>
-<p><strong>re_data</strong> — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer.</p>
+<p><strong>re_data</strong> — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer. Asking your transformation tool to also be your monitoring platform is how you end up with a Swiss Army knife that's mediocre at both jobs.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Need surrogate keys, date spines, or dynamic pivots</span>
+<span class="decision-a"><strong>dbt_utils</strong> — install it on day one, every project eventually needs all three.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Need range, column-pair, row-count, or column-exist tests</span>
+<span class="decision-a"><strong>dbt_expectations</strong> — covers test categories without a clean built-in equivalent.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Rewriting a model and need to prove parity</span>
+<span class="decision-a"><strong>audit_helper</strong>, run once — don't wire its comparison queries into ongoing CI.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Onboarding a source with 15+ new tables</span>
+<span class="decision-a"><strong>codegen</strong> — for a single table, writing the YAML by hand is faster.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Multiple contributors, convention drift is a real risk</span>
+<span class="decision-a"><strong>dbt_project_evaluator</strong> — budget time to configure exceptions for rules that don't fit.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">You actually need observability, not just testing</span>
+<span class="decision-a">use a <strong>dedicated platform</strong> (Elementary, Monte Carlo, Anomalo) — not a dbt package wearing an observability costume.</span>
+</div>
+</div>
+
 <div class="takeaways">
 <h2>Takeaways</h2>
 <ul>

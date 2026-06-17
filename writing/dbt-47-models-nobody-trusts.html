@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -332,14 +385,14 @@
   <div class="article-body">
     <p>Every data team I talk to eventually confesses the same thing. They adopted dbt six to eighteen months ago. The project has grown. There are models everywhere — staging, intermediate, marts, one-offs, experiments that never got cleaned up. The CI pipeline is green.</p>
 <p>And nobody trusts the numbers.</p>
-<p>Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.</p>
+<p>Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. The CI pipeline is green — which, it turns out, is the data equivalent of a smoke detector with no batteries: technically silent, not actually telling you you're safe. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.</p>
 <p>This is the dbt trust problem. It is not a tooling problem. It is an architectural and process problem that tooling alone cannot fix.</p>
 <hr />
 <h2>How you get to 47 models</h2>
 <p>The pattern is consistent enough that I'd call it a law. It goes like this:</p>
 <p><strong>Month 1–3:</strong> A data engineer — sometimes a senior one, sometimes someone who just did the dbt Fundamentals course — sets up the project. They create a staging layer. They build a few marts. It's clean. There's hope.</p>
 <p><strong>Month 4–8:</strong> The business starts making requests faster than the model structure can absorb them. Someone adds a one-off model for a sales report. Someone else forks <code>fct_orders</code> because they need a slightly different grain. An analyst writes a model directly in the marts folder because staging felt too far away. Nobody reviews it. The CI passes.</p>
-<p><strong>Month 9–18:</strong> You now have:</p>
+<p><strong>Month 9–18:</strong> Congratulations, you now have:</p>
 <ul>
 <li>Staging models that duplicate logic from each other</li>
 <li>Intermediate models that exist for one downstream consumer and nowhere else</li>
@@ -351,7 +404,8 @@
 <hr />
 <h2>The real problem is undocumented decisions</h2>
 <p>When a stakeholder looks at two numbers that disagree, they don't think "there's a SQL bug." They think "I can't trust this system." And once that trust breaks, it's very slow to rebuild.</p>
-<p>The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record. Consider:</p>
+<p>The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record.</p>
+<p>Picture two supermarket receipts for the exact same basket of groceries that ring up to different totals — one register applies the loyalty discount before tax, the other after. Both did valid math. Nobody at the till audits the order of operations; they just stop trusting the register. That's what's happening when <code>mart_revenue</code> and <code>mart_finance_v2</code> both claim to report MRR and land a few percent apart. Consider:</p>
 <pre><code><span class="comment">-- Which of these is "correct" MRR?</span>
 
 <span class="comment">-- Version A — in mart_revenue</span>
@@ -407,12 +461,37 @@ models:
 
 <p>This is the minimum. For revenue-critical models, add reconciliation tests that compare aggregate outputs across models for the same business concept.</p>
 <h3>3. Deprecate loudly, delete completely</h3>
-<p>The <code>mart_finance_v2</code> that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it.</p>
+<p>The <code>mart_finance_v2</code> that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it. Deleting it feels rude. Leaving it there is ruder — to every analyst who'll spend an afternoon convinced it's the live one.</p>
 <p>Before you delete it, write a YAML description in the replacement model that says exactly what changed and why. A one-sentence note in <code>schema.yml</code> prevents 80% of the stakeholder questions that follow.</p>
 <h3>4. Treat the mart layer like an API</h3>
 <p>If you were building a public API, you would version it, document it, and not break consumers without notice. Your mart models are an API — Finance, RevOps, and the product team are your consumers.</p>
 <p>This means: every mart model has a description. Every column that means something to the business has a description. Changes that affect downstream consumers go through a review. Not a formal RFC — just a human who reads the diff and asks "does anything consume this?"</p>
 <p>In a growing company moving from spreadsheets to a proper data stack, this step is usually the one that gets skipped. It's also the one that determines whether dbt becomes the source of truth or becomes the thing the analysts work around.</p>
+<hr />
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree: where does this model belong?</p>
+<div class="decision-step">
+<span class="decision-q">Touches exactly one source table, no joins</span>
+<span class="decision-a">It's <strong>staging</strong> — rename, cast, deduplicate, nothing else.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Joins sources or applies business logic</span>
+<span class="decision-a">It's <strong>intermediate</strong> — fine to exist, but no BI tool or analyst should query it directly.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A BI tool, exec dashboard, or AI agent will read it</span>
+<span class="decision-a">It belongs in <strong>marts</strong> — with a documented grain, owner, and column descriptions before it ships.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Two models claim the same metric and disagree</span>
+<span class="decision-a">Don't average them. Pick one, write down why in <code>schema.yml</code>, and delete the other.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A model has exactly one downstream consumer</span>
+<span class="decision-a">Fold it into the mart that uses it — it isn't pulling its weight as a standalone file.</span>
+</div>
+</div>
+
 <hr />
 <div class="takeaways">
 <h2>Three takeaways</h2>

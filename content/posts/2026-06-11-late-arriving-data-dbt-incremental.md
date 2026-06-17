@@ -23,6 +23,8 @@ status: published
 
     <p>The event exists in the source system. It exists in the staging table. It just never made it into your marts — and nothing told you that.</p>
 
+    <p>Think of a transit app's live arrivals board. A bus actually passes your stop at 8:02 — that's the event. But the bus's GPS unit only reports back to the server once it clears a dead zone five minutes later — that's when the data arrives. If the app's board only shows "pings received since I last checked," and it checked at 8:04, that 8:02 bus never appears. It happened. The board just never heard about it in time. Your incremental model has the exact same blind spot, just with rows instead of buses.</p>
+
     <hr>
 
     <h2>Why it happens</h2>
@@ -34,6 +36,8 @@ status: published
     <p>A user opens your app on a train with no signal and generates a session's worth of events — clicks, views, purchases. Their phone queues those events locally. Two hours later they connect to WiFi, and all of them flush to your backend at once. The <code>event_time</code> values are from the train. The <code>arrival_time</code> is from the airport.</p>
 
     <p>This is expected behavior from the SDK. It's also a guarantee that if you filter by <code>event_time &gt; last_run</code>, the offline session will be missed on any incremental run that happened before the user reconnected.</p>
+
+    <p>Your incremental model, meanwhile, has no idea anyone was ever on a train.</p>
 
     <h3>Webhook retries</h3>
 
@@ -71,6 +75,8 @@ status: published
     </ul>
 
     <p>The warehouse doesn't know data is missing. It reports what it has. The model succeeded. The tests passed. Everything is fine, except for the data that isn't there.</p>
+
+    <p>Ask a warehouse if it's missing anything and it will cheerfully say no. It does not know what it does not know, and it is remarkably confident about that.</p>
 
     <hr>
 

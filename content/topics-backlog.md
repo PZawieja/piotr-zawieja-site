@@ -2,6 +2,13 @@
 
 Topics queued for goldlayer.dev. Remove a topic when its post goes live.
 
+## Style conventions (every post)
+
+- **One real-life analogy** for the hardest concept, introduced in plain English before the technical explanation. Reach for shopping, soccer, parking, transit, or movies — not "imagine a library."
+- **Light, dry humor** in 1–3 spots, never more. Stays professional; should read as confidence, not jokes.
+- **One structured reference block** in addition to the closing `.takeaways`: a `.decision-tree` (`if X, do Y`) for posts about choices, or `tradeoff-grid`/`strategy-grid`/`ts-block` for posts that are naturally comparative/tabular. `.takeaways` is the tl;dr; this block is "how you'd actually decide."
+- Update `read_time` in frontmatter if word count shifts — `scripts/check.py` flags drift over 2 minutes.
+
 ---
 
 1. **The analytics engineer's debugging toolkit** — how to systematically diagnose wrong numbers in production: grain checks, join audits, timezone traps, filter drift — tool-agnostic patterns that work regardless of your stack

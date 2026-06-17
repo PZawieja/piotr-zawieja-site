@@ -5,7 +5,7 @@ published_at: 2026-06-12T11:00:00Z
 slug: snowflake-cortex-analyst-in-practice
 description: "Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two."
 tags: [Snowflake, AI]
-read_time: 6
+read_time: 8
 status: published
 ---
 
@@ -15,6 +15,8 @@ The Snowflake Cortex Analyst demo is a good demo. Curated schema, hand-picked qu
 Week two looks different. You point Cortex Analyst at your actual warehouse — the one with three overlapping definitions of "active customer," mart models whose column descriptions were last updated when the model was first built, and a pipeline that lands data at 6 AM but is sometimes an hour late. Suddenly the generated SQL is plausible-looking but wrong, or right on a metric nobody uses, or right but returning yesterday's numbers.
 
 This post is about the gap between the demo and production. Not to say Cortex Analyst is bad — it is genuinely useful when set up correctly — but to lay out the problems you will hit and the practical steps that make it reliable.
+
+It helps to think of Cortex Analyst as a GPS app. Demoed on a closed test track, with perfect weather and no traffic, it always finds the fastest route — there's only one route to find. Point that same GPS at your actual city, with a bridge closed for repairs since 6 AM and a one-way street the map provider hasn't updated in months, and it will confidently route you the wrong way down that street. It isn't lying to you. It's reporting, with total confidence, from a model of the world that is stale and incomplete in ways it has no way of knowing about.
 
 ## What Cortex Analyst actually is
 
@@ -101,7 +103,7 @@ WHERE prev_mrr IS NOT NULL
 
 The window function runs over all rows after churn, including rows where the subscription is still dormant. The growth rate calculation is technically executing; the denominator just includes the wrong baseline. Nobody notices until someone compares the output to a manually built cohort.
 
-**Problem 4: Data freshness.** Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale." It returns numbers with no timestamp context, and the user assumes they are current.
+**Problem 4: Data freshness.** Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale" — same as the GPS, it just keeps routing you with a perfectly straight face. It returns numbers with no timestamp context, and the user assumes they are current.
 
 ## What actually works
 
@@ -153,7 +155,31 @@ st.caption(f"Data current through: {latest}. Pipeline runs daily at 06:00 UTC.")
 
 Not elegant, but it gives users the information they need before they act on a number.
 
-**The correct mental model:** Cortex Analyst is a natural language front-end for a governed query layer. It is not a replacement for that layer. The better your dbt semantic layer — complete descriptions, tested metrics, clean mart boundaries — the better Cortex Analyst performs. You are not configuring an AI product. You are improving your data documentation and then attaching an interface to it.
+**The correct mental model:** Cortex Analyst is a natural language front-end for a governed query layer. It is not a replacement for that layer. The better your dbt semantic layer — complete descriptions, tested metrics, clean mart boundaries — the better Cortex Analyst performs. You are not configuring an AI product. You are improving your data documentation and then attaching an interface to it. Skip that work and you haven't shipped a smarter GPS — you've shipped the same one, with a nicer voice reading out the wrong turns.
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Choosing which layer to expose</span>
+<span class="decision-a">point Cortex at your <strong>mart layer</strong> only — it's governed, tested, and already encodes your business definitions. Raw and staging models are a fast path to wrong answers.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Writing a column description</span>
+<span class="decision-a">write it as an <strong>instruction for a new analyst</strong>, not a label — state what's included, what's excluded, and which business context it belongs to.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A metric exists in more than one mart</span>
+<span class="decision-a">pick one <strong>canonical</strong> source and expose only that one in the semantic model — Cortex won't tell users which definition it picked.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">The question implies a multi-join or window function</span>
+<span class="decision-a">treat the generated SQL as a <strong>draft</strong>, not an answer — add a human review step before anyone acts on it.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Users ask about "today" or "yesterday"</span>
+<span class="decision-a">expose a <strong>data_as_of</strong> dimension and surface it in the UI — Cortex has no idea your pipeline runs at 6 AM.</span>
+</div>
+</div>
 
 <div class="takeaways">
 <h2>Takeaways</h2>

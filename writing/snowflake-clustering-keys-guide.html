@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -322,7 +375,7 @@
   <header>
     <div class="article-meta">
       <span class="meta-tag">Snowflake</span>
-      <span class="meta-date">16 Jun 2026 · 9 min read</span>
+      <span class="meta-date">16 Jun 2026 · 10 min read</span>
     </div>
     <h1 class="article-title">Snowflake clustering keys: what they are, when they help, and when to skip them</h1>
     <p class="article-lede">Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
@@ -330,12 +383,13 @@
 
   <div class="article-body">
     <p>Your Snowflake UI recommended adding a clustering key to a large events table. You did. One dashboard query went from 45 seconds to 12. Then your credit bill came in and compute costs were up 18% for the month.</p>
-<p>Was it worth it? The answer requires understanding what clustering keys actually do — and what they keep doing, every time you load new data.</p>
+<p>Was it worth it? The answer requires understanding what clustering keys actually do — and what they keep doing, every time you load new data. Snowflake had, technically, done exactly what you asked. That's almost worse.</p>
 <hr />
 <h2>How Snowflake stores data</h2>
 <p>Snowflake stores table data in <strong>micro-partitions</strong>: immutable, compressed files of roughly 50–500 MB of uncompressed data each. Every time you load data, Snowflake writes new micro-partitions in the order the rows arrive.</p>
 <p>Alongside each micro-partition, Snowflake stores metadata: for every column, the minimum and maximum value in that partition. This is what makes pruning possible. When a query runs <code>WHERE event_date = '2026-05-01'</code>, Snowflake checks the metadata for all micro-partitions and skips any partition whose <code>event_date</code> range doesn't include that date — without reading the partition itself.</p>
 <p>This metadata-driven pruning is the core of Snowflake's performance model. Clustering keys only matter insofar as they improve it.</p>
+<p>In plain English: imagine a supermarket where the stock boy shelves whatever arrives wherever there's free space — milk next to motor oil, bread next to batteries. You can still find what you need, you just have to check every aisle. A clustering key is reorganizing the store by category, so dairy is always together — once you know to look in the dairy aisle, you skip the rest of the store entirely. That's pruning. But somebody has to keep re-shelving the store every time a delivery truck arrives, and nobody enjoys doing that at 2am — least of all your credit bill.</p>
 <p><strong>Natural clustering</strong> is what you get for free. When you bulk-load an events table one day at a time, data for each day lands in a small number of micro-partitions with a narrow date range. Queries filtering on that date will prune well without any explicit clustering. When you load from a CDC feed or backfill historical data, rows for many different dates get mixed into the same micro-partitions, pruning degrades, and queries slow down.</p>
 <hr />
 <h2>What a clustering key changes</h2>
@@ -380,8 +434,37 @@ ALTER TABLE events SUSPEND RECLUSTER;
 SELECT SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS('events');
 </code></pre>
 <p>If the estimate is higher than what you're currently spending on queries against this table (visible in <code>QUERY_HISTORY</code>), drop the key: <code>ALTER TABLE events DROP CLUSTERING KEY</code>.</p>
-<p><strong>Low-cardinality columns.</strong> Clustering on a boolean column or a column with 5 distinct values doesn't help. Each micro-partition will still contain a wide value range. Use <code>accepted_values</code> tests for those columns instead and forget about clustering.</p>
+<p><strong>Low-cardinality columns.</strong> Clustering on a boolean column or a column with 5 distinct values doesn't help. Each micro-partition will still contain a wide value range. It's like sorting a parking lot into "has a roof" and "doesn't" — half the lot still matches whichever one you pick, so you've organized nothing. Use <code>accepted_values</code> tests for those columns instead and forget about clustering.</p>
 <p><strong>The table already has good natural clustering.</strong> If data is loaded in chronological order and queries filter on the load timestamp or date, the natural insertion order provides good clustering for free. Verify with <code>SYSTEM$CLUSTERING_INFORMATION</code> — if <code>average_depth</code> is already under 3, leave it alone.</p>
+<hr />
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">If `average_depth` < 5</span>
+<span class="decision-a">Skip clustering — your data is already well-organized; an explicit key buys nothing.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If the table is under 500 GB</span>
+<span class="decision-a">Skip clustering — use a bigger warehouse for the occasional slow query instead. Cheaper, no ongoing cost.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If queries filter on many different columns about equally</span>
+<span class="decision-a">Skip clustering — no single key serves all of them; you'd pay for one pattern while ignoring the rest.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If the table is over 1 TB, `average_depth` > 10, and most queries filter the same column</span>
+<span class="decision-a">Add the <strong>clustering key</strong> on that column — this is the case it's actually built for.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If writes are frequent (streaming, Kafka, 5-minute syncs)</span>
+<span class="decision-a">Run `SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS` before committing — high write rates can make reclustering cost more than it saves.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If you're about to run a bulk load</span>
+<span class="decision-a">`SUSPEND RECLUSTER` first, load, then `RESUME RECLUSTER` — don't pay to recluster mid-batch.</span>
+</div>
+</div>
+
 <hr />
 <h2>The cost model for Automatic Clustering</h2>
 <p>Once you add a clustering key, Snowflake runs Automatic Clustering continuously. The cost is:</p>

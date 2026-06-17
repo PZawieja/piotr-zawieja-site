@@ -9,7 +9,7 @@ read_time: 7
 status: published
 ---
 
-MetricFlow is production-ready. The dbt Semantic Layer has been generally available for a while now, and most analytics teams have at least one Slack thread about it. What's still missing for a lot of teams is a clear mental model for when to migrate and when a good old mart table is still the right call.
+MetricFlow is production-ready. The dbt Semantic Layer has been generally available for a while now, and most analytics teams have at least one Slack thread about it (yours is probably still unresolved). What's still missing for a lot of teams is a clear mental model for when to migrate and when a good old mart table is still the right call.
 
 This post is that decision framework. Both approaches are valid. Both solve real problems. The question is which one fits your current situation — not which one is theoretically superior.
 
@@ -101,7 +101,7 @@ Once that definition is in place, the same `mrr` metric is queryable from the db
 
 ## The key difference
 
-This sounds like a technical implementation detail, but it is actually a fundamental shift in where truth lives.
+This sounds like a technical implementation detail, but it is actually a fundamental shift in where truth lives. Think of a cinema's lobby showtimes board versus its booking app. The chalkboard is painted once a day — accurate at 9am, wrong the moment a 7pm screening sells out and gets a second showing added. Someone has to notice and repaint it. The booking app has no board at all; it asks the box office system fresh, every single time, so it's never stale but it also never stops asking. A metric mart is the chalkboard. The Semantic Layer is the app that always calls the box office.
 
 With a metric mart, truth is encoded in SQL and manifested as rows in a table. If your definition of MRR changes, you update the SQL, run the model, and the table changes. Every consumer gets the updated number automatically — but they were also all querying a single materialised artifact that you controlled.
 
@@ -162,7 +162,7 @@ This is the architecture behind Cortex Analyst and similar governed natural-lang
 
 You do not need to port your entire mart layer to the Semantic Layer at once. Start with one metric that has multiple consumers or that changes definition frequently. Validate that MetricFlow produces the same results as your mart table. Then expand.
 
-Keep both approaches in production simultaneously during the transition. There is no reason to delete `fct_mrr` the day you add a semantic model for MRR. Retire the mart table when you are confident every consumer has migrated.
+Keep both approaches in production simultaneously during the transition. There is no reason to delete `fct_mrr` the day you add a semantic model for MRR — sunk cost is a cognitive bias, and a deprecated mart sitting unused for two extra weeks is not the hill to die on. Retire the mart table when you are confident every consumer has migrated.
 
 ```yaml
 # dbt_project.yml — run semantic models alongside marts with no conflict
@@ -177,6 +177,34 @@ models:
 ```
 
 The two approaches are not mutually exclusive during migration. That flexibility is worth using.
+
+---
+
+## Choosing in practice
+
+<div class="decision-tree">
+<p class="decision-tree-title">Mart or Semantic Layer?</p>
+<div class="decision-step">
+<span class="decision-q">One BI tool, stable definitions</span>
+<span class="decision-a">Stick with metric marts — <strong>the Semantic Layer adds overhead</strong> you don't need yet.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Three+ tools need the same number</span>
+<span class="decision-a">Move that metric to the Semantic Layer — <strong>one YAML beats three copies of SQL</strong> drifting apart.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Sub-second dashboard latency matters</span>
+<span class="decision-a">Keep it as a mart — <strong>query-time computation costs you that latency</strong>.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Building an LLM-backed querying layer</span>
+<span class="decision-a">Semantic Layer is mandatory — <strong>it's the governance boundary</strong> that keeps the model from writing wrong SQL.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Still unsure</span>
+<span class="decision-a">Migrate one high-churn metric first, validate parity against the mart, then decide.</span>
+</div>
+</div>
 
 ---
 

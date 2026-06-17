@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -344,6 +397,8 @@
 
 <p>The event exists in the source system. It exists in the staging table. It just never made it into your marts — and nothing told you that.</p>
 
+<p>Think of a transit app's live arrivals board. A bus actually passes your stop at 8:02 — that's the event. But the bus's GPS unit only reports back to the server once it clears a dead zone five minutes later — that's when the data arrives. If the app's board only shows "pings received since I last checked," and it checked at 8:04, that 8:02 bus never appears. It happened. The board just never heard about it in time. Your incremental model has the exact same blind spot, just with rows instead of buses.</p>
+
 <hr>
 
 <h2>Why it happens</h2>
@@ -355,6 +410,8 @@
 <p>A user opens your app on a train with no signal and generates a session's worth of events — clicks, views, purchases. Their phone queues those events locally. Two hours later they connect to WiFi, and all of them flush to your backend at once. The <code>event_time</code> values are from the train. The <code>arrival_time</code> is from the airport.</p>
 
 <p>This is expected behavior from the SDK. It's also a guarantee that if you filter by <code>event_time &gt; last_run</code>, the offline session will be missed on any incremental run that happened before the user reconnected.</p>
+
+<p>Your incremental model, meanwhile, has no idea anyone was ever on a train.</p>
 
 <h3>Webhook retries</h3>
 
@@ -392,6 +449,8 @@
 </ul>
 
 <p>The warehouse doesn't know data is missing. It reports what it has. The model succeeded. The tests passed. Everything is fine, except for the data that isn't there.</p>
+
+<p>Ask a warehouse if it's missing anything and it will cheerfully say no. It does not know what it does not know, and it is remarkably confident about that.</p>
 
 <hr>
 

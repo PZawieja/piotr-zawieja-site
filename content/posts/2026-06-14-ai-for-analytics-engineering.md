@@ -2,7 +2,7 @@
 date: 2026-06-14
 description: Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.
 published_at: '2026-06-14T12:31:51Z'
-read_time: 8
+read_time: 9
 slug: ai-for-analytics-engineering
 status: published
 tags: [AI]
@@ -12,6 +12,8 @@ title: 'AI for analytics engineering: where it actually helps and where it doesn
 The pitch for AI in data work has been consistent for two years: write SQL faster, generate documentation automatically, let analysts ask questions in plain English. Some of that has landed. A lot of it hasn't, or has landed in a much narrower way than advertised.
 
 This is a practical map based on actual daily use — not what AI tools claim to do, but what they reliably do well, where they fail predictably, and how to structure your workflow around the gap between the two.
+
+A useful comparison: a good AI assistant is a lot like a valet. Hand it your car with a clear instruction — "park it in spot 14" — and it'll do that faster and more reliably than you would. Ask it instead "where should I park so my whole day goes smoothly," and it'll still give you a confident answer. It just has no idea you're meeting a client at 2 and leaving early for a school pickup at 4. The first task is mechanical execution. The second requires context only you have. AI in analytics engineering breaks down along exactly that line.
 
 ---
 
@@ -57,7 +59,7 @@ When you inherit a codebase with patterns you haven't used — recursive CTEs, c
 
 This is the most important failure mode to understand, because it is also the place where the hype is loudest.
 
-AI does not know what your business means by "active customer." It does not know whether your MRR calculation should include trial subscriptions, whether a paused subscription counts as churned for cohort analysis, or which product lines are excluded from the revenue metric your CFO uses. It has no access to the Slack thread where your data team and finance agreed on that definition last quarter.
+AI does not know what your business means by "active customer." It does not know whether your MRR calculation should include trial subscriptions, whether a paused subscription counts as churned for cohort analysis, or which product lines are excluded from the revenue metric your CFO uses. It has no access to the Slack thread where your data team and finance agreed on that definition last quarter — and even if it did, that thread has 340 replies and ends in a thumbs-up emoji, not a written decision.
 
 When you ask AI to write a revenue model, it will produce plausible SQL. The SQL will run without error. The numbers will look reasonable. They will also be wrong in ways that take weeks to surface, because the model made reasonable-seeming assumptions about your business that happen to be incorrect for your specific context.
 
@@ -71,7 +73,7 @@ AI produces confident-sounding answers to these questions. Those answers are not
 
 ### Debugging wrong numbers in production
 
-"My revenue figure is 12% higher than last month with no change in the business" is exactly the kind of problem that looks like it should be solvable with AI assistance. In practice, diagnosing it requires understanding the data model, knowing what changed in upstream sources, understanding the business context, and being able to run exploratory queries against the actual data.
+"My revenue figure is 12% higher than last month with no change in the business" is exactly the kind of problem that looks like it should be solvable with AI assistance — the data equivalent of "have you tried turning it off and on again." Sometimes that fixes the printer. Mostly it buys you ten minutes. In practice, diagnosing it requires understanding the data model, knowing what changed in upstream sources, understanding the business context, and being able to run exploratory queries against the actual data.
 
 AI can suggest a debugging checklist — check for new rows in source tables, look for filter drift, audit the incremental lookback window. That checklist is useful. But the actual debugging work requires a human who can run queries, read the results, and connect technical findings to business events. AI can assist at the margins; it cannot replace the investigative work.
 
@@ -112,6 +114,30 @@ The pattern that produces the best results is treating AI as a skilled technical
 **GitHub Copilot** for SQL completion in editors that support it. Most useful for writing repetitive patterns (CASE WHEN blocks, date trunc expressions) where the completion is mechanical. Less useful for anything that requires business context.
 
 What's not worth using yet: any AI tool that claims to generate production-ready data models from a schema description alone. The structural output is fine. The business logic it encodes will be wrong in ways that are hard to audit.
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Task is boilerplate (staging models, schema YAML, tests)</span>
+<span class="decision-a">let AI draft it, you edit — this is the <strong>mechanical</strong> 40% where it consistently earns its keep.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Reviewing SQL for bugs</span>
+<span class="decision-a">give a <strong>targeted prompt</strong> ("check join fanout and incremental filter logic"), not "review this SQL" — specificity is the difference between signal and noise.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Defining a metric or choosing a grain</span>
+<span class="decision-a">keep it <strong>human</strong> — these require business context and downstream knowledge no AI tool has access to.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Debugging a wrong number in production</span>
+<span class="decision-a">use AI for a <strong>checklist</strong> at most — the actual investigation needs a human running queries against real data.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Considering a natural-language query tool</span>
+<span class="decision-a">only point it at a <strong>governed semantic layer</strong> — against raw tables it produces confident, wrong answers.</span>
+</div>
+</div>
 
 <div class="takeaways">
 <h2>Takeaways</h2>

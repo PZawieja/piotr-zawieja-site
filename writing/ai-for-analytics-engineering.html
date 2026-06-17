@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -322,7 +375,7 @@
   <header>
     <div class="article-meta">
       <span class="meta-tag">AI</span>
-      <span class="meta-date">14 Jun 2026 · 8 min read</span>
+      <span class="meta-date">14 Jun 2026 · 9 min read</span>
     </div>
     <h1 class="article-title">AI for analytics engineering: where it actually helps and where it doesn't</h1>
     <p class="article-lede">Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</p>
@@ -331,6 +384,7 @@
   <div class="article-body">
     <p>The pitch for AI in data work has been consistent for two years: write SQL faster, generate documentation automatically, let analysts ask questions in plain English. Some of that has landed. A lot of it hasn't, or has landed in a much narrower way than advertised.</p>
 <p>This is a practical map based on actual daily use — not what AI tools claim to do, but what they reliably do well, where they fail predictably, and how to structure your workflow around the gap between the two.</p>
+<p>A useful comparison: a good AI assistant is a lot like a valet. Hand it your car with a clear instruction — "park it in spot 14" — and it'll do that faster and more reliably than you would. Ask it instead "where should I park so my whole day goes smoothly," and it'll still give you a confident answer. It just has no idea you're meeting a client at 2 and leaving early for a school pickup at 4. The first task is mechanical execution. The second requires context only you have. AI in analytics engineering breaks down along exactly that line.</p>
 <hr />
 <h2>Where AI consistently helps</h2>
 <h3>Boilerplate that follows a pattern</h3>
@@ -357,14 +411,14 @@
 <h2>Where AI predictably fails</h2>
 <h3>Metric definitions and business logic</h3>
 <p>This is the most important failure mode to understand, because it is also the place where the hype is loudest.</p>
-<p>AI does not know what your business means by "active customer." It does not know whether your MRR calculation should include trial subscriptions, whether a paused subscription counts as churned for cohort analysis, or which product lines are excluded from the revenue metric your CFO uses. It has no access to the Slack thread where your data team and finance agreed on that definition last quarter.</p>
+<p>AI does not know what your business means by "active customer." It does not know whether your MRR calculation should include trial subscriptions, whether a paused subscription counts as churned for cohort analysis, or which product lines are excluded from the revenue metric your CFO uses. It has no access to the Slack thread where your data team and finance agreed on that definition last quarter — and even if it did, that thread has 340 replies and ends in a thumbs-up emoji, not a written decision.</p>
 <p>When you ask AI to write a revenue model, it will produce plausible SQL. The SQL will run without error. The numbers will look reasonable. They will also be wrong in ways that take weeks to surface, because the model made reasonable-seeming assumptions about your business that happen to be incorrect for your specific context.</p>
 <p>The correct use of AI in metric work is narrow: once you have defined the metric precisely and written the SQL yourself, AI can review the implementation for structural errors. It cannot define the metric for you.</p>
 <h3>Grain decisions</h3>
 <p>The hardest decisions in data modeling are grain decisions: should this fact table be at the order grain or the order-line grain? Should this model be a wide mart or a normalized dimension? Should subscription events be tracked as a slowly changing dimension or a point-in-time snapshot?</p>
 <p>AI produces confident-sounding answers to these questions. Those answers are not grounded in knowledge of your query patterns, your BI tool's behavior, your team's SQL proficiency, or the downstream consumers who will actually use the model. Grain decisions require that context. AI does not have it.</p>
 <h3>Debugging wrong numbers in production</h3>
-<p>"My revenue figure is 12% higher than last month with no change in the business" is exactly the kind of problem that looks like it should be solvable with AI assistance. In practice, diagnosing it requires understanding the data model, knowing what changed in upstream sources, understanding the business context, and being able to run exploratory queries against the actual data.</p>
+<p>"My revenue figure is 12% higher than last month with no change in the business" is exactly the kind of problem that looks like it should be solvable with AI assistance — the data equivalent of "have you tried turning it off and on again." Sometimes that fixes the printer. Mostly it buys you ten minutes. In practice, diagnosing it requires understanding the data model, knowing what changed in upstream sources, understanding the business context, and being able to run exploratory queries against the actual data.</p>
 <p>AI can suggest a debugging checklist — check for new rows in source tables, look for filter drift, audit the incremental lookback window. That checklist is useful. But the actual debugging work requires a human who can run queries, read the results, and connect technical findings to business events. AI can assist at the margins; it cannot replace the investigative work.</p>
 <h3>Code that touches undocumented business rules</h3>
 <p>Every mature analytics project has undocumented business rules encoded in SQL: the <code>WHERE customer_type != 'internal'</code> filter that excludes test accounts, the <code>CASE WHEN</code> that maps legacy product codes to current product names, the date offset that aligns your fiscal calendar. These rules exist because someone made a decision that was never written down.</p>
@@ -388,6 +442,30 @@
 <p><strong>Snowflake Cortex Analyst / BigQuery Gemini</strong> for natural language querying against a governed semantic layer. The qualifier "governed semantic layer" is load-bearing — these tools work when the metric definitions are already encoded in a semantic model, and fail when pointed at raw tables.</p>
 <p><strong>GitHub Copilot</strong> for SQL completion in editors that support it. Most useful for writing repetitive patterns (CASE WHEN blocks, date trunc expressions) where the completion is mechanical. Less useful for anything that requires business context.</p>
 <p>What's not worth using yet: any AI tool that claims to generate production-ready data models from a schema description alone. The structural output is fine. The business logic it encodes will be wrong in ways that are hard to audit.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Task is boilerplate (staging models, schema YAML, tests)</span>
+<span class="decision-a">let AI draft it, you edit — this is the <strong>mechanical</strong> 40% where it consistently earns its keep.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Reviewing SQL for bugs</span>
+<span class="decision-a">give a <strong>targeted prompt</strong> ("check join fanout and incremental filter logic"), not "review this SQL" — specificity is the difference between signal and noise.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Defining a metric or choosing a grain</span>
+<span class="decision-a">keep it <strong>human</strong> — these require business context and downstream knowledge no AI tool has access to.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Debugging a wrong number in production</span>
+<span class="decision-a">use AI for a <strong>checklist</strong> at most — the actual investigation needs a human running queries against real data.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Considering a natural-language query tool</span>
+<span class="decision-a">only point it at a <strong>governed semantic layer</strong> — against raw tables it produces confident, wrong answers.</span>
+</div>
+</div>
+
 <div class="takeaways">
 <h2>Takeaways</h2>
 <ul>

@@ -26,6 +26,8 @@ A column can be not-null, unique, and completely wrong from a business perspecti
 
 The tests that catch infrastructure failures are worth keeping. The gap is the layer above them.
 
+Think about a supermarket self-checkout. It will beep at you if you forget to scan an item, and it will catch you if you somehow scan the same yogurt twice. What it will never catch is the price on that yogurt being wrong by a decimal point — €0.50 instead of €5.00, scan, beep, have a nice day. The till is satisfied: one scan per item, no duplicates, nothing missing. The *shape* of the transaction is correct. Whether the *amount* is correct was never checked, because that was never the scanner's job. `not_null` and `unique` are that scanner. They confirm shape. They have no opinion on whether the number is right.
+
 ## Three categories of tests that matter
 
 ### Category 1: Range and threshold tests
@@ -146,9 +148,33 @@ For revenue columns, the minimum bar is a range test plus a cross-model reconcil
               severity: error
 ```
 
-One production note worth taking seriously: use `severity: warn` for tests you want visibility on without failing the build, and `severity: error` only for tests that represent data you genuinely cannot trust downstream. If everything is `error`, teams start ignoring the red builds or disabling tests to get deploys through. Build fatigue is real, and a ignored test suite is worse than a small one.
+One production note worth taking seriously: use `severity: warn` for tests you want visibility on without failing the build, and `severity: error` only for tests that represent data you genuinely cannot trust downstream. If everything is `error`, teams start ignoring the red builds or disabling tests to get deploys through. Build fatigue is real, and a ignored test suite is worse than a small one — at that point you've built a smoke detector everyone has quietly unplugged.
 
 The goal is a suite where a green build means something. Where the pass signal carries information. That requires being deliberate about what you test and how loudly each failure should ring.
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Column feeds a revenue metric</span>
+<span class="decision-a">add a <strong>range test</strong> (accepted_range or dbt_expectations) plus a cross-model reconciliation test — financial columns get the highest bar.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Column is a status or enum</span>
+<span class="decision-a">use an explicit <strong>accepted_values</strong> list, not just not_null — it fails the moment an unhandled value appears upstream instead of silently passing through.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Date column on a historical fact</span>
+<span class="decision-a">test that it is <strong>not in the future</strong> — cheap, and it catches a surprising share of timezone and load-order bugs.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A business rule can't be expressed as a range</span>
+<span class="decision-a">write a <strong>custom generic test</strong> — invariants like "active subscriptions can't start in the future" need their own assertion.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Tempted to mark every test severity: error</span>
+<span class="decision-a">don't — reserve <strong>error</strong> for data you genuinely can't trust downstream, or the team starts ignoring red builds altogether.</span>
+</div>
+</div>
 
 <div class="takeaways">
 <h2>Takeaways</h2>

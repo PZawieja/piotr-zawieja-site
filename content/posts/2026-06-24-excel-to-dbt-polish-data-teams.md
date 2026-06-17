@@ -5,7 +5,7 @@ published_at: 2026-06-05T11:00:00Z
 slug: excel-to-dbt-polish-data-teams
 description: "A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip."
 tags: [dbt]
-read_time: 8
+read_time: 9
 status: published
 ---
 
@@ -20,7 +20,9 @@ This guide is for teams in Warsaw, Kraków, and the wider Polish market who are 
 
 Nearly every migration I have seen follows the same arc.
 
-**Stage 0** looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that.
+**Stage 0** looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that. It's less a data architecture than a peace treaty nobody signed.
+
+In plain English, this is the same disagreement VAR brought to football. The replay is not the problem — everyone can see the same frozen frame of the offside line. The argument is about which moment and which body part the rule actually means, and two broadcasters can draw the line slightly differently from identical footage. Finance and Customer Success aren't disagreeing because one of their spreadsheets has a typo. They're disagreeing because nobody ever agreed on what "active customer" means, so the same underlying data produces two confident, contradictory rulings.
 
 Then someone joins who knows SQL well. Things move to BigQuery or Snowflake. dbt gets installed over a weekend. Month one through three: it works beautifully. Clean staging models, a few marts, a DAG that makes sense. The team is proud, and they should be.
 
@@ -81,7 +83,7 @@ A staging layer that contains derived logic is a staging layer you will regret i
 
 ### Stage 3: Build marts that match your current Excel outputs first
 
-Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off.
+Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Think of it the way a movie remake earns the right to change the ending: not by being objectively better on day one, but by first proving it understood the original. Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off — fixing them now is how a trust-building project quietly turns into an eight-month rebuild nobody asked for.
 
 ```yaml
 # models/marts/schema.yml
@@ -155,11 +157,37 @@ Running this script before each month-end close builds a paper trail that makes 
 
 ---
 
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">If Finance and CS already disagree on a metric</span>
+<span class="decision-a">Stop. Resolve the <strong>definition</strong> before writing a single dbt model — the migration cannot fix a disagreement the business hasn't settled.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If dbt's number differs from the Excel it replaces</span>
+<span class="decision-a">Assume the dbt model is wrong until proven otherwise — not the spreadsheet, even if you suspect the spreadsheet has flaws.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If parity holds for fewer than three billing cycles</span>
+<span class="decision-a">Keep running both systems in parallel — one good week is not three good months.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If a stakeholder asks "where did this number come from" and you don't have a written answer</span>
+<span class="decision-a">The model isn't ready to ship, regardless of test coverage.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If you spot a number you want to "fix" while matching Excel</span>
+<span class="decision-a">Log it. Fix it later, with sign-off — not in the same pass where you're trying to earn trust.</span>
+</div>
+</div>
+
+---
+
 ## The one thing that makes it stick
 
 The transition fails when dbt is treated as a technical upgrade and succeeds when it is treated as a trust-building project.
 
-Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.
+Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer — reasonably so, since nobody has ever closed a deal by admiring a DAG. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.
 
 Write the documentation before anyone asks for it. Define "active customer" in your schema.yml before Finance asks why dbt's count differs from theirs. Set up the parity tests before the first month-end. Make the process visible.
 

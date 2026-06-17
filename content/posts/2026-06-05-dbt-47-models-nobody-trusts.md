@@ -13,7 +13,7 @@ Every data team I talk to eventually confesses the same thing. They adopted dbt 
 
 And nobody trusts the numbers.
 
-Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.
+Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. The CI pipeline is green — which, it turns out, is the data equivalent of a smoke detector with no batteries: technically silent, not actually telling you you're safe. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.
 
 This is the dbt trust problem. It is not a tooling problem. It is an architectural and process problem that tooling alone cannot fix.
 
@@ -27,7 +27,7 @@ The pattern is consistent enough that I'd call it a law. It goes like this:
 
 **Month 4–8:** The business starts making requests faster than the model structure can absorb them. Someone adds a one-off model for a sales report. Someone else forks `fct_orders` because they need a slightly different grain. An analyst writes a model directly in the marts folder because staging felt too far away. Nobody reviews it. The CI passes.
 
-**Month 9–18:** You now have:
+**Month 9–18:** Congratulations, you now have:
 
 - Staging models that duplicate logic from each other
 - Intermediate models that exist for one downstream consumer and nowhere else
@@ -43,7 +43,9 @@ The project is large. The project is broken in ways that are invisible to `dbt t
 
 When a stakeholder looks at two numbers that disagree, they don't think "there's a SQL bug." They think "I can't trust this system." And once that trust breaks, it's very slow to rebuild.
 
-The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record. Consider:
+The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record.
+
+Picture two supermarket receipts for the exact same basket of groceries that ring up to different totals — one register applies the loyalty discount before tax, the other after. Both did valid math. Nobody at the till audits the order of operations; they just stop trusting the register. That's what's happening when `mart_revenue` and `mart_finance_v2` both claim to report MRR and land a few percent apart. Consider:
 
 <pre><code><span class="comment">-- Which of these is "correct" MRR?</span>
 
@@ -114,7 +116,7 @@ This is the minimum. For revenue-critical models, add reconciliation tests that 
 
 ### 3. Deprecate loudly, delete completely
 
-The `mart_finance_v2` that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it.
+The `mart_finance_v2` that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it. Deleting it feels rude. Leaving it there is ruder — to every analyst who'll spend an afternoon convinced it's the live one.
 
 Before you delete it, write a YAML description in the replacement model that says exactly what changed and why. A one-sentence note in `schema.yml` prevents 80% of the stakeholder questions that follow.
 
@@ -125,6 +127,32 @@ If you were building a public API, you would version it, document it, and not br
 This means: every mart model has a description. Every column that means something to the business has a description. Changes that affect downstream consumers go through a review. Not a formal RFC — just a human who reads the diff and asks "does anything consume this?"
 
 In a growing company moving from spreadsheets to a proper data stack, this step is usually the one that gets skipped. It's also the one that determines whether dbt becomes the source of truth or becomes the thing the analysts work around.
+
+---
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree: where does this model belong?</p>
+<div class="decision-step">
+<span class="decision-q">Touches exactly one source table, no joins</span>
+<span class="decision-a">It's <strong>staging</strong> — rename, cast, deduplicate, nothing else.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Joins sources or applies business logic</span>
+<span class="decision-a">It's <strong>intermediate</strong> — fine to exist, but no BI tool or analyst should query it directly.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A BI tool, exec dashboard, or AI agent will read it</span>
+<span class="decision-a">It belongs in <strong>marts</strong> — with a documented grain, owner, and column descriptions before it ships.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Two models claim the same metric and disagree</span>
+<span class="decision-a">Don't average them. Pick one, write down why in <code>schema.yml</code>, and delete the other.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A model has exactly one downstream consumer</span>
+<span class="decision-a">Fold it into the mart that uses it — it isn't pulling its weight as a standalone file.</span>
+</div>
+</div>
 
 ---
 

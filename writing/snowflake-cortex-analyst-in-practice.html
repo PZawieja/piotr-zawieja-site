@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -323,7 +376,7 @@
     <div class="article-meta">
       <span class="meta-tag">Snowflake</span>
       <span class="meta-tag">AI</span>
-      <span class="meta-date">12 Jun 2026 · 6 min read</span>
+      <span class="meta-date">12 Jun 2026 · 8 min read</span>
     </div>
     <h1 class="article-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</h1>
     <p class="article-lede">Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</p>
@@ -333,6 +386,7 @@
     <p>The Snowflake Cortex Analyst demo is a good demo. Curated schema, hand-picked questions, a semantic model that has been tuned to answer exactly the things the presenter is about to ask. The SQL it generates is clean. The answers are right. The audience nods.</p>
 <p>Week two looks different. You point Cortex Analyst at your actual warehouse — the one with three overlapping definitions of "active customer," mart models whose column descriptions were last updated when the model was first built, and a pipeline that lands data at 6 AM but is sometimes an hour late. Suddenly the generated SQL is plausible-looking but wrong, or right on a metric nobody uses, or right but returning yesterday's numbers.</p>
 <p>This post is about the gap between the demo and production. Not to say Cortex Analyst is bad — it is genuinely useful when set up correctly — but to lay out the problems you will hit and the practical steps that make it reliable.</p>
+<p>It helps to think of Cortex Analyst as a GPS app. Demoed on a closed test track, with perfect weather and no traffic, it always finds the fastest route — there's only one route to find. Point that same GPS at your actual city, with a bridge closed for repairs since 6 AM and a one-way street the map provider hasn't updated in months, and it will confidently route you the wrong way down that street. It isn't lying to you. It's reporting, with total confidence, from a model of the world that is stale and incomplete in ways it has no way of knowing about.</p>
 <h2>What Cortex Analyst actually is</h2>
 <p>Cortex Analyst takes a natural language question and returns SQL, using a semantic model YAML you define and store in Snowflake. The semantic model describes your tables, columns, metrics, and relationships. Cortex reads it, interprets the question against it, and generates a query. You approve or run the query; Cortex does not execute anything directly unless you wire it up to do so.</p>
 <p>The semantic model is the entire ballgame. Here is a minimal example for a subscriptions table:</p>
@@ -405,7 +459,7 @@ FROM reactivated
 WHERE prev_mrr IS NOT NULL
 </code></pre>
 <p>The window function runs over all rows after churn, including rows where the subscription is still dormant. The growth rate calculation is technically executing; the denominator just includes the wrong baseline. Nobody notices until someone compares the output to a manually built cohort.</p>
-<p><strong>Problem 4: Data freshness.</strong> Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale." It returns numbers with no timestamp context, and the user assumes they are current.</p>
+<p><strong>Problem 4: Data freshness.</strong> Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale" — same as the GPS, it just keeps routing you with a perfectly straight face. It returns numbers with no timestamp context, and the user assumes they are current.</p>
 <h2>What actually works</h2>
 <p><strong>Start with your mart layer, not raw or intermediate models.</strong> Your marts are governed, tested, and documented. They are also the layer where your business definitions are already encoded. Pointing Cortex at raw Salesforce tables or intermediate staging models is a fast path to wrong answers.</p>
 <p><strong>Write semantic model descriptions as if you are writing instructions for a new analyst.</strong> The descriptions Cortex reads need to be unambiguous. Vague column names with vague descriptions produce vague SQL. The more precise your language, the more constrained the interpretation.</p>
@@ -445,7 +499,31 @@ latest = cursor.fetchone()[0]
 st.caption(f&quot;Data current through: {latest}. Pipeline runs daily at 06:00 UTC.&quot;)
 </code></pre>
 <p>Not elegant, but it gives users the information they need before they act on a number.</p>
-<p><strong>The correct mental model:</strong> Cortex Analyst is a natural language front-end for a governed query layer. It is not a replacement for that layer. The better your dbt semantic layer — complete descriptions, tested metrics, clean mart boundaries — the better Cortex Analyst performs. You are not configuring an AI product. You are improving your data documentation and then attaching an interface to it.</p>
+<p><strong>The correct mental model:</strong> Cortex Analyst is a natural language front-end for a governed query layer. It is not a replacement for that layer. The better your dbt semantic layer — complete descriptions, tested metrics, clean mart boundaries — the better Cortex Analyst performs. You are not configuring an AI product. You are improving your data documentation and then attaching an interface to it. Skip that work and you haven't shipped a smarter GPS — you've shipped the same one, with a nicer voice reading out the wrong turns.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Choosing which layer to expose</span>
+<span class="decision-a">point Cortex at your <strong>mart layer</strong> only — it's governed, tested, and already encodes your business definitions. Raw and staging models are a fast path to wrong answers.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Writing a column description</span>
+<span class="decision-a">write it as an <strong>instruction for a new analyst</strong>, not a label — state what's included, what's excluded, and which business context it belongs to.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A metric exists in more than one mart</span>
+<span class="decision-a">pick one <strong>canonical</strong> source and expose only that one in the semantic model — Cortex won't tell users which definition it picked.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">The question implies a multi-join or window function</span>
+<span class="decision-a">treat the generated SQL as a <strong>draft</strong>, not an answer — add a human review step before anyone acts on it.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Users ask about "today" or "yesterday"</span>
+<span class="decision-a">expose a <strong>data_as_of</strong> dimension and surface it in the UI — Cortex has no idea your pipeline runs at 6 AM.</span>
+</div>
+</div>
+
 <div class="takeaways">
 <h2>Takeaways</h2>
 <ul>

@@ -8,7 +8,7 @@ description: Most dbt models look idempotent but aren't. What breaks it silently
   fix it.
 tags:
 - dbt
-read_time: 8
+read_time: 9
 status: published
 ---
 
@@ -17,6 +17,8 @@ You re-ran the pipeline last night because a source table was late. This morning
 This is an idempotency failure. It is the most common silent bug in dbt projects, and it is almost never caught by dbt tests because tests run on the current state, not across multiple runs.
 
 Idempotency means: running the same pipeline multiple times with the same inputs produces the same output as running it once. An idempotent model can be re-run after a failure, a backfill, or an accidental double-trigger, and the result is always correct. A non-idempotent model can't make that promise.
+
+In plain English: think of paying for parking through an app. You tap "pay," the screen freezes, and you're not sure it went through — so you tap it again. A well-built app recognizes it's the same parking session and charges you once. A badly-built one sees two button presses and charges you twice, because as far as it's concerned, you asked twice. Your incremental dbt model is that app. Re-running it — on purpose or by accident — should never be the thing that charges revenue twice.
 
 ---
 
@@ -67,7 +69,7 @@ dbt's `unique_key` config triggers a merge or upsert instead of a plain append. 
 ) }}
 ```
 
-The difference is one config line. Most projects start without `unique_key` and add it only after the first incident.
+The difference is one config line. Most projects start without `unique_key` and add it only after the first incident — read: after Finance calls.
 
 ### Non-deterministic column values
 
@@ -82,6 +84,8 @@ FROM {{ source('ecommerce', 'orders') }}
 ```
 
 `loaded_at` populated with `CURRENT_TIMESTAMP()` is a common offender. So is `SYSDATE()` or `NOW()`. If your merge key doesn't include this column, duplicate rows accumulate. If it does, rows that haven't changed get updated unnecessarily, complicating change detection downstream.
+
+Same parking analogy, different failure mode: imagine the app re-stamps your ticket with the current time every time it merely re-checks whether you've paid — not just when you actually pay. Same car, same spot, but the receipt now claims you arrived three different times. That's `CURRENT_TIMESTAMP()` in a merge key: a clock that lies about how long something has been waiting.
 
 Fix: use a deterministic timestamp from the source data itself — `updated_at`, `created_at`, or `_fivetran_synced` — never from the pipeline execution clock.
 
@@ -223,6 +227,36 @@ FROM {{ source('ecommerce', 'orders') }}
 ```
 
 The first version will silently drop all pre-2026 history every time someone runs `dbt run --full-refresh`.
+
+---
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">If materialized as `table`</span>
+<span class="decision-a">Already idempotent — it rebuilds from scratch every run. No action needed.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If `incremental` with no `unique_key`</span>
+<span class="decision-a">Add <strong>unique_key</strong> plus `incremental_strategy='merge'` (or `delete+insert`) — the single highest-leverage fix.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If the natural key is composite</span>
+<span class="decision-a">Generate a surrogate key in staging with `dbt_utils.generate_surrogate_key()` and merge on that one column instead.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If a column uses `CURRENT_TIMESTAMP()`, `NOW()`, or `SYSDATE()`</span>
+<span class="decision-a">Replace it with a source-provided timestamp — `updated_at` or `_fivetran_synced`, never the execution clock.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If the table is large and a full merge is too costly</span>
+<span class="decision-a">Use <strong>partition replacement</strong> (`insert_overwrite` or `delete+insert`) to get idempotency at partition granularity.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If you're not sure</span>
+<span class="decision-a">Run it twice and compare row counts before it ships — that's the only check that actually catches this.</span>
+</div>
+</div>
 
 ---
 

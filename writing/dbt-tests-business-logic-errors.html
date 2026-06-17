@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -338,6 +391,7 @@
 <p>These tests answer the question: did the pipeline run correctly? They do not answer the question: did the pipeline produce the right output?</p>
 <p>A column can be not-null, unique, and completely wrong from a business perspective. A revenue figure can be populated with plausible-looking numbers that are off by 30% because a new product line was excluded from the mart filter. A churn rate can be technically non-null and technically within an accepted value range while being calculated against the wrong date boundary for three months running.</p>
 <p>The tests that catch infrastructure failures are worth keeping. The gap is the layer above them.</p>
+<p>Think about a supermarket self-checkout. It will beep at you if you forget to scan an item, and it will catch you if you somehow scan the same yogurt twice. What it will never catch is the price on that yogurt being wrong by a decimal point — €0.50 instead of €5.00, scan, beep, have a nice day. The till is satisfied: one scan per item, no duplicates, nothing missing. The <em>shape</em> of the transaction is correct. Whether the <em>amount</em> is correct was never checked, because that was never the scanner's job. <code>not_null</code> and <code>unique</code> are that scanner. They confirm shape. They have no opinion on whether the number is right.</p>
 <h2>Three categories of tests that matter</h2>
 <h3>Category 1: Range and threshold tests</h3>
 <p>The first place to add business logic coverage is financial and metric columns. Use <code>dbt_utils.accepted_range</code> to set floor and ceiling values that reflect what the number should actually be — not just that it exists.</p>
@@ -434,8 +488,32 @@ where diff_pct &gt; {{ tolerance_pct }}
               max_value: &quot;cast(current_date as date)&quot;
               severity: error
 </code></pre>
-<p>One production note worth taking seriously: use <code>severity: warn</code> for tests you want visibility on without failing the build, and <code>severity: error</code> only for tests that represent data you genuinely cannot trust downstream. If everything is <code>error</code>, teams start ignoring the red builds or disabling tests to get deploys through. Build fatigue is real, and a ignored test suite is worse than a small one.</p>
+<p>One production note worth taking seriously: use <code>severity: warn</code> for tests you want visibility on without failing the build, and <code>severity: error</code> only for tests that represent data you genuinely cannot trust downstream. If everything is <code>error</code>, teams start ignoring the red builds or disabling tests to get deploys through. Build fatigue is real, and a ignored test suite is worse than a small one — at that point you've built a smoke detector everyone has quietly unplugged.</p>
 <p>The goal is a suite where a green build means something. Where the pass signal carries information. That requires being deliberate about what you test and how loudly each failure should ring.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Column feeds a revenue metric</span>
+<span class="decision-a">add a <strong>range test</strong> (accepted_range or dbt_expectations) plus a cross-model reconciliation test — financial columns get the highest bar.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Column is a status or enum</span>
+<span class="decision-a">use an explicit <strong>accepted_values</strong> list, not just not_null — it fails the moment an unhandled value appears upstream instead of silently passing through.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Date column on a historical fact</span>
+<span class="decision-a">test that it is <strong>not in the future</strong> — cheap, and it catches a surprising share of timezone and load-order bugs.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A business rule can't be expressed as a range</span>
+<span class="decision-a">write a <strong>custom generic test</strong> — invariants like "active subscriptions can't start in the future" need their own assertion.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Tempted to mark every test severity: error</span>
+<span class="decision-a">don't — reserve <strong>error</strong> for data you genuinely can't trust downstream, or the team starts ignoring red builds altogether.</span>
+</div>
+</div>
+
 <div class="takeaways">
 <h2>Takeaways</h2>
 <ul>

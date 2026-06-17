@@ -14,6 +14,8 @@ The dbt Hub has a lot of packages. Most projects use two or three consistently a
 
 Here is an honest assessment of the packages that do, and the ones that don't.
 
+Every package you add to `packages.yml` is a bit like the gadget aisle at a kitchen store. The avocado slicer looks essential in the demo. Six months later it's the thing wedged behind the colander, and you're back to using a knife. A dbt package earns a permanent spot in the kitchen drawer when it solves a problem you hit on every project, not just the one you happened to be reading about when you installed it.
+
 ---
 
 ## dbt_utils — the baseline
@@ -140,7 +142,7 @@ The core workflow is a comparison query:
 ) }}
 ```
 
-This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration.
+This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration — the equivalent of counting your boxes before and after the movers leave, instead of just trusting that everything that left the old apartment arrived at the new one.
 
 Reach for it when refactoring staging models, consolidating two marts, or migrating from a legacy pipeline. Do not add it to CI as ongoing test infrastructure — the comparison queries are designed for one-time validation, not for running in every PR.
 
@@ -200,7 +202,35 @@ The practical limitation: the default rules are opinionated and not all of them 
 
 **dbt-profiler** — generates column-level profiling statistics as dbt models. Useful for initial source exploration; not worth keeping as an ongoing dependency. Profile a new source once with ad-hoc queries and move on.
 
-**re_data** — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer.
+**re_data** — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer. Asking your transformation tool to also be your monitoring platform is how you end up with a Swiss Army knife that's mediocre at both jobs.
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">Need surrogate keys, date spines, or dynamic pivots</span>
+<span class="decision-a"><strong>dbt_utils</strong> — install it on day one, every project eventually needs all three.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Need range, column-pair, row-count, or column-exist tests</span>
+<span class="decision-a"><strong>dbt_expectations</strong> — covers test categories without a clean built-in equivalent.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Rewriting a model and need to prove parity</span>
+<span class="decision-a"><strong>audit_helper</strong>, run once — don't wire its comparison queries into ongoing CI.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Onboarding a source with 15+ new tables</span>
+<span class="decision-a"><strong>codegen</strong> — for a single table, writing the YAML by hand is faster.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Multiple contributors, convention drift is a real risk</span>
+<span class="decision-a"><strong>dbt_project_evaluator</strong> — budget time to configure exceptions for rules that don't fit.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">You actually need observability, not just testing</span>
+<span class="decision-a">use a <strong>dedicated platform</strong> (Elementary, Monte Carlo, Anomalo) — not a dbt package wearing an observability costume.</span>
+</div>
+</div>
 
 <div class="takeaways">
 <h2>Takeaways</h2>

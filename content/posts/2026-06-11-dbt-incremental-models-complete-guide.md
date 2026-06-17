@@ -17,6 +17,8 @@ status: published
 
     <h2>Why `table` doesn't scale</h2>
 
+    <p>Think about restocking a grocery store. Every night, you could empty every shelf and rebuild the whole store from the warehouse truck — guaranteed correct, completely absurd for a store that only sold three hundred items that day. Or you could just restock what moved: walk the aisles, find the gaps, refill them. That's the entire pitch of an incremental model. A <code>table</code> materialization is "empty every shelf." An <code>incremental</code> model is "just restock what sold" — much faster, but only correct if your restocking logic actually accounts for what changed, what got returned, and what arrived late from the supplier.</p>
+
     <p>dbt gives you three core materializations out of the box: <code>view</code>, <code>table</code>, and <code>incremental</code>.</p>
 
     <p>A <code>view</code> is nearly free to build — it's just a saved query — but runs the full computation every time it's queried. Fine for simple lookups, slow for anything complex.</p>
@@ -202,6 +204,8 @@ status: published
 
     <p>By default: <code>on_schema_change='ignore'</code>. dbt runs without error, inserts rows, and silently drops the new column on the way in. You won't get an alert. The column appears nowhere. The first sign will be someone asking why a metric you just added is all nulls.</p>
 
+    <p>dbt will not throw a tantrum about this. It is exceptionally calm about your missing column. You will not be.</p>
+
     <p>The four options:</p>
 
 <pre><code><span class="tag">{{</span> config(
@@ -334,6 +338,8 @@ status: published
     <hr>
 
     <h2>Common mistakes</h2>
+
+    <p>None of these are exotic. They are the same seven ways to shoot yourself in the foot, worn smooth by years of teams finding them independently.</p>
 
     <ol>
       <li><strong>No lookback window.</strong> The <code>&gt; MAX(event_time)</code> filter misses late-arriving records. Add a buffer of at least 1–3 days in every incremental filter you write.</li>

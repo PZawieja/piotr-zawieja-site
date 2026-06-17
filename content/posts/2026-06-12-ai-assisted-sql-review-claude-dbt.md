@@ -24,6 +24,8 @@ These patterns are predictable. Predictable means automatable.
 
 ## What this is not
 
+Think of it like VAR in soccer. The video review checks the stuff that has a factual answer — was the ball over the line, was the attacker level with the last defender. It does not decide whether a tackle deserved a yellow card or a red one; that still needs a referee's judgment about intent and context. Claude plays the VAR role for SQL: it checks the structural facts (is there a WHERE clause, is DISTINCT doing something suspicious) and leaves the judgment calls to you.
+
 Not a replacement for human code review. The human reviewer still owns the things that require judgment: is this the right model to build, does this metric definition match what finance agreed, is the grain correct, should this live in staging or intermediate or mart.
 
 What Claude handles is the structural layer — the class of errors a human reviewer *would* catch if they were fresh and focused, but regularly misses when they're on their third PR of the afternoon.
@@ -40,7 +42,7 @@ Claude catches the structural problems. The human focuses on business logic.
 
 ## The prompt
 
-The mistake most people make is asking Claude to "review my SQL". That produces a mix of style suggestions, observations, and genuine findings, all weighted equally. It is not useful.
+The mistake most people make is asking Claude to "review my SQL". That produces a mix of style suggestions, observations, and genuine findings, all weighted equally. It is not useful — it's the data-team equivalent of asking a friend "does this look okay?" and getting a technically true, practically useless answer.
 
 The approach that works: ask Claude to check for specific failure modes only, and return nothing for patterns it does not find.
 
@@ -176,7 +178,31 @@ WHERE revenue_date >= '{{ var("revenue_start_date", "2020-01-01") }}'
 
 **Intentional DISTINCT.** If a model uses `DISTINCT` deliberately — for example, deduplicating session events by design — Claude may flag it. A one-line comment in the SQL explaining the intent fixes the false positive and communicates the intent to the next human reviewer too.
 
-In practice: roughly one false positive per five real findings. Still worth it.
+In practice: roughly one false positive per five real findings. Still worth it — a 20% false-positive rate beats the 0% review rate most PRs actually get on a Friday afternoon.
+
+<div class="decision-tree">
+<p class="decision-tree-title">What to do with a finding</p>
+<div class="decision-step">
+<span class="decision-q">If it flags a missing is_incremental() guard</span>
+<span class="decision-a">Fix it — <strong>this is almost never a false positive</strong>, and the cost of being wrong is a full-table scan every run.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If it flags a possibly non-unique join</span>
+<span class="decision-a">Check <code>schema.yml</code> for a unique test on that column first — <strong>dismiss</strong> the finding if one already exists.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If it flags a DISTINCT as a workaround</span>
+<span class="decision-a">If deliberate, add a one-line comment explaining intent; if not, <strong>investigate</strong> the upstream duplication it's masking.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If it says "No issues found"</span>
+<span class="decision-a">Still do the human pass — <strong>structurally clean isn't the same as logically correct</strong>.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If you're integrating this for the first time</span>
+<span class="decision-a">Start manual, in claude.ai — <strong>learn how noisy it is</strong> on your codebase before wiring it into CI.</span>
+</div>
+</div>
 
 ---
 

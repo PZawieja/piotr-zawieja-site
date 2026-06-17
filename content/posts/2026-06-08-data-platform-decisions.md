@@ -98,7 +98,7 @@ status: published
 
     <p>A better heuristic: start with the source that causes the most disagreement in meetings. In most B2B SaaS companies, that is CRM data (Salesforce) or billing data (Chargebee, Stripe). These sources power the numbers that appear in board decks and sales reviews. The moment you produce reliable, agreed-upon figures from them, you earn organisational credibility. That credibility is the political capital that funds the next six months of work.</p>
 
-    <p>Starting with a complex but low-visibility source produces an excellent pipeline that nobody notices. Build where the pain is. Build where three versions of the same spreadsheet are circulating every Monday morning.</p>
+    <p>Starting with a complex but low-visibility source produces an excellent pipeline that nobody notices — the analytics equivalent of drilling penalty kicks for a five-a-side game that never goes to penalties. Build where the pain is. Build where three versions of the same spreadsheet are circulating every Monday morning.</p>
 
     <hr>
 
@@ -128,6 +128,8 @@ Marts        — documented grain, documented owner, documented metric definitio
     <h2>Decision 3: Establish a materialisation policy, not a case-by-case habit</h2>
 
     <p>Table, view, incremental, or ephemeral — most teams decide on a per-model basis, in the moment, without a policy. That produces an inconsistent project where some marts are views (slow for dashboards), some staging models are tables (burning compute unnecessarily), and incremental models exist wherever someone once had a performance problem.</p>
+
+    <p>It's the difference between walking to the corner shop for milk every time and stocking your own fridge. A view is the corner-shop trip — always fresh, because you're reading the live source every time, but slow if you do it before every dashboard refresh. A table is the stocked fridge — fast to grab from, but only as fresh as your last shopping trip, which is exactly why a stale table is a worse failure mode than a stale view: nobody notices an empty shelf they can't see.</p>
 
     <p>A simple default policy eliminates most of the decision overhead:</p>
 
@@ -210,6 +212,8 @@ Marts        — documented grain, documented owner, documented metric definitio
 
     <p>Not all dbt models are equal. Some are certified: reviewed, tested, owned by someone accountable, safe to use in a board presentation. Others are exploratory: built for a specific analysis, not production-maintained, potentially stale after one sprint.</p>
 
+    <p>It's the difference between a reserved parking permit and a visitor pass. The permit holder gets a numbered spot, their name on file, and someone to call if it's blocked. The visitor pass gets you in for an afternoon, no guarantee it'll be there tomorrow, and nobody's annoyed if you don't renew it. Board decks should only ever park in permit spots.</p>
+
     <p>The distinction must be visible — not just understood by the team who built it, but enforced structurally so that a new analyst connecting a BI tool to the warehouse cannot accidentally land on the wrong model.</p>
 
     <p>The simplest mechanism is folder structure: <code>marts/certified/</code> and <code>marts/exploratory/</code>. BI tools connect only to <code>marts/certified/</code>. Access policies restrict direct warehouse access to the same boundary. The exploratory folder exists and is usable — it just cannot silently enter a dashboard.</p>
@@ -226,7 +230,7 @@ Marts        — documented grain, documented owner, documented metric definitio
 
     <p>A practical signal: if your team has never had a deployment conflict between two domains working in the same project, you do not need multiple projects yet. The pain that justifies splitting is real and specific — it arrives when two teams are regularly blocked waiting for each other's releases.</p>
 
-    <p>The intermediate step before splitting is <a href="https://docs.getdbt.com/docs/build/groups">dbt model groups and access policies</a>, available since dbt Core 1.5. These let you enforce ownership and access boundaries within a single project, capturing most of the governance benefit without the operational overhead of separate deployments.</p>
+    <p>The intermediate step before splitting is <a href="https://docs.getdbt.com/docs/build/groups">dbt model groups and access policies</a>, available since dbt Core 1.5. These let you enforce ownership and access boundaries within a single project, capturing most of the governance benefit without the operational overhead of separate deployments — splitting a project before you need to is the architectural equivalent of building a fence between roommates who get along fine. It's just paperwork nobody asked for.</p>
 
     <hr>
 

@@ -17,7 +17,7 @@ status: published
 
     <p>The retrieval-augmented generation pattern is straightforward enough. You chunk your documentation, embed it, store the vectors, and at query time you retrieve the most relevant chunks and let the LLM synthesise an answer. For support tickets, product documentation, and legal FAQs, this works reasonably well.</p>
 
-    <p>For business data questions, it has a structural flaw: documentation describes what was planned or what was true at some point. It does not describe what exists in the warehouse right now. Docs get written during a project kickoff, updated once when someone files a complaint, and then drift quietly into irrelevance. The metric definition in your Notion page is probably the version from three strategy pivots ago.</p>
+    <p>For business data questions, it has a structural flaw: documentation describes what was planned or what was true at some point. It does not describe what exists in the warehouse right now. Docs get written during a project kickoff, updated once when someone files a complaint, and then drift quietly into irrelevance. The metric definition in your Notion page is probably the version from three strategy pivots ago — Notion pages don't get deprecated, they just quietly become historical fiction.</p>
 
     <p>A user asks "what is our churn rate this quarter?" The RAG system retrieves a doc that says churn is calculated as cancelled MRR divided by starting MRR, churns out a confident answer, and nobody notices that the definition was revised six months ago to exclude downgrades from the numerator. The warehouse has the correct answer. The wiki does not. You indexed the wiki.</p>
 
@@ -123,6 +123,8 @@ status: published
     <h2>The alternative: governed AI on structured data</h2>
 
     <p>Instead of teaching an LLM to synthesise answers from documentation, give it access to a parameterised query layer built on top of your tested, governed dbt models. The architecture is less exciting to describe but far more reliable in practice.</p>
+
+    <p>Think of it like a taxi dispatcher versus a stranger handed a rental car in a city they've never visited. The dispatcher doesn't need to know how to drive every possible route — they just match your request ("airport, please") to a driver who already knows that exact route cold. The rental-car stranger might get you there, might take a detour through a closed bridge, and might confidently turn the wrong way down a one-way street, all while sounding sure of themselves. Free-form SQL generation against a warehouse the model has never truly "driven" is the rental car. Intent classification against a pre-approved template is the dispatcher.</p>
 
     <p>It works like this: the LLM classifies user intent, matches that intent to an allowlisted query template, fills in the parameters, executes the SQL against the warehouse, and presents the result. At no point does the LLM write SQL. It selects from a finite, reviewed set of templates.</p>
 
@@ -246,11 +248,35 @@ models:
 
     <h2>What it does not solve</h2>
 
-    <p>This pattern has a hard boundary: it can only answer questions you have templates for. Ask something outside the template library and you get nothing useful. That is not a bug — it is the point. A system that answers every question, some of them incorrectly, is harder to trust than a system that answers a defined set of questions correctly.</p>
+    <p>This pattern has a hard boundary: it can only answer questions you have templates for. Ask something outside the template library and you get nothing useful. That is not a bug — it is the point. A system that answers every question, some of them incorrectly, is harder to trust than a system that answers a defined set of questions correctly. A confidently wrong answer is a worse outcome than "I don't have a template for that" — the second one at least doesn't end up screenshotted into a board deck.</p>
 
     <p>The template library needs ongoing maintenance. When the business redefines a metric, the template changes. When a new reporting segment is introduced, a new template gets added. This is maintenance work, but it is the same maintenance work you are doing when you update your dbt models. You are not adding a new workflow, you are extending an existing one.</p>
 
     <p>It does not replace an analyst. What it does is handle the high-volume routine questions — weekly churn, last month's new MRR by segment, top churned accounts — so that analysts spend their time on questions that actually require judgement. The analyst who was running the same Snowflake query every Monday morning for six stakeholders is now available to think about something harder.</p>
+
+    <div class="decision-tree">
+    <p class="decision-tree-title">Decision Tree: RAG, governed templates, or neither?</p>
+    <div class="decision-step">
+    <span class="decision-q">Question is about policy, process, or "how do I..."</span>
+    <span class="decision-a">RAG over docs is fine — <strong>documentation</strong> is the actual source of truth here, not the warehouse.</span>
+    </div>
+    <div class="decision-step">
+    <span class="decision-q">Question is about a metric the warehouse already certifies</span>
+    <span class="decision-a">Route it through an <strong>allowlisted query template</strong> against a tested dbt mart — never let the LLM write the SQL.</span>
+    </div>
+    <div class="decision-step">
+    <span class="decision-q">Question doesn't match any existing template</span>
+    <span class="decision-a">Say so. <strong>Bounded coverage</strong> beats a confident guess against a schema the model has never really driven.</span>
+    </div>
+    <div class="decision-step">
+    <span class="decision-q">A new recurring question shows up often enough to matter</span>
+    <span class="decision-a">Add it to the template library — this is dbt-model maintenance, not a new workflow.</span>
+    </div>
+    <div class="decision-step">
+    <span class="decision-q">Your schema.yml descriptions are vague or missing</span>
+    <span class="decision-a">Fix those first — they're the same descriptions driving your intent-matching prompts.</span>
+    </div>
+    </div>
 
     <div class="takeaways">
       <h2>Takeaways</h2>

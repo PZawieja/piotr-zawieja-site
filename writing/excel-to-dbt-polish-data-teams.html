@@ -26,7 +26,7 @@
     --white:   #f0ece4;
     --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
     --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Playfair Display', 'Georgia', serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:     680px;
   }
 
@@ -54,8 +54,9 @@
     height: 52px; display: flex; align-items: center; justify-content: space-between;
   }
 
-  .nav-brand { font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
-  .nav-brand a { color: inherit; text-decoration: none; }
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
@@ -271,6 +272,50 @@
 
   .takeaways ul li { color: var(--text); font-size: 0.92rem; }
 
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -306,13 +351,21 @@
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">goldlayer.dev</a></span>
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
     <a href="../writing/" class="nav-back">← writing</a>
   </div>
 </nav>
@@ -322,7 +375,7 @@
   <header>
     <div class="article-meta">
       <span class="meta-tag">dbt</span>
-      <span class="meta-date">5 Jun 2026 · 8 min read</span>
+      <span class="meta-date">5 Jun 2026 · 9 min read</span>
     </div>
     <h1 class="article-title">From Excel to dbt: a realistic transition guide for Polish data teams</h1>
     <p class="article-lede">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
@@ -334,7 +387,8 @@
 <hr />
 <h2>The pattern</h2>
 <p>Nearly every migration I have seen follows the same arc.</p>
-<p><strong>Stage 0</strong> looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that.</p>
+<p><strong>Stage 0</strong> looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that. It's less a data architecture than a peace treaty nobody signed.</p>
+<p>In plain English, this is the same disagreement VAR brought to football. The replay is not the problem — everyone can see the same frozen frame of the offside line. The argument is about which moment and which body part the rule actually means, and two broadcasters can draw the line slightly differently from identical footage. Finance and Customer Success aren't disagreeing because one of their spreadsheets has a typo. They're disagreeing because nobody ever agreed on what "active customer" means, so the same underlying data produces two confident, contradictory rulings.</p>
 <p>Then someone joins who knows SQL well. Things move to BigQuery or Snowflake. dbt gets installed over a weekend. Month one through three: it works beautifully. Clean staging models, a few marts, a DAG that makes sense. The team is proud, and they should be.</p>
 <p>Month six through twelve: the project has forty models, Finance is still using the spreadsheet from 2022, and nobody can agree on what "active customer" means. The dbt project is technically correct. It is also not trusted.</p>
 <p>The thing they skipped was agreeing on definitions before building models. That is not a dbt problem. That is a data governance problem, and dbt cannot solve it on your behalf.</p>
@@ -373,7 +427,7 @@ FROM {{ source('crm', 'customers') }}
 </code></pre>
 <p>A staging layer that contains derived logic is a staging layer you will regret in six months.</p>
 <h3>Stage 3: Build marts that match your current Excel outputs first</h3>
-<p>Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off.</p>
+<p>Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Think of it the way a movie remake earns the right to change the ending: not by being objectively better on day one, but by first proving it understood the original. Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off — fixing them now is how a trust-building project quietly turns into an eight-month rebuild nobody asked for.</p>
 <pre><code class="language-yaml"># models/marts/schema.yml
 version: 2
 
@@ -432,9 +486,34 @@ def check_parity(dbt_df: pd.DataFrame, excel_df: pd.DataFrame, tolerance: float 
 </code></pre>
 <p>Running this script before each month-end close builds a paper trail that makes the retirement conversation much easier.</p>
 <hr />
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">If Finance and CS already disagree on a metric</span>
+<span class="decision-a">Stop. Resolve the <strong>definition</strong> before writing a single dbt model — the migration cannot fix a disagreement the business hasn't settled.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If dbt's number differs from the Excel it replaces</span>
+<span class="decision-a">Assume the dbt model is wrong until proven otherwise — not the spreadsheet, even if you suspect the spreadsheet has flaws.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If parity holds for fewer than three billing cycles</span>
+<span class="decision-a">Keep running both systems in parallel — one good week is not three good months.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If a stakeholder asks "where did this number come from" and you don't have a written answer</span>
+<span class="decision-a">The model isn't ready to ship, regardless of test coverage.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If you spot a number you want to "fix" while matching Excel</span>
+<span class="decision-a">Log it. Fix it later, with sign-off — not in the same pass where you're trying to earn trust.</span>
+</div>
+</div>
+
+<hr />
 <h2>The one thing that makes it stick</h2>
 <p>The transition fails when dbt is treated as a technical upgrade and succeeds when it is treated as a trust-building project.</p>
-<p>Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.</p>
+<p>Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer — reasonably so, since nobody has ever closed a deal by admiring a DAG. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.</p>
 <p>Write the documentation before anyone asks for it. Define "active customer" in your schema.yml before Finance asks why dbt's count differs from theirs. Set up the parity tests before the first month-end. Make the process visible.</p>
 <p>The Polish data market is moving fast. Senior analytics engineers who can take a team through this transition — combining technical depth with the stakeholder work — are in genuinely short supply. The teams that invest in this skill set are building something durable.</p>
 <hr />

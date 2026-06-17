@@ -2,7 +2,7 @@
 date: 2026-06-14
 description: Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.
 published_at: '2026-06-14T12:19:51Z'
-read_time: 9
+read_time: 10
 slug: dimensional-modeling-dbt-practical-patterns
 status: published
 tags: [dbt]
@@ -10,6 +10,8 @@ title: 'Dimensional modeling in dbt: the patterns that don''t fit the textbook'
 ---
 
 The textbook version of dimensional modeling is clean. Fact tables at the center, dimension tables surrounding them, foreign keys connecting them, surrogate keys disambiguating natural keys from different source systems. Every row in `fct_orders` points to a row in `dim_customer`, `dim_product`, `dim_date`. Star schema. Done.
+
+Reality, as usual, skipped the memo.
 
 Reality is messier. Customers change their email address. Products move between categories. The same date dimension needs to be referenced three times on the same fact table for order date, ship date, and return date. Orders can have multiple promotional codes.
 
@@ -125,7 +127,7 @@ SELECT
 FROM {{ ref('stg_order_lines') }}
 ```
 
-`order_id` is a degenerate dimension. There is no separate `dim_orders` table — the order itself has no attributes beyond those that already belong to the line items or to the customer. The order identifier lives directly on the fact row.
+`order_id` is a degenerate dimension. There is no separate `dim_orders` table — the order itself has no attributes beyond those that already belong to the line items or to the customer. The order identifier lives directly on the fact row. It's the data-warehouse equivalent of a receipt with no header — just line items stapled together with a shared number at the top.
 
 When should you promote a degenerate dimension to a full dimension table? When the "header" entity starts acquiring attributes that don't belong on the line. If orders have shipping addresses, discount codes, channel sources, and fulfillment statuses — those are order-level attributes that warrant a `dim_orders` table. If an order is nothing more than a grouping key for line items, keep it degenerate.
 
@@ -134,6 +136,8 @@ When should you promote a degenerate dimension to a full dimension table? When t
 ## Role-playing dimensions
 
 `dim_date` typically appears once in a star schema diagram. In practice it appears three or four times on the same fact table.
+
+In plain English: this is the same situation as an actor playing three characters in the same film — same person, same résumé, but the credits list them three times under three different names because the story needs three different roles filled. `dim_date` is the actor. Order Date, Ship Date, and Return Date are the roles. The table doesn't change; what changes is which role it's playing at that point in the query — same employee, three name badges.
 
 ```sql
 -- models/marts/fct_orders.sql
@@ -188,6 +192,8 @@ Common examples:
 - A product in multiple categories
 - An order with multiple applied promotions
 
+In plain English, think of a single soccer match with multiple goal scorers. The match itself is one row — one fact. The scorers are a separate list, and a match can have zero, one, or five of them. If you naively join the match table to the scorers table to "enrich" it with scorer names, you don't get one row per match anymore — you get one row per goal. Attendance, ticket revenue, anything that lived on the match row, now silently multiplies by however many goals were scored. Nobody changed the data; the join just stopped respecting the original grain.
+
 The bridge table is a narrow join table at the relationship grain:
 
 ```sql
@@ -230,6 +236,36 @@ INNER JOIN {{ ref('brd_customer_tags') }} t
 ```
 
 Option A preserves the fact grain and returns all tags as an array. Option B intentionally scopes to a subset — only orders from enterprise-tagged customers. Both are valid; the choice depends on what the downstream consumer needs.
+
+---
+
+<div class="decision-tree">
+<p class="decision-tree-title">Decision Tree</p>
+<div class="decision-step">
+<span class="decision-q">If an attribute changes and you need history</span>
+<span class="decision-a">Use a <strong>dbt snapshot</strong> (SCD Type 2) — never an incremental model, which overwrites the old value.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If an attribute changes and you don't need history</span>
+<span class="decision-a">Skip snapshots entirely — just let the dimension overwrite. History you'll never query is a maintenance cost with no payoff.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If an entity has no attributes beyond a grouping key</span>
+<span class="decision-a">Keep it a <strong>degenerate dimension</strong> on the fact table — don't build a dimension table for an entity that has nothing to describe.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If that entity later acquires header-level attributes</span>
+<span class="decision-a">Promote it to a real dimension table — shipping address, discount codes, and channel source belong on `dim_orders`, not scattered across line items.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If a fact relates to multiple members of a dimension</span>
+<span class="decision-a">Use a <strong>bridge table</strong>, and aggregate or filter before joining — joining through it unguarded multiplies your fact rows.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">If it's a single dashboard with one analyst and three metrics</span>
+<span class="decision-a">Skip dimensional modeling — a wide mart is simpler, faster to build, and easier to debug than a star schema nobody else queries.</span>
+</div>
+</div>
 
 ---
 

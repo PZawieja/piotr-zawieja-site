@@ -31,7 +31,7 @@
     --green:     #6db87a;
     --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
     --sans:      'Inter', system-ui, -apple-system, sans-serif;
-    --serif:     'Playfair Display', 'Georgia', serif;
+    --serif:     'Space Grotesk', 'Inter', system-ui, sans-serif;
     --max:       900px;
     --gap:       2rem;
   }
@@ -92,11 +92,16 @@
   }
 
   .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
     font-family: var(--mono);
     font-size: 0.8rem;
     color: var(--accent2);
     letter-spacing: 0.05em;
   }
+
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
 
   .nav-links {
     display: flex;
@@ -183,6 +188,29 @@
   }
 
   .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; gap: 3rem; align-items: center; }
+  .hero-text { min-width: 0; }
+
+  .hero-photo-wrap { display: flex; justify-content: center; min-width: 0; }
+
+  .hero-photo-frame {
+    width: 100%;
+    max-width: 260px;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(200,169,110,0.3);
+    box-shadow: 0 30px 80px -20px rgba(200,169,110,0.25);
+  }
+
+  .hero-photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.1) contrast(1.05);
+  }
 
   .btn {
     display: inline-flex;
@@ -609,6 +637,9 @@
   @media (max-width: 768px) {
     .nav-links { display: none; }
     .about-grid { grid-template-columns: 1fr; }
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-photo-wrap { order: -1; margin-bottom: 1.5rem; }
+    .hero-photo-frame { max-width: 180px; }
     .projects-grid { grid-template-columns: 1fr !important; }
     .contact-inner { grid-template-columns: 1fr; }
     section { padding: 3rem 0; }
@@ -662,14 +693,22 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <!-- ─── Navigation ──────────────────────────────────────────── -->
 <nav>
   <div class="inner">
-    <span class="nav-brand">goldlayer.dev</span>
+    <span class="nav-brand">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </span>
     <ul class="nav-links">
       <li><a href="#about">about</a></li>
       <li><a href="#stack">stack</a></li>
@@ -685,38 +724,48 @@
 <!-- ─── Hero ─────────────────────────────────────────────────── -->
 <section id="hero">
   <div class="container">
-    <div class="hero-meta">
-      <span class="hero-dot"></span>
-      <span class="hero-status">Berlin · Warsaw · Cracow · Open to remote across EU/UK timezones</span>
-    </div>
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-meta">
+          <span class="hero-dot"></span>
+          <span class="hero-status">Berlin · Warsaw · Cracow · Open to remote across EU/UK timezones</span>
+        </div>
 
-    <h1 class="hero-title">
-      Piotr Zawieja
-      <span class="line-muted">Analytics Engineer</span>
-    </h1>
+        <h1 class="hero-title">
+          Piotr Zawieja
+          <span class="line-muted">Analytics Engineer</span>
+        </h1>
 
-    <p class="hero-hook">
-      If different teams disagree on the numbers,<br>the problem isn't data. It's trust.
-    </p>
+        <p class="hero-hook">
+          If different teams disagree on the numbers,<br>the problem isn't data. It's trust.
+        </p>
 
-    <p class="hero-sub">
-      I build the data layer that ends that conversation — clean definitions, tested pipelines, one version of MRR, churn, and pipeline that everyone can rely on.
-    </p>
+        <p class="hero-sub">
+          I build the data layer that ends that conversation — clean definitions, tested pipelines, one version of MRR, churn, and pipeline that everyone can rely on.
+        </p>
 
-    <p class="hero-tags">
-      8+ years in B2B SaaS &nbsp;·&nbsp; Snowflake &nbsp;·&nbsp; dbt &nbsp;·&nbsp; End-to-end analytics systems &nbsp;·&nbsp; Self-service data layers &nbsp;·&nbsp; AI-assisted analytics
-    </p>
+        <p class="hero-tags">
+          8+ years in B2B SaaS &nbsp;·&nbsp; Snowflake &nbsp;·&nbsp; dbt &nbsp;·&nbsp; End-to-end analytics systems &nbsp;·&nbsp; Self-service data layers &nbsp;·&nbsp; AI-assisted analytics
+        </p>
 
-    <div class="hero-actions">
-      <a href="https://github.com/PZawieja" class="btn btn-primary" target="_blank" rel="noopener">
-        ↗ GitHub
-      </a>
-      <a href="https://linkedin.com/in/piotr-zawieja" class="btn btn-ghost" target="_blank" rel="noopener">
-        LinkedIn
-      </a>
-      <a href="mailto:piotr.zawieja.pl@gmail.com" class="btn btn-ghost">
-        Email
-      </a>
+        <div class="hero-actions">
+          <a href="https://github.com/PZawieja" class="btn btn-primary" target="_blank" rel="noopener">
+            ↗ GitHub
+          </a>
+          <a href="https://linkedin.com/in/piotr-zawieja" class="btn btn-ghost" target="_blank" rel="noopener">
+            LinkedIn
+          </a>
+          <a href="mailto:piotr.zawieja.pl@gmail.com" class="btn btn-ghost">
+            Email
+          </a>
+        </div>
+      </div>
+
+      <div class="hero-photo-wrap">
+        <div class="hero-photo-frame">
+          <img src="assets/piotr.jpg" alt="Piotr Zawieja" loading="eager">
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -1031,7 +1080,7 @@
       <a href="writing/snowflake-clustering-keys-guide.html" class="writing-item">
         <div class="writing-item-meta">
           <span class="writing-tag">Snowflake</span>
-          <span class="writing-date">16 Jun 2026 · 9 min read</span>
+          <span class="writing-date">16 Jun 2026 · 10 min read</span>
         </div>
         <h3 class="writing-title">Snowflake clustering keys: what they are, when they help, and when to skip them</h3>
         <p class="writing-lede">Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
@@ -1039,7 +1088,7 @@
       <a href="writing/dbt-idempotency-pipelines.html" class="writing-item">
         <div class="writing-item-meta">
           <span class="writing-tag">dbt</span>
-          <span class="writing-date">16 Jun 2026 · 8 min read</span>
+          <span class="writing-date">16 Jun 2026 · 9 min read</span>
         </div>
         <h3 class="writing-title">Idempotency in dbt: the one pipeline property worth obsessing over</h3>
         <p class="writing-lede">Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</p>
@@ -1047,7 +1096,7 @@
       <a href="writing/ai-for-analytics-engineering.html" class="writing-item">
         <div class="writing-item-meta">
           <span class="writing-tag">AI</span>
-          <span class="writing-date">14 Jun 2026 · 8 min read</span>
+          <span class="writing-date">14 Jun 2026 · 9 min read</span>
         </div>
         <h3 class="writing-title">AI for analytics engineering: where it actually helps and where it doesn't</h3>
         <p class="writing-lede">Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</p>
@@ -1063,7 +1112,7 @@
       <a href="writing/dimensional-modeling-dbt-practical-patterns.html" class="writing-item">
         <div class="writing-item-meta">
           <span class="writing-tag">dbt</span>
-          <span class="writing-date">14 Jun 2026 · 9 min read</span>
+          <span class="writing-date">14 Jun 2026 · 10 min read</span>
         </div>
         <h3 class="writing-title">Dimensional modeling in dbt: the patterns that don't fit the textbook</h3>
         <p class="writing-lede">Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</p>
