@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Reconciling competing metric definitions across teams with an LLM</title>
+      <link>https://goldlayer.dev/writing/reconciling-metric-definitions-llm.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/reconciling-metric-definitions-llm.html</guid>
+      <pubDate>Sun, 21 Jun 2026 21:29:05 +0000</pubDate>
+      <description>An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.</description>
+    </item>
+    <item>
       <title>Forecasting with an LLM vs. a real time-series model: where each one is the right call</title>
       <link>https://goldlayer.dev/writing/forecasting-llm-vs-time-series-model.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/forecasting-llm-vs-time-series-model.html</guid>

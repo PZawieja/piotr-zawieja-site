@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reconciling competing metric definitions across teams with an LLM — Piotr Zawieja</title>
+<meta name="description" content="An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.">
+<meta property="og:title" content="Reconciling competing metric definitions across teams with an LLM">
+<meta property="og:description" content="An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.">
+<meta property="og:url" content="https://goldlayer.dev/writing/reconciling-metric-definitions-llm.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-date">21 Jun 2026 · 8 min read</span>
+    </div>
+    <h1 class="article-title">Reconciling competing metric definitions across teams with an LLM</h1>
+    <p class="article-lede">An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Sales says 1,840 active customers this month. Finance says 1,510. Product says 2,260. All three numbers are in the same QBR deck. Nobody on the call can explain the gap in real time, so the meeting moves on, and three teams keep reporting three different versions of the same metric for another quarter.</p>
+<p>This isn't a data quality bug. Every one of those numbers is computed correctly from its team's own definition — Sales counts anyone who logged in in the last 30 days, Finance counts anyone with a paid invoice in the last 90, Product counts anyone who performed a core action in the last 7. The bug is that nobody agreed on what "active" means, and nobody has a fast way to find every place that decision got made differently.</p>
+<p>That's a genuinely good problem to hand an LLM — with a specific, narrow job description. Not "decide what active customer means." It can't, and it shouldn't get to. Its job is finding every existing definition, showing precisely where they diverge, and drafting the document that gets humans to a decision faster. The decision itself stays human.</p>
+<hr />
+<h2>Step 1 — Inventory every definition that already exists</h2>
+<p>The definitions are never in one place. They're scattered across dbt models, BI tool calculated fields, semantic layer YAML, and a Notion doc someone wrote eighteen months ago that's now wrong. Before you can reconcile anything, you need all of them pulled into one format you can actually compare.</p>
+<p>This is the part an LLM is well-suited for, because the inputs are heterogeneous and the extraction is a parsing-and-summarizing task, not a numerical one. Feed it a dbt model's SQL, a LookML calculated field, and a Tableau calc field, and ask it to extract the same structured shape from each:</p>
+<pre><code class="language-text">Extract this metric definition into JSON with this shape:
+{ &quot;name&quot;: str, &quot;filter_conditions&quot;: [str], &quot;time_window_days&quot;: int,
+  &quot;aggregation&quot;: str, &quot;source_table&quot;: str }
+
+Input (dbt model int_active_customers.sql):
+&lt;paste SQL&gt;
+
+Input (LookML, customer_explore.view.lkml):
+&lt;paste LookML&gt;
+</code></pre>
+<p>The LLM is good at this specifically because each source format encodes the same concept differently — a <code>WHERE</code> clause in SQL, a filter parameter in LookML, a calculated field formula in Tableau — and normalizing across formats is exactly the kind of translation task language models handle reliably. What it should not do at this stage is judge any of them. The output is raw inventory, not analysis.</p>
+<hr />
+<h2>Step 2 — Diff the definitions with code, not vibes</h2>
+<p>Once every definition is in the same structured shape, the comparison itself should be deterministic code, not another LLM call. This is the step people skip, and it's the one that matters most: asking an LLM "do these definitions agree?" gets you a prose answer that sounds authoritative and may or may not be checking the right fields. Diffing structured JSON objects gets you an exact, reproducible answer.</p>
+<pre><code class="language-python">def diff_definitions(defs: list[dict]) -&gt; dict:
+    return {
+        &quot;time_window_days&quot;: {d[&quot;name&quot;]: d[&quot;time_window_days&quot;] for d in defs},
+        &quot;aggregation&quot;: {d[&quot;name&quot;]: d[&quot;aggregation&quot;] for d in defs},
+        &quot;filter_conditions&quot;: {d[&quot;name&quot;]: set(d[&quot;filter_conditions&quot;]) for d in defs},
+    }
+</code></pre>
+<p>Run that over the three extracted definitions and you get something unambiguous: Sales uses a 30-day window on <code>last_login_at</code>, Finance uses a 90-day window on <code>paid_invoice_at</code>, Product uses a 7-day window on <code>core_action_at</code>. That's the actual divergence, stated precisely enough that the conversation can start from "we're measuring three different behaviors over three different windows" instead of "the numbers don't match, IT must be wrong."</p>
+<p>This is the same lesson that applies to any LLM-in-the-loop pipeline step: use the model for the part that requires language understanding — parsing heterogeneous formats — and use plain code for the part that requires correctness — comparison. Letting an LLM do the diffing too is where teams end up trusting a summary that quietly missed that one definition also excludes trial accounts and the others don't.</p>
+<hr />
+<h2>Step 3 — Draft the reconciliation document, not the decision</h2>
+<p>With the exact divergence in hand, an LLM is a genuinely fast way to produce the first draft of the document that gets put in front of stakeholders. Not a recommendation — a structured comparison that makes the tradeoff visible:</p>
+<pre><code class="language-text">Given these three metric definitions and their exact divergence
+points, write a comparison document for a stakeholder review. For
+each definition: what it measures, why that team likely chose it,
+and what decision it's optimized for. Do not recommend a winner.
+End with three explicit open questions the group needs to resolve.
+</code></pre>
+<p>The "do not recommend a winner" instruction matters as much as anything else in this workflow. The LLM has no information about why Finance is contractually required to use paid-invoice activity for revenue recognition, or why Product's 7-day window matches their actual engagement loop. Those are organizational facts, not facts in the data. Let it write the comparison; let humans own the call.</p>
+<hr />
+<h2>Step 4 — Codify the decision once it's made</h2>
+<p>Once the room agrees on a canonical definition — or agrees that "active" genuinely means three different things and needs three differently-named metrics — the unglamorous work is migrating every downstream consumer to reference the canonical version instead of recomputing its own. This is where a dbt Semantic Layer metric or a single governed <code>int_</code> model earns its keep: one place to change the definition, one place every BI tool points back to.</p>
+<p>An LLM can speed up the migration scan: given the canonical metric and the inventory from Step 1, ask it to list every dashboard, calculated field, or model whose logic now needs to be replaced with a reference to the canonical metric. That's a search-and-flag task it handles well. Actually rewriting twenty Tableau calculated fields and confirming each dashboard still renders correctly is still a human doing the work, dashboard by dashboard.</p>
+<hr />
+<h2>Where this breaks</h2>
+<ul>
+<li><strong>Letting the model merge ambiguous definitions instead of surfacing them.</strong> If you ask an LLM to "reconcile" rather than "diff," it will sometimes average or blend conflicting logic into something that satisfies neither team and is wrong for both. Keep the extraction, diff, and recommendation steps separate so this can't happen silently.</li>
+<li><strong>Treating the draft document as the decision.</strong> The whole value of Step 3 is that it's a draft. If it gets forwarded as final without a human reviewing whether the open questions were actually answered, you've just automated the production of organizational consensus theater.</li>
+<li><strong>Definitions that were never written down anywhere extractable.</strong> A number someone manually maintains in a spreadsheet, with the logic in their head, has nothing for the LLM to parse. The inventory step only finds what exists in a parseable form — which is itself useful information, because "this metric has no documented source" is often the actual root cause.</li>
+</ul>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<div class="tradeoff-cell">Task</div>
+<div class="tradeoff-cell">Good fit for an LLM</div>
+<div class="tradeoff-cell">Needs a human</div>
+<div class="tradeoff-cell">Why</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Extracting a definition from SQL, LookML, or a calc field</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Parsing heterogeneous formats into a common shape is a language task</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Diffing two structured definitions</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Code</div>
+<div class="tradeoff-cell">Needs an exact, reproducible answer, not a prose summary</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Drafting the stakeholder comparison doc</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">Reviews it</div>
+<div class="tradeoff-cell">Speeds up the writing; the framing still needs a human check</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Choosing the canonical definition</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">Requires organizational context the model doesn't have</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Finding downstream consumers to migrate</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">Executes it</div>
+<div class="tradeoff-cell">Search-and-flag is reliable; rewriting and verifying each dashboard isn't automated</div>
+</div>
+</div>
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>An LLM should never pick the canonical metric definition.</strong> That's an organizational decision with context the model doesn't have access to.</li>
+<li><strong>Use the LLM to extract and normalize, not to compare.</strong> Diffing structured definitions should be deterministic code — it needs an exact answer, not a confident-sounding one.</li>
+<li><strong>The highest-value output is a draft comparison document, not a recommendation.</strong> Explicitly instruct the model not to recommend a winner — that's the part that keeps the workflow honest.</li>
+<li><strong>Codify the decision in one place once it's made.</strong> A dbt Semantic Layer metric or a single governed model is what stops the next divergence from happening the same way.</li>
+<li><strong>This only surfaces definitions that exist in parseable form.</strong> A metric with no documented logic anywhere is itself a finding, not a gap in the workflow.</li>
+</ul>
+</div>
+
+<p>How many definitions of your most-quoted metric exist right now, and could you actually list them without asking three different people?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>
