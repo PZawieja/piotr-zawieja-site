@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forecasting with an LLM vs. a real time-series model: where each one is the right call — Piotr Zawieja</title>
+<meta name="description" content="An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.">
+<meta property="og:title" content="Forecasting with an LLM vs. a real time-series model: where each one is the right call">
+<meta property="og:description" content="An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.">
+<meta property="og:url" content="https://goldlayer.dev/writing/forecasting-llm-vs-time-series-model.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-date">21 Jun 2026 · 9 min read</span>
+    </div>
+    <h1 class="article-title">Forecasting with an LLM vs. a real time-series model: where each one is the right call</h1>
+    <p class="article-lede">An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Someone on the team pastes eighteen months of MRR into Claude and asks it to forecast next quarter. It comes back with three numbers, a confident paragraph about "steady month-over-month growth continuing into Q3," and no error bars. It goes into the board deck. Nobody asks how it was computed, because the paragraph sounds like it knows what it's talking about.</p>
+<p>Sometimes that's completely fine. Sometimes it's how a real number ends up in a budget commitment with no statistical basis at all. The difference is whether you understand what the model is actually doing under the hood, and most people asking an LLM to forecast don't.</p>
+<hr />
+<h2>What an LLM is actually doing when you ask it to forecast</h2>
+<p>An LLM has no built-in time-series machinery. When you hand it a column of monthly numbers and ask for a forecast, it isn't fitting a model — it's doing next-token-style pattern completion over a textual representation of your series, informed by whatever forecasting reasoning it picked up from training data. In practice that mostly looks like: estimate the recent trend, project it forward, round to something plausible.</p>
+<p>That works fine when your data is close to a straight line. It falls apart the moment there's structure the model has to actually estimate rather than eyeball.</p>
+<p>Take a retail revenue series with a real December spike. Feed an LLM 24 months of that data and ask it to forecast the next December without telling it explicitly to expect seasonality, and it will almost always under-forecast the spike — it's anchoring on the last few months it saw, which are probably not December. It has no internal concept of "seasonal period," no decomposition step, no way to separate trend from noise from a recurring cycle unless you spell the cycle out in the prompt. Tell it "this business has a strong December seasonal spike, account for that" and the output gets noticeably better — which is itself the tell. The model isn't discovering the pattern from the data; it's following an instruction you gave it.</p>
+<p>The same gap shows up with confidence intervals. Ask for one and the LLM will produce numbers that look like an interval — a low estimate, a high estimate — but they aren't derived from anything resembling residual variance or a fitted distribution. They're a plausible-sounding spread, generated the same way the point forecast was. If you backtest them against actual outcomes, they're not calibrated. A model that says "80% confidence" should be right about 80% of the time across many forecasts. An LLM's stated confidence has no such property.</p>
+<hr />
+<h2>What a real time-series model does that an LLM structurally can't</h2>
+<p>A statistical forecasting model — exponential smoothing (ETS), ARIMA, Prophet, or anything in that family — fits parameters to your actual data by minimizing an error function. It decomposes the series into trend, seasonality, and residual, estimates each one from the numbers you give it, and produces a forecast plus a prediction interval derived from the residual variance. None of that is approximate in the same way an LLM's output is approximate — it's the literal mechanism, not a stylistic feature of the response.</p>
+<pre><code class="language-python">import pandas as pd
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
+
+df = pd.read_sql(
+    &quot;SELECT month, mrr FROM analytics.fct_mrr_monthly ORDER BY month&quot;,
+    con,
+)
+
+model = ExponentialSmoothing(
+    df[&quot;mrr&quot;],
+    trend=&quot;add&quot;,
+    seasonal=&quot;add&quot;,
+    seasonal_periods=12,
+).fit()
+
+forecast = model.forecast(3)
+</code></pre>
+<p>That <code>seasonal_periods=12</code> line is doing the thing the LLM can't do on its own: it forces the model to estimate a recurring 12-month cycle from the data itself, not from a hint in a prompt. You also get a forecast you can backtest — hold out the last six months, fit on the rest, compare forecast to actuals with MAPE or MASE, and you have a number that tells you whether this model version is actually getting better or worse over time. That comparison doesn't exist for "ask the LLM and see if the paragraph sounds confident."</p>
+<hr />
+<h2>Where the LLM is genuinely the right tool</h2>
+<p>This isn't an argument for never using an LLM near a forecast. It's an argument for being precise about which job it's doing.</p>
+<ul>
+<li><strong>Narrating the output.</strong> A fitted model gives you a forecast, an interval, and a pile of residuals. Turning that into "Q3 is forecast at $412K, down from $430K last quarter, mainly because growth has flattened since the pricing change in May" is a job an LLM does well — it's summarizing structured output, not generating numbers.</li>
+<li><strong>Anomaly triage on residuals.</strong> Point an LLM at the gap between forecast and actuals each month and ask it to flag the outliers and correlate them against a calendar of known events — launches, outages, pricing changes, holidays. It's good at connecting "March was 18% under forecast" to "that's the month the outage took checkout down for six hours," especially if you give it access to a changelog or incident log.</li>
+<li><strong>Qualitative what-ifs.</strong> "We're launching a new SKU in August — how should that change our assumptions?" has no clean numeric answer from a fitted model, because there's no historical data for the new SKU. An LLM reasoning over comparable product launches, market context, and stated assumptions is a reasonable way to think through the adjustment, as long as everyone treats the output as a judgment call, not a forecast.</li>
+<li><strong>Cold start, zero history.</strong> If a time series literally doesn't exist yet — brand-new product, brand-new market — there's nothing for ETS or Prophet to fit. An LLM reasoning from comparable products or stated assumptions is arguably more useful here than forcing a statistical model that has no signal to work with. The honest framing is "this is an estimate from analogy," not "this is a forecast."</li>
+</ul>
+<hr />
+<h2>Where you need the real model, full stop</h2>
+<ul>
+<li><strong>Anything tied to a financial commitment.</strong> Budget, headcount, inventory orders, anything that becomes a number someone is held accountable to hitting. You need a calibrated interval, not a confident-sounding paragraph, and you need to be able to explain the method if someone asks.</li>
+<li><strong>A recurring seasonal pattern with enough history to estimate it.</strong> If you have two or more full cycles of data, fit the cycle — don't ask a language model to eyeball it.</li>
+<li><strong>Backtestable accuracy you track over time.</strong> If you're going to compare forecast accuracy release over release, or alert when a model's error rate creeps up, you need a metric computed the same way every time. MAPE on an LLM's output isn't meaningless, but it's measuring something different every time the underlying model version changes underneath you.</li>
+<li><strong>Reproducibility.</strong> Same inputs, same model, same forecast — every run. An LLM's output can shift across model versions and even across runs of the same prompt in ways that are hard to pin down. That's a real problem the moment the number ends up somewhere that needs to be defensible after the fact.</li>
+</ul>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<div class="tradeoff-cell">Situation</div>
+<div class="tradeoff-cell">Use a real model</div>
+<div class="tradeoff-cell">Use an LLM</div>
+<div class="tradeoff-cell">Why</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Recurring seasonality, 2+ years of history</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">LLM only follows seasonality if you state it; the model estimates it from data</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Number feeds a budget or headcount commitment</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Needs a calibrated interval and a defensible method</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Explaining why the forecast moved</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">Narrating structured output is a language task, not a math task</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Flagging anomalies against known events</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Yes</div>
+<div class="tradeoff-cell">Correlating residuals with a changelog or incident log is reasoning, not estimation</div>
+</div>
+<div class="tradeoff-row">
+<div class="tradeoff-cell">Brand-new product, zero history</div>
+<div class="tradeoff-cell">No</div>
+<div class="tradeoff-cell">Yes (as an estimate, not a forecast)</div>
+<div class="tradeoff-cell">There's no signal for a statistical model to fit</div>
+</div>
+</div>
+
+<hr />
+<h2>A workflow that uses both correctly</h2>
+<p>The pattern that holds up in practice: a dbt mart with monthly actuals feeds a scheduled Python job that fits ETS or Prophet and writes the forecast plus its prediction interval back into a mart. An LLM never touches the number. It consumes the forecast, the interval, and the residuals, and its only jobs are narration and anomaly flagging — constrained explicitly so it can't quietly replace the model's output with its own guess.</p>
+<pre><code class="language-text">You are given a fitted forecast for monthly MRR: point estimate, 80%
+prediction interval, and the last 6 months of forecast-vs-actual
+residuals. Do not produce a different forecast number. Write a
+3-sentence summary of the trend, and flag any residual larger than
+1.5x the typical deviation, naming the month and asking whether a
+known event (launch, outage, pricing change) explains it.
+</code></pre>
+<p>That constraint — "do not produce a different forecast number" — is the whole point. It keeps the LLM in the lane where it's actually good (language, correlation, summarization) and out of the lane where it's structurally weaker than a model built for the job.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>An LLM extrapolates a trend; it doesn't fit a model.</strong> Without an explicit instruction, it won't discover seasonality on its own — it anchors on whatever it last saw in the series.</li>
+<li><strong>LLM confidence intervals aren't calibrated.</strong> They look like an interval but aren't derived from residual variance, so they don't carry the statistical guarantee a real one does.</li>
+<li><strong>Use ETS, ARIMA, or Prophet when there's history to fit.</strong> Two or more seasonal cycles of data is enough signal that guessing is the wrong tool.</li>
+<li><strong>Use the LLM to narrate and flag, not to forecast.</strong> Summarizing a fitted model's output and correlating residuals with known events is a language task it's genuinely good at.</li>
+<li><strong>Cold-start forecasting (zero history) is the one case where an LLM's reasoning-by-analogy is arguably more honest than forcing a statistical model to fit noise.</strong> Just label it an estimate, not a forecast.</li>
+<li><strong>Anything tied to a financial commitment needs a reproducible, backtestable method.</strong> That rules out asking a model whose version and output can shift under you.</li>
+</ul>
+</div>
+
+<p>Where in your stack is a forecast currently coming from a prompt instead of a fitted model — and would anyone notice if the number were wrong?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+</body>
+</html>

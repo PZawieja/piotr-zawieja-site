@@ -113,7 +113,10 @@ def check_description_length(post) -> None:
 
 def _css_classes_in_template() -> set[str]:
     text = TEMPLATE.read_text(encoding="utf-8")
-    return set(re.findall(r"\.([\w-]+)\s*\{", text))
+    classes = set()
+    for selector_list in re.findall(r"([^{}]+)\{", text):
+        classes.update(re.findall(r"\.([\w-]+)", selector_list))
+    return classes
 
 
 def _body_html(article_html: str) -> str:
