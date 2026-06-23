@@ -120,12 +120,26 @@
     max-width: 100%; display: block;
     border: 1px solid var(--border); border-radius: 8px;
     margin: 1.75rem 0;
+    cursor: zoom-in;
   }
 
   .article-body figure { margin: 1.75rem 0; }
   .article-body figure img { margin: 0 0 0.6rem; }
   .article-body figcaption {
     font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
   }
 
   /* ─── Code ─────────────────────────────────────────────────── */
@@ -389,7 +403,7 @@
     <div class="article-meta">
       <span class="meta-tag">AI</span>
       <span class="meta-tag">dbt</span>
-      <span class="meta-date">23 Jun 2026 · 10 min read</span>
+      <span class="meta-date">23 Jun 2026 · 11 min read</span>
     </div>
     <h1 class="article-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h1>
     <p class="article-lede">A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
@@ -487,8 +501,8 @@ ai/           ai_* views — only what's in dim_ai_allowed_assets is queryable
 <h2>Where it broke</h2>
 <p>The honest version of "what was hard," in build order:</p>
 <p><strong>The first UI was Streamlit. It had to go.</strong> Streamlit is fast to prototype with and bad at being a real product — no real routing, awkward state management once you have three views that need to share context (an account clicked in Accounts has to land pre-loaded in Intelligence). I rewrote the whole frontend as a vanilla JS SPA over a FastAPI backend. More code, but it's <em>my</em> code, not a framework's opinion about how state should work.</p>
-<p><strong>The SPA boot order broke — twice.</strong> First pass: <code>DOMContentLoaded</code> fired before <code>portfolio.js</code> had finished loading when scripts sat in <code>&lt;body&gt;</code> behind a catch-all SPA route, so the dashboard sometimes rendered empty on first load. Fix one was deferring <code>showView('portfolio')</code> to <code>DOMContentLoaded</code> — which helped but was still timing-dependent. The real fix was inverting the dependency: <code>portfolio.js</code> calls <code>loadPortfolio()</code> itself the moment it finishes loading, instead of waiting to be told to. <code>app.js</code> just marks portfolio as already-initialized so a nav click doesn't double-fire it. Don't trust load-order races to resolve themselves; make the module that has the data responsible for announcing it's ready.</p>
-<p><strong>Jinja2 picked a bad day to add caching.</strong> Serving <code>index.html</code> through <code>Jinja2Templates.TemplateResponse</code> started throwing an "unhashable type" error on newer Starlette versions, because the template had zero variables to substitute and didn't need to be a Jinja2 template at all. Swapped it for a plain <code>FileResponse</code>. The lesson there isn't about Jinja2 specifically — it's that pulling in a templating engine for a file that templates nothing is a dependency you don't need, and dependencies you don't need are the ones that break on an upstream version bump you didn't ask for.</p>
+<p><strong>The dashboard sometimes loaded empty — for no reason I could reproduce on purpose.</strong> The charts were trying to draw themselves before the data had actually arrived. It's the same failure mode as a downstream dbt model running before its upstream source has finished loading: everything looks fine in isolation, and it only breaks on the timing you didn't test. My first fix was to make the page wait a little longer before drawing — which helped, but "wait a little longer" is never a real fix, just a smaller window for the same race. The actual fix was flipping who's in charge: instead of the page guessing when the data is ready and going to fetch it, the part of the code that <em>has</em> the data announces "I'm done" the moment it finishes, and everything else reacts to that. Same principle as triggering a pipeline off a completion event instead of polling a table until the row count looks right.</p>
+<p><strong>The bigger trap wasn't a bug at all — it was a label.</strong> Early on, the health donut had three bands: Healthy, At Risk, Critical. There was also a KPI card titled "At-Risk Accounts" that only counted the Critical ones. So "at risk" meant two different things depending on which corner of the screen you were looking at, and a CSM scanning the page in five seconds couldn't tell if 12 accounts were in trouble or 23. I renamed the bands to Healthy / Warning / Critical and changed the KPI card to show the full breakdown — "12 critical · 11 warning · 27 healthy" — instead of one ambiguous number. It's the same mistake as two teams calling something "active customer" with two different definitions: the data underneath was correct, the labels were lying. A confusing column name does more damage to trust than a wrong row ever will.</p>
 <p><strong>Getting the guardrails right took more passes than the chat feature itself.</strong> It's easy to build an agent that answers questions well. It's harder to build one a RevOps lead will actually deploy, because the real question isn't "does it answer correctly," it's "can I prove to my CISO it can't insert, can't see PII, and can't wander off the allowlist." The keyword block list, the allowlist check against <code>dim_ai_allowed_assets</code>, and the PII column-name scan all came after the chat already worked — because a working demo and a defensible one aren't the same project.</p>
 <hr />
 <h2>Why this matters for CS teams</h2>
@@ -516,6 +530,24 @@ ai/           ai_* views — only what's in dim_ai_allowed_assets is queryable
   </footer>
 
 </article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
 
 </body>
 </html>
