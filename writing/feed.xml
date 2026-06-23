@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</title>
+      <link>https://goldlayer.dev/writing/revenue-intelligence-agent-ai-cs-copilot.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/revenue-intelligence-agent-ai-cs-copilot.html</guid>
+      <pubDate>Tue, 23 Jun 2026 12:12:52 +0000</pubDate>
+      <description>A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</description>
+    </item>
+    <item>
       <title>Reconciling competing metric definitions across teams with an LLM</title>
       <link>https://goldlayer.dev/writing/reconciling-metric-definitions-llm.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/reconciling-metric-definitions-llm.html</guid>
