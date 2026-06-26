@@ -1,7 +1,7 @@
 ---
 title: 'How to know if your analytics agent still works: a deterministic eval harness'
 date: 2026-06-27
-published_at: '2026-06-26T22:34:28Z'
+published_at: '2026-06-26T22:38:44Z'
 slug: analytics-agent-eval-harness
 description: Scoring, cost tracking from real runs, and regression gating for a dbt
   analytics agent — without LLM-as-judge.
@@ -14,7 +14,7 @@ status: published
 
 There's a moment in every AI project where you've run the thing enough times that it feels like it works, and you ship it. Then three weeks later someone changes the system prompt, or swaps to a newer model, or tweaks one of the tools — and the thing quietly gets worse. Nobody notices until a user says something.
 
-That's not a hypothetical. My previous project, [dbt-agentic-engine](https://github.com/PZawieja/dbt-agentic-engine), ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.
+That's not a hypothetical. My previous project, [dbt-agentic-engine](https://goldlayer.dev/writing/dbt-agentic-engine-build-log.html) ([GitHub](https://github.com/PZawieja/dbt-agentic-engine)), ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.
 
 [llmops-eval-harness](https://github.com/PZawieja/llmops-eval-harness) turns "I manually sanity-checked 15 questions once" into a repeatable, scored, cost-aware check that can gate future changes. This post is a build log: what I built, why I made the tradeoffs I did, and what the first real run actually showed.
 

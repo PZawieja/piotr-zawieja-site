@@ -10,8 +10,15 @@
       <title>How to know if your analytics agent still works: a deterministic eval harness</title>
       <link>https://goldlayer.dev/writing/analytics-agent-eval-harness.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-eval-harness.html</guid>
-      <pubDate>Fri, 26 Jun 2026 22:34:28 +0000</pubDate>
+      <pubDate>Fri, 26 Jun 2026 22:38:44 +0000</pubDate>
       <description>Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</description>
+    </item>
+    <item>
+      <title>Building an analytics agent on a real dbt project: what actually broke</title>
+      <link>https://goldlayer.dev/writing/dbt-agentic-engine-build-log.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-agentic-engine-build-log.html</guid>
+      <pubDate>Fri, 26 Jun 2026 22:38:39 +0000</pubDate>
+      <description>A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</description>
     </item>
     <item>
       <title>Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</title>

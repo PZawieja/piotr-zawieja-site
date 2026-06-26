@@ -411,7 +411,7 @@
 
   <div class="article-body">
     <p>There's a moment in every AI project where you've run the thing enough times that it feels like it works, and you ship it. Then three weeks later someone changes the system prompt, or swaps to a newer model, or tweaks one of the tools — and the thing quietly gets worse. Nobody notices until a user says something.</p>
-<p>That's not a hypothetical. My previous project, <a href="https://github.com/PZawieja/dbt-agentic-engine">dbt-agentic-engine</a>, ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.</p>
+<p>That's not a hypothetical. My previous project, <a href="https://goldlayer.dev/writing/dbt-agentic-engine-build-log.html">dbt-agentic-engine</a> (<a href="https://github.com/PZawieja/dbt-agentic-engine">GitHub</a>), ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.</p>
 <p><a href="https://github.com/PZawieja/llmops-eval-harness">llmops-eval-harness</a> turns "I manually sanity-checked 15 questions once" into a repeatable, scored, cost-aware check that can gate future changes. This post is a build log: what I built, why I made the tradeoffs I did, and what the first real run actually showed.</p>
 <hr />
 <h2>The problem with manually checking</h2>
