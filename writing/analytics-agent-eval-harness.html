@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to know if your analytics agent still works: a deterministic eval harness — Piotr Zawieja</title>
+<meta name="description" content="Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.">
+<meta property="og:title" content="How to know if your analytics agent still works: a deterministic eval harness">
+<meta property="og:description" content="Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.">
+<meta property="og:url" content="https://goldlayer.dev/writing/analytics-agent-eval-harness.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="../index.html">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <a href="../writing/" class="nav-back">← writing</a>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-date">26 Jun 2026 · 11 min read</span>
+    </div>
+    <h1 class="article-title">How to know if your analytics agent still works: a deterministic eval harness</h1>
+    <p class="article-lede">Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
+  </header>
+
+  <div class="article-body">
+    <p>There's a moment in every AI project where you've run the thing enough times that it feels like it works, and you ship it. Then three weeks later someone changes the system prompt, or swaps to a newer model, or tweaks one of the tools — and the thing quietly gets worse. Nobody notices until a user says something.</p>
+<p>That's not a hypothetical. My previous project, <a href="https://github.com/PZawieja/dbt-agentic-engine">dbt-agentic-engine</a>, ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.</p>
+<p><a href="https://github.com/PZawieja/llmops-eval-harness">llmops-eval-harness</a> turns "I manually sanity-checked 15 questions once" into a repeatable, scored, cost-aware check that can gate future changes. This post is a build log: what I built, why I made the tradeoffs I did, and what the first real run actually showed.</p>
+<hr />
+<h2>The problem with manually checking</h2>
+<p>When you run an LLM agent by hand to see if it's working, you're doing three things wrong.</p>
+<p><strong>You're not measuring anything.</strong> "The answer looked right" is not a score. It tells you nothing about whether the answer was better or worse than last week, or how it compares on the questions you didn't happen to check this time.</p>
+<p><strong>You're not tracking cost.</strong> Per-question token counts in a trace file are not the same as "the full eval set cost $X to run." You need to multiply by actual pricing, sum across all questions, and compare runs. That calculation never happens manually because it's tedious.</p>
+<p><strong>You have no baseline.</strong> If you change the model from Sonnet 4.6 to Sonnet 4.7, or rewrite the system prompt, or add a tool — did accuracy go up or down? By how much? You have no idea, because you didn't record the starting point.</p>
+<p>The harness fixes all three.</p>
+<hr />
+<h2>Coupling to project 1 without importing it</h2>
+<p>The harness and the agent live in separate repos. That's intentional: project 1 is a working product with its own dependencies; I don't want to create a shared package or a monorepo just to run evals.</p>
+<p>The coupling happens through one narrow contract: the harness shells out to <code>agent/cli.py</code> per question, captures its stdout as a single JSON object, and parses it.</p>
+<pre><code class="language-python">proc = subprocess.run(
+    [&quot;uv&quot;, &quot;run&quot;, &quot;python&quot;, &quot;cli.py&quot;,
+     &quot;--question&quot;, question_text, &quot;--question-id&quot;, question_id],
+    cwd=agent_dir,
+    capture_output=True,
+    text=True,
+    timeout=120,
+)
+result = json.loads(proc.stdout.strip().splitlines()[-1])
+</code></pre>
+<p>The CLI itself is eight lines:</p>
+<pre><code class="language-python">def main() -&gt; None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(&quot;--question&quot;, required=True)
+    parser.add_argument(&quot;--question-id&quot;, default=&quot;cli-adhoc&quot;)
+    args = parser.parse_args()
+
+    result = agent_loop.run_question(args.question, question_id=args.question_id)
+    print(json.dumps(result))
+</code></pre>
+<p>The agent loop still appends to <code>traces/trace_log.jsonl</code> exactly as it does for the Streamlit app — the harness doesn't change any agent behavior, it just adds a way to invoke the agent programmatically and read its output. The JSON shape is the same <code>run_question()</code> return dict: <code>final_answer</code>, <code>trace</code>, <code>tool_calls_made</code>, <code>hit_cap</code>, <code>stop_reason</code>, <code>total_usage</code>, <code>run_id</code>.</p>
+<p>One fragile part: if the agent prints debug output to stdout before the JSON, parsing the last line is a workaround. The cleaner fix is for the CLI to use stderr for everything except the JSON result. That's a project-1 change I flagged but didn't make — the workaround works for now and the fix is obvious if it ever breaks.</p>
+<hr />
+<h2>Scoring: deterministic, no LLM-as-judge</h2>
+<p>The eval question set has three tiers, each scored differently.</p>
+<p><strong>Lookup and investigation questions</strong> have either <code>expected_data</code> (structured key→value facts) or <code>expected_answer</code> (a comma-separated list of things the answer should mention). Score = fraction of expected facts found as substrings in the agent's <code>final_answer</code>.</p>
+<pre><code class="language-yaml">- id: q06
+  tier: investigation
+  question: &quot;Why did Acme Co's MRR increase in April 2025?&quot;
+  expected_data:
+    mar_mrr: 800.00
+    apr_mrr: 2400.00
+    delta: 1600.00
+    event_id: E001
+    event_type: plan_upgrade
+</code></pre>
+<p>Numbers get formatting tolerance: <code>800</code> matches <code>800.00</code> matches <code>$800</code> matches <code>$800.00</code>. If the agent says "MRR jumped from $800 to $2,400" it finds <code>mar_mrr</code> and <code>apr_mrr</code> even though the format differs from the YAML values.</p>
+<pre><code class="language-python">def _number_variants(value: str) -&gt; set[str]:
+    num = float(value.strip().lstrip(&quot;$&quot;).replace(&quot;,&quot;, &quot;&quot;))
+    bases = {f&quot;{num:.2f}&quot;}
+    if num == int(num):
+        bases.add(str(int(num)))
+        bases.add(f&quot;{int(num):,}&quot;)
+    bases.add(f&quot;{num:,.2f}&quot;)
+    variants = set()
+    for b in bases:
+        variants.add(b)
+        variants.add(f&quot;${b}&quot;)
+    return variants
+</code></pre>
+<p><strong>Unanswerable questions</strong> are scored by a decline-phrase heuristic: pass if the answer matches a regex like <code>outside (the|this) scope|doesn't track|no (model|table|field)|not tracked here</code> <em>and</em> contains no fabricated figure (a dollar amount or percentage). The fabricated-figure check is important — an agent that says "this data isn't tracked, but it's probably around $50,000" should fail, not pass.</p>
+<pre><code class="language-python">_DECLINE_RE = re.compile(
+    r&quot;outside (the |this )?scope|doesn'?t track|do(es)?n'?t (have|contain)&quot;
+    r&quot;|no (model|data|entity|table|field)|not tracked( here)?&quot;,
+    re.IGNORECASE,
+)
+_FABRICATED_FIGURE_RE = re.compile(r&quot;\$\s?\d|\d+(\.\d+)?\s*%&quot;)
+
+def score_unanswerable(final_answer: str) -&gt; dict:
+    declines = bool(_DECLINE_RE.search(final_answer))
+    fabricated = bool(_FABRICATED_FIGURE_RE.search(final_answer))
+    passed = declines and not fabricated
+    return {&quot;score&quot;: 1.0 if passed else 0.0, &quot;passed&quot;: passed, ...}
+</code></pre>
+<p>I deliberately didn't use LLM-as-judge in v1. The reasons: it adds cost to every eval run, it introduces non-determinism (the judge can disagree with itself), and it's overkill when your answers are structured enough to substring-match. The spec explicitly notes that if the decline heuristic proves too brittle — false negatives on correct declines phrased unexpectedly — the fix is LLM-as-judge for the unanswerable tier specifically, not a bigger regex.</p>
+<hr />
+<h2>Cost tracking from actual runs</h2>
+<p>The spec rule is: cost and latency are reported, not assumed. That means no estimates — every cost number in the output came from a real API call with real token counts.</p>
+<p>The agent loop already accumulates token usage across all tool calls per question. The harness just multiplies:</p>
+<pre><code class="language-python">INPUT_PRICE_PER_MTOK = 3.00   # Claude Sonnet 4.6, sourced June 2026
+OUTPUT_PRICE_PER_MTOK = 15.00
+
+def compute_cost(total_usage: dict) -&gt; dict:
+    input_cost = total_usage[&quot;input_tokens&quot;] / 1_000_000 * INPUT_PRICE_PER_MTOK
+    output_cost = total_usage[&quot;output_tokens&quot;] / 1_000_000 * OUTPUT_PRICE_PER_MTOK
+    return {
+        &quot;input_tokens&quot;: total_usage[&quot;input_tokens&quot;],
+        &quot;output_tokens&quot;: total_usage[&quot;output_tokens&quot;],
+        &quot;input_cost_usd&quot;: round(input_cost, 6),
+        &quot;output_cost_usd&quot;: round(output_cost, 6),
+        &quot;total_cost_usd&quot;: round(input_cost + output_cost, 6),
+    }
+</code></pre>
+<p>Pricing lives in <code>config.py</code> as named constants. If Anthropic changes the price, there's one line to update. It's not buried in a formula somewhere.</p>
+<p>Latency works the same way: wall-clock time per question is measured around the subprocess call; per-tool-call <code>latency_ms</code> is already in every trace record the agent returns. Both are reported, not one or the other.</p>
+<hr />
+<h2>Regression gating</h2>
+<p>The first run writes <code>results/baseline.json</code>. Every subsequent run with <code>--gate</code> compares against that baseline and exits non-zero if any of three conditions are met:</p>
+<ul>
+<li>Accuracy dropped more than 5 percentage points</li>
+<li>Total cost rose more than 20%</li>
+<li>Total latency rose more than 20%</li>
+</ul>
+<pre><code class="language-python">def evaluate_gate(report: dict, baseline: dict) -&gt; dict:
+    reasons = []
+
+    accuracy_drop = baseline[&quot;accuracy_pct&quot;] - report[&quot;accuracy_pct&quot;]
+    if accuracy_drop &gt; MAX_ACCURACY_DROP_PCT:
+        reasons.append(
+            f&quot;accuracy dropped {accuracy_drop:.1f} points &quot;
+            f&quot;({baseline['accuracy_pct']:.1f}% -&gt; {report['accuracy_pct']:.1f}%), &quot;
+            f&quot;exceeds max allowed drop of {MAX_ACCURACY_DROP_PCT}&quot;
+        )
+
+    if baseline[&quot;total_cost_usd&quot;] &gt; 0:
+        cost_increase_pct = (
+            (report[&quot;total_cost_usd&quot;] - baseline[&quot;total_cost_usd&quot;])
+            / baseline[&quot;total_cost_usd&quot;] * 100
+        )
+        if cost_increase_pct &gt; MAX_COST_INCREASE_PCT:
+            reasons.append(...)
+
+    return {&quot;passed&quot;: not reasons, &quot;reasons&quot;: reasons}
+</code></pre>
+<p><code>MAX_ACCURACY_DROP_PCT</code>, <code>MAX_COST_INCREASE_PCT</code>, <code>MAX_LATENCY_INCREASE_PCT</code> are defined once in <code>config.py</code>. The CLAUDE.md for this project says hard caps are config values, not buried — that rule exists because I've seen analytics code where a threshold that matters is sitting in the middle of a function nobody will ever look at.</p>
+<p>One sharp edge: <code>--gate</code> and <code>--update-baseline</code> together on the same run do nothing useful. The gate compares the current run against the existing baseline before the update — if you're updating, you're declaring this run <em>is</em> the new standard, so gating against the old one is meaningless. The harness warns and exits cleanly in that case.</p>
+<hr />
+<h2>What the first real run showed</h2>
+<p>Running all 15 questions live against the agent:</p>
+<pre><code>id   tier           pass  score  cost_usd  latency_ms  tools (actual/est)
+---  -------------  ----  -----  --------  ----------  ------------------
+q01  lookup         PASS  1.00   0.0113    5968        1/1
+q02  lookup         PASS  1.00   0.0172    8868        1/1
+q03  lookup         PASS  1.00   0.0331    15656       3/1
+q04  lookup         FAIL  0.00   0.0117    5661        1/1
+q05  lookup         PASS  1.00   0.0161    7037        2/1
+q06  investigation  FAIL  0.00   0.0420    13702       6/3
+q07  investigation  FAIL  0.00   0.0426    12895       6/3
+q08  investigation  FAIL  0.50   0.0526    24911       6/3
+q09  investigation  FAIL  0.00   0.0177    9090        3/3
+q10  investigation  FAIL  0.75   0.0494    19901       5/3
+q11  investigation  FAIL  0.40   0.0462    18682       5/3
+q12  investigation  FAIL  0.50   0.0582    25338       6/3
+q13  unanswerable   PASS  1.00   0.0052    4123        0/0-2
+q14  unanswerable   PASS  1.00   0.0051    3427        0/0-1
+q15  unanswerable   PASS  1.00   0.0148    7593        1/0-2
+
+accuracy: 46.7%  (7/15 scored questions passed)
+total cost: $0.4232
+total latency: 182852ms
+</code></pre>
+<p>46.7% is not a good score, but it's an honest one. Two distinct failure modes showed up immediately.</p>
+<p><strong>The 6-tool-call cap is too low for investigation questions.</strong> q06 and q07 hit the cap and returned the partial-findings fallback before finishing their cross-mart analysis. q08 burned two calls on a wrong column name (<code>mrr</code> instead of <code>mrr_amount</code>), leaving the budget exhausted before it could pull the contract events. The cap is a project-1 config value set deliberately — the spec says agents that hit it should say so rather than guess — but 6 calls is genuinely not enough for questions that need to check the MRR mart, the logo mart, and the contract events table in sequence. That's a project-1 tuning decision, not a harness bug.</p>
+<p><strong><code>expected_answer</code> substring matching fails on semantically correct answers.</strong> q04 asked whether all tests pass for <code>fct_mrr_bridge_monthly</code>. The agent answered correctly — "Yes, all 7 tests currently pass for <code>fct_mrr_bridge_monthly</code>..." — but the expected_answer started with "Yes — all 7 tests pass (6 not_null tests on month_date/new_mrr/...)" and the scoring looks for that as a substring. Different phrasing, correct answer, zero score.</p>
+<p>q09 had the same problem: expected "No — all tests pass across all three marts as of the last dbt build," agent said "All three marts are fully clean as of the last dbt build. No failing tests anywhere" — again correct, but no substring match.</p>
+<p>The fix for q04 and q09 is to replace <code>expected_answer</code> with <code>expected_data</code> (structured key→value) for questions where the phrasing can vary. <code>expected_data</code> is how the investigation-tier questions are structured — it's why q10 scored 0.75 (3 of 4 facts found) instead of 0.00 even with a partial answer. The evaluation set needs updating, not the scoring logic.</p>
+<p>The unanswerable tier was clean: 3/3, no fabricated figures, all correctly declined. That was the tier I was most uncertain about — the heuristic felt brittle when I wrote it — and it held up on first contact.</p>
+<hr />
+<h2>The part that's missing from most eval write-ups</h2>
+<p>Most posts about LLM evaluation describe the methodology. They don't publish the score.</p>
+<p>The score from the first run of this harness is 46.7%. That's worse than I expected when I was writing the question set by hand and qualitatively checking answers. The discrepancy is partly the scoring tool (two questions failed on substring matching despite correct answers), and partly the agent genuinely struggling with multi-hop investigation questions under a conservative tool-call budget.</p>
+<p>Both findings are useful. The scoring limitation tells me <code>expected_answer</code> is the wrong format for questions where phrasing varies. The agent limitation tells me the tool-call cap needs revisiting before investigation-tier accuracy will improve. Neither of those insights was available from the manual sanity check.</p>
+<p>That's the point of running the harness: the score tells you something the manual check doesn't, even when — especially when — the number is lower than you wanted.</p>
+<hr />
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>A manual sanity check has no memory.</strong> It can't tell you if this run is better or worse than last week, and it can't stop a silent regression from shipping.</li>
+<li><strong>Deterministic scoring is good enough for v1.</strong> Substring matching with number-formatting tolerance catches real failures without the cost, non-determinism, and complexity of LLM-as-judge.</li>
+<li><strong><code>expected_data</code> is more robust than <code>expected_answer</code>.</strong> Structured key→value facts let you check specific numbers and terms without requiring the exact phrasing the eval author happened to write down.</li>
+<li><strong>Cost is a first-class metric, not an afterthought.</strong> Running 15 questions cost $0.42 from actual token counts — not an estimate. That number exists to be compared against future runs, not to be impressive or alarming.</li>
+<li><strong>Put thresholds in one visible place.</strong> Accuracy drop tolerance, cost ceiling, latency ceiling — all named constants in <code>config.py</code>. A threshold buried inside a function is a threshold nobody will update when the project changes.</li>
+<li><strong>Publish the actual score.</strong> 46.7% on the first run. That number revealed two concrete problems: a scoring format issue on two questions, and a tool-call budget that's too low for multi-hop investigation questions. The manual check didn't surface either.</li>
+</ul>
+</div>
+
+<p>If you've shipped an AI feature and you're not running a scored eval on it regularly, what's your actual evidence that it still works?</p>
+  </div>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="../writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>
