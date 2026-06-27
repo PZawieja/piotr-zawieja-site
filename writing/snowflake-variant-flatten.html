@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>You've been flattening Snowflake JSON wrong — Piotr Zawieja</title>
+<meta name="description" content="LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.">
+<meta property="og:title" content="You've been flattening Snowflake JSON wrong">
+<meta property="og:description" content="LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.">
+<meta property="og:url" content="https://goldlayer.dev/writing/snowflake-variant-flatten.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── Prev / Next nav ──────────────────────────────────────── */
+  .post-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 1rem; margin-top: 2rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .post-nav-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s; max-width: 45%;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .post-nav-link:hover { color: var(--accent); }
+  .post-nav-link.next { text-align: right; margin-left: auto; }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem -0.25rem; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+    .post-nav { flex-direction: column; gap: 0.75rem; }
+    .post-nav-link { max-width: 100%; }
+    .post-nav-link.next { margin-left: 0; text-align: left; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">Snowflake</span>
+      <span class="meta-date">27 Jun 2026 · 9 min read</span>
+    </div>
+    <h1 class="article-title">You've been flattening Snowflake JSON wrong</h1>
+    <p class="article-lede">LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.</p>
+  </header>
+
+  <div class="article-body">
+    <p>A Salesforce webhook dumps events into Snowflake. They land in a VARIANT column called <code>payload</code>. Someone needs the account name out of it. Within ten minutes, this query exists in your codebase:</p>
+<pre><code class="language-sql">SELECT
+      f.value:account_name::STRING AS account_name
+FROM  raw.events,
+LATERAL FLATTEN(INPUT =&gt; payload:records) f
+</code></pre>
+<p>It works in dev. On 10 million rows it takes four minutes. Six months later, half your warehouse credits come from JSON queries and nobody quite remembers why.</p>
+<p>The problem isn't VARIANT. It's using <code>LATERAL FLATTEN</code> as a reflex when dot-notation would be faster, or parsing at load time would be better still. There are three tools for Snowflake JSON and most teams only reach for one of them.</p>
+<hr />
+<h2>What VARIANT actually is</h2>
+<p>Think of a regular Snowflake column like a spreadsheet: every cell in a column holds the same kind of data — all integers, all timestamps. Snowflake stores each column as a compressed columnar block and builds statistics on it (min/max, distinct count). That's what makes typed column filters fast.</p>
+<p>A VARIANT column is like a filing cabinet drawer where each slot holds whatever arrived. One row might have a flat JSON object with five keys. The next might have a nested object three levels deep. The one after might have an array of fifty items. No rules about shape.</p>
+<p>Snowflake stores VARIANT as a compressed internal binary format, and it handles deep nesting without issues. The flexibility is real. But Snowflake can't build the same statistics on VARIANT data that it builds on typed columns — it doesn't know at planning time how many distinct values <code>payload:account_id</code> contains. That's the cost, and it shows up in query profiles.</p>
+<div class="callout callout-info">
+<span class="callout-label">context</span>
+<p>Snowflake VARIANT supports JSON, Avro, ORC, Parquet, and XML. In practice at analytics engineering shops, it's almost always JSON from webhooks, CDPs, CRMs, or product event streams. Everything here assumes JSON.</p>
+</div>
+
+<hr />
+<h2>Tool 1: Dot-notation for scalar fields</h2>
+<p>When you need a single value from a JSON object — not an array, just a field — dot-notation is the right tool. It's fast, it reads clearly, and it doesn't require any joins or unnesting.</p>
+<pre><code class="language-sql">SELECT
+      payload:event_type::STRING          AS event_type
+    , payload:account_id::STRING          AS account_id
+    , payload:amount::FLOAT               AS amount_usd
+    , payload:customer.name::STRING       AS customer_name
+    , payload:customer.address.city::STRING AS city
+FROM  raw.webhook_events
+WHERE payload:event_type::STRING = 'payment_completed'
+</code></pre>
+<p>Two things to know about this syntax:</p>
+<p><strong>Colon accesses the field.</strong> <code>payload:account_id</code> navigates into the VARIANT using the field name. For nested fields, dots go deeper: <code>payload:customer.address.city</code> descends three levels.</p>
+<p><strong>Double-colon casts to a type.</strong> <code>::STRING</code>, <code>::FLOAT</code>, <code>::INT</code>, <code>::BOOLEAN</code>, <code>::TIMESTAMP_NTZ</code> — always cast immediately. If you skip the cast, you get VARIANT back. Every downstream join and comparison on that result does implicit casting, which quietly hurts performance and can throw type mismatch errors on rows with unexpected shapes.</p>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>Use <code>TRY_CAST</code> when the source JSON is dirty. <code>payload:amount::FLOAT</code> errors on the row if the value is <code>"N/A"</code>. <code>TRY_TO_DOUBLE(payload:amount)</code> returns NULL instead. For webhook data from external systems, TRY_ variants save a lot of pain.</p>
+</div>
+
+<p>Dot-notation handles nested objects cleanly. What it can't handle is arrays — if <code>payload:line_items</code> is a JSON array, <code>payload:line_items::STRING</code> gives you the entire array serialised as a string, which isn't useful. That's where FLATTEN comes in.</p>
+<hr />
+<h2>Tool 2: LATERAL FLATTEN for arrays</h2>
+<p>LATERAL FLATTEN exists to explode arrays into rows. It is the right tool when you genuinely have an array to unnest. It is the wrong tool when you're using it to reach a scalar field.</p>
+<p>Here's the mental model: each row in your table is a bag of items. LATERAL FLATTEN reaches into each bag and pulls out every item as its own row. A bag with 3 items becomes 3 rows. A bag with 100 items becomes 100 rows.</p>
+<pre><code class="language-sql">-- One row per order before; one row per line item after
+SELECT
+      o.order_id
+    , o.created_at
+    , f.value:product_id::STRING  AS product_id
+    , f.value:quantity::INT       AS quantity
+    , f.value:unit_price::FLOAT   AS unit_price
+FROM  raw.orders o
+      , LATERAL FLATTEN(INPUT =&gt; o.payload:line_items) f
+</code></pre>
+<p>FLATTEN returns several columns from each expanded row — <code>SEQ</code>, <code>KEY</code>, <code>PATH</code>, <code>INDEX</code>, <code>VALUE</code>, <code>THIS</code>. For array elements, <code>f.value</code> is what you want: the actual array item. Use <code>f.index</code> when you need the position of the element within the array.</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>If a row has an empty array or a NULL in the array field, LATERAL FLATTEN silently drops that row from your result. You lose orders with no line items, users with no events, accounts with no contacts — without any error. Add <code>OUTER => TRUE</code> to keep those rows with NULLs: <code>LATERAL FLATTEN(INPUT => o.payload:line_items, OUTER => TRUE) f</code></p>
+</div>
+
+<h3>The cardinality problem</h3>
+<p>This is where teams get into trouble with FLATTEN. A query that looks like "one row per order" now returns "one row per line item across all orders." If you then aggregate without realising this, you multiply counts, sums, and averages silently.</p>
+<div class="pull-quote">
+LATERAL FLATTEN doesn't warn you that it multiplied your rows. The bug shows up in your aggregations two weeks later when the numbers don't match the source system.
+</div>
+
+<p>Check expansion factor before using FLATTEN in a production model:</p>
+<pre><code class="language-sql">SELECT
+      COUNT(*)                              AS orders
+    , SUM(ARRAY_SIZE(payload:line_items))   AS total_line_items
+    , AVG(ARRAY_SIZE(payload:line_items))   AS avg_per_order
+    , MAX(ARRAY_SIZE(payload:line_items))   AS max_per_order
+FROM  raw.orders
+</code></pre>
+<p>If <code>max_per_order</code> is 300 and you have 10 million orders, your flattened result set could be hundreds of millions of rows. Know this before you build a model on top of it.</p>
+<h3>FLATTEN for key-value objects</h3>
+<p>FLATTEN also handles the case where you have a JSON object with unknown or variable keys and you need to pivot it long. Use <code>f.key</code> to get the field name and <code>f.value</code> to get the value:</p>
+<pre><code class="language-sql">-- Explode {&quot;clicks&quot;: 4, &quot;opens&quot;: 12, &quot;bounces&quot;: 0} into rows
+SELECT
+      email_id
+    , f.key::STRING   AS metric_name
+    , f.value::INT    AS metric_value
+FROM  raw.email_events
+      , LATERAL FLATTEN(INPUT =&gt; payload:metrics) f
+</code></pre>
+<p>This is legitimate use of FLATTEN on an object (not an array). The same cardinality warning applies — each key-value pair becomes a row.</p>
+<hr />
+<h2>Tool 3: Parse at load time</h2>
+<p>When the JSON schema is stable and you query the same fields over and over, the best approach is to parse once in your staging model and never touch VARIANT again downstream.</p>
+<pre><code class="language-sql">-- models/staging/stg_webhook_events.sql
+SELECT
+      event_id
+    , event_type
+    , occurred_at
+    , raw_payload:account_id::STRING       AS account_id
+    , raw_payload:amount::FLOAT            AS amount_usd
+    , raw_payload:currency::STRING         AS currency
+    , raw_payload:customer.name::STRING    AS customer_name
+    , raw_payload:customer.email::STRING   AS customer_email
+    , raw_payload                          AS _raw_payload
+FROM  {{ source('webhook', 'raw_events') }}
+</code></pre>
+<p>After this model, every downstream model works with typed columns. No VARIANT access, no FLATTEN, no casting in production queries. The staging model pays the parsing cost once; everything downstream is a fast typed-column scan.</p>
+<p>Keep <code>_raw_payload</code> in staging. When the source system adds new fields six months from now, you can backfill them from <code>_raw_payload</code> without re-ingesting source data. This has saved every team I've worked on at least one painful backfill.</p>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>For array columns that you'll need to unnest frequently, consider a separate staging model specifically for the flattened version — <code>stg_orders__line_items</code> alongside <code>stg_orders</code>. Centralise the FLATTEN once, test the cardinality in that model, and let everything else join to the already-flat table.</p>
+</div>
+
+<hr />
+<h2>Choosing the right tool</h2>
+<div class="decision-tree">
+<p class="decision-tree-title">Which VARIANT access pattern to use</p>
+<div class="decision-step">
+<span class="decision-q">Stable JSON schema, same fields queried repeatedly</span>
+<span class="decision-a"><strong>Parse at load</strong> in your staging model. Typed columns from that point forward.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Ad-hoc scalar field from a JSON object</span>
+<span class="decision-a"><strong>Dot-notation</strong> with immediate type cast. Works in any SELECT without joins.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Array that needs to become rows</span>
+<span class="decision-a"><strong>LATERAL FLATTEN</strong> with OUTER => TRUE. Check expansion factor first.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Variable-key JSON object, need all keys as rows</span>
+<span class="decision-a"><strong>LATERAL FLATTEN</strong> using f.key and f.value. Same cardinality warning applies.</span>
+</div>
+</div>
+
+<hr />
+<h2>Side by side</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<span class="tradeoff-cell">Approach</span>
+<span class="tradeoff-cell">Best for</span>
+<span class="tradeoff-cell">Performance</span>
+<span class="tradeoff-cell">Main risk</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Parse at load (typed columns)</span>
+<span class="tradeoff-cell">Stable schema, repeated queries</span>
+<span class="tradeoff-cell">Fastest — no VARIANT at query time</span>
+<span class="tradeoff-cell">Schema changes need a model update</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Dot-notation</span>
+<span class="tradeoff-cell">Scalar fields, ad-hoc access</span>
+<span class="tradeoff-cell">Good — Snowflake optimises path access</span>
+<span class="tradeoff-cell">Forgetting ::TYPE → implicit casting downstream</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">LATERAL FLATTEN</span>
+<span class="tradeoff-cell">Arrays and key-value pivots</span>
+<span class="tradeoff-cell">Expensive — row multiplication at scale</span>
+<span class="tradeoff-cell">Silent cardinality explosion in aggregations</span>
+</div>
+</div>
+
+<p>The default in most teams is: JSON arrives → VARIANT → LATERAL FLATTEN everything. The correct default is the reverse: parse scalars at load time, use dot-notation for ad-hoc access, and reach for FLATTEN only when you have an actual array that needs to become rows.</p>
+<p>VARIANT is not the problem. FLATTEN as a reflex is.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>LATERAL FLATTEN is for arrays, not JSON in general</strong> — if you're reading a scalar field, dot-notation is faster and doesn't multiply your rows.</li>
+<li><strong>Always cast with ::TYPE immediately</strong> — leaving results as VARIANT propagates implicit casting through every downstream query and causes hard-to-debug type errors.</li>
+<li><strong>OUTER => TRUE keeps rows with empty or null arrays</strong> — without it, those rows silently disappear from your result.</li>
+<li><strong>Check expansion factor before FLATTENing in production</strong> — <code>MAX(ARRAY_SIZE(col))</code> tells you how much your row count multiplies.</li>
+<li><strong>Stable schema? Parse in staging, never touch VARIANT downstream</strong> — typed columns are always faster than VARIANT path access at query time.</li>
+<li><strong>Keep _raw_payload in your staging model</strong> — when the source system adds new fields later, you can backfill without re-ingesting.</li>
+</ul>
+</div>
+
+<p>Which JSON pattern has cost you the most — cardinality explosions from FLATTEN, type casting bugs on dirty payloads, or schema drift from the source system silently breaking your queries?</p>
+  </div>
+
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      
+      <a href="snowflake-clustering-keys-guide.html" class="related-card">
+        <span class="related-tag">Snowflake</span>
+        <p class="related-title">Snowflake clustering keys: what they are, when they help, and when to skip them</p>
+        <span class="related-date">16 Jun 2026 · 10 min</span>
+      </a>
+      
+      <a href="snowflake-cortex-analyst-in-practice.html" class="related-card">
+        <span class="related-tag">Snowflake</span>
+        <p class="related-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</p>
+        <span class="related-date">12 Jun 2026 · 8 min</span>
+      </a>
+      
+    </div>
+  </div>
+  
+
+  <nav class="post-nav" aria-label="Article navigation">
+    
+    <a href="analytics-agent-eval-harness.html" class="post-nav-link prev">← How to know if your analytics agent still works: a deterministic eval harness</a>
+    
+    
+  </nav>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="/writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>
