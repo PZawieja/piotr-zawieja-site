@@ -4,36 +4,34 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Piotr Zawieja — Analytics Engineer</title>
-<meta name="description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
+<meta name="description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
 <meta property="og:title" content="Piotr Zawieja — Analytics Engineer">
-<meta property="og:description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
+<meta property="og:description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
 <meta property="og:url" content="https://goldlayer.dev/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="goldlayer.dev">
 <meta property="og:image" content="https://goldlayer.dev/og-default.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Piotr Zawieja — Analytics Engineer">
-<meta name="twitter:description" content="Senior Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. Based in Poland, available for fully remote B2B contracts with EU/UK/US teams.">
+<meta name="twitter:description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
 <style>
-  /* ─── Reset & Base ─────────────────────────────────────────── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:        #0d0d0f;
-    --surface:   #141417;
-    --border:    #232328;
-    --accent:    #e8d5b0;
-    --accent2:   #c8a96e;
-    --text:      #d4d0c8;
-    --muted:     #7a7870;
-    --dim:       #4a4844;
-    --white:     #f0ece4;
-    --green:     #6db87a;
-    --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
-    --sans:      'Inter', system-ui, -apple-system, sans-serif;
-    --serif:     'Space Grotesk', 'Inter', system-ui, sans-serif;
-    --max:       900px;
-    --gap:       2rem;
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --green:   #6db87a;
+    --mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     900px;
   }
 
   html { scroll-behavior: smooth; }
@@ -47,29 +45,20 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ─── Typography ───────────────────────────────────────────── */
   h1, h2, h3 { font-family: var(--serif); font-weight: 700; color: var(--white); letter-spacing: -0.02em; }
   h1 { font-size: clamp(2.4rem, 6vw, 3.8rem); line-height: 1.1; }
   h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.2; }
-  h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0; font-family: var(--sans); }
+  h3 { font-size: 1rem; font-weight: 600; letter-spacing: 0; font-family: var(--sans); }
 
-  .label {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--accent2);
-  }
+  .label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); }
 
   a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
   a:hover { color: var(--white); }
-
   p { color: var(--text); }
   strong { color: var(--white); font-weight: 600; }
 
   /* ─── Layout ───────────────────────────────────────────────── */
   .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
-
   section { padding: 5rem 0; border-top: 1px solid var(--border); }
   section:first-of-type { border-top: none; }
 
@@ -81,49 +70,20 @@
     border-bottom: 1px solid var(--border);
   }
 
-  nav .inner {
-    max-width: var(--max);
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  nav .inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
 
-  .nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    color: var(--accent2);
-    letter-spacing: 0.05em;
-  }
-
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); letter-spacing: 0.05em; }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
   .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
 
-  .nav-links {
-    display: flex;
-    gap: 1.8rem;
-    list-style: none;
-  }
-
-  .nav-links a {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--muted);
-    letter-spacing: 0.06em;
-    text-transform: lowercase;
-  }
-
+  .nav-links { display: flex; gap: 1.8rem; list-style: none; }
+  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; transition: color 0.15s; }
   .nav-links a:hover { color: var(--accent); }
 
   /* ─── Hero ─────────────────────────────────────────────────── */
   #hero {
     padding-top: 8rem;
     padding-bottom: 5rem;
-    border-top: none;
     position: relative;
     overflow: hidden;
   }
@@ -137,557 +97,195 @@
     pointer-events: none;
   }
 
-  .hero-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
-  .hero-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease infinite; }
+  .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; gap: 3rem; align-items: center; }
+  .hero-text { min-width: 0; }
+  .hero-photo-wrap { display: flex; justify-content: center; min-width: 0; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
+  .hero-photo-frame {
+    width: 100%; max-width: 240px;
+    aspect-ratio: 1 / 1; border-radius: 16px;
+    overflow: hidden; border: 1px solid rgba(200,169,110,0.3);
+    box-shadow: 0 30px 80px -20px rgba(200,169,110,0.2);
   }
+
+  .hero-photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0.1) contrast(1.05); }
+
+  .hero-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+  .hero-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease infinite; flex-shrink: 0; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
   .hero-status { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
 
   .hero-title { margin-bottom: 1rem; }
+  .hero-title .line-muted { font-family: var(--serif); font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 400; color: var(--muted); letter-spacing: -0.02em; line-height: 1.1; display: block; }
 
-  .hero-title .line-muted {
-    font-family: var(--serif);
-    font-size: clamp(2.4rem, 6vw, 3.8rem);
-    font-weight: 400;
-    color: var(--muted);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    display: block;
+  .hero-niche {
+    font-family: var(--serif); font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+    color: var(--white); line-height: 1.5; margin-bottom: 1rem;
+    max-width: 520px; font-weight: 700;
   }
 
-  .hero-hook {
-    font-family: var(--serif);
-    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
-    color: var(--white);
-    line-height: 1.5;
-    margin-bottom: 1rem;
-    max-width: 560px;
-    font-style: normal;
-    font-weight: 700;
-  }
-
-  .hero-sub {
-    font-size: 1.05rem;
-    color: var(--muted);
-    max-width: 560px;
-    margin-bottom: 1.25rem;
-    line-height: 1.7;
-  }
-
-  .hero-tags {
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    color: var(--dim);
-    letter-spacing: 0.03em;
-    margin-bottom: 2rem;
-    line-height: 1.8;
-  }
+  .hero-sub { font-size: 1rem; color: var(--muted); max-width: 520px; margin-bottom: 2rem; line-height: 1.7; }
 
   .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
 
-  .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; gap: 3rem; align-items: center; }
-  .hero-text { min-width: 0; }
+  .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.3rem; border-radius: 4px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; transition: all 0.15s; cursor: pointer; border: 1px solid transparent; }
 
-  .hero-photo-wrap { display: flex; justify-content: center; min-width: 0; }
+  .btn-primary { background: var(--accent2); color: #0d0d0f; border-color: var(--accent2); font-weight: 700; }
+  .btn-primary:hover { background: var(--accent); border-color: var(--accent); color: #0d0d0f; }
 
-  .hero-photo-frame {
-    width: 100%;
-    max-width: 260px;
-    aspect-ratio: 1 / 1;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid rgba(200,169,110,0.3);
-    box-shadow: 0 30px 80px -20px rgba(200,169,110,0.25);
-  }
-
-  .hero-photo-frame img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    filter: grayscale(0.1) contrast(1.05);
-  }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.6rem 1.3rem;
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    letter-spacing: 0.04em;
-    transition: all 0.15s;
-    cursor: pointer;
-    border: 1px solid transparent;
-  }
-
-  .btn-primary {
-    background: var(--accent2);
-    color: var(--bg);
-    border-color: var(--accent2);
-    font-weight: 600;
-  }
-
-  .btn-primary:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border-color: var(--border);
-  }
-
+  .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
   .btn-ghost:hover { border-color: var(--accent2); color: var(--accent); }
 
-  /* ─── About ────────────────────────────────────────────────── */
+  /* ─── Writing section ──────────────────────────────────────── */
   .section-header { margin-bottom: 2.5rem; }
   .section-header .label { margin-bottom: 0.5rem; }
 
-  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
-
-  .about-text p + p { margin-top: 1rem; }
-
-  .facts-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-
-  .facts-list li {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    font-size: 0.9rem;
-    color: var(--text);
-  }
-
-  .facts-list li::before {
-    content: '→';
-    color: var(--accent2);
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    margin-top: 0.15rem;
-    flex-shrink: 0;
-  }
-
-  /* ─── Stack ────────────────────────────────────────────────── */
-  .stack-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
-  }
-
-  .stack-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1.2rem 1.25rem;
-    transition: border-color 0.15s;
-  }
-
-  .stack-card:hover { border-color: var(--dim); }
-
-  .stack-card-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent2);
-    margin-bottom: 0.6rem;
-  }
-
-  .stack-card-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
-
-  .tag {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    background: var(--bg);
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 0.15rem 0.5rem;
-  }
-
-  /* ─── Projects ─────────────────────────────────────────────── */
-  .projects-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .project-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    transition: border-color 0.2s, transform 0.2s;
-  }
-
-  .project-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
-
-  .project-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-
-  .project-icon {
-    width: 36px; height: 36px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem;
-  }
-
-  .project-link-icon {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--dim);
-    transition: color 0.15s, transform 0.2s;
-    display: inline-block;
-  }
-
-  .project-card:hover .project-link-icon { color: var(--accent2); transform: translate(3px, -3px); }
-
-  .project-card h3 { font-size: 0.95rem; color: var(--white); }
-  .project-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.55; flex: 1; }
-
-  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
-
-  /* ─── Achievements ─────────────────────────────────────────── */
-  .achievements-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.88rem;
-  }
-
-  .achievements-table thead th {
-    text-align: left;
-    padding: 0.65rem 1rem;
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent2);
-    font-weight: 400;
-  }
-
-  .achievements-table thead th:first-child { padding-left: 0; }
-
-  .achievements-table tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.12s;
-  }
-
-  .achievements-table tbody tr:last-child { border-bottom: none; }
-  .achievements-table tbody tr:hover { background: var(--surface); }
-
-  .achievements-table td {
-    padding: 0.9rem 1rem;
-    vertical-align: top;
-    color: var(--text);
-    line-height: 1.5;
-  }
-
-  .achievements-table td:first-child { padding-left: 0; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; white-space: nowrap; }
-
-  .metric {
-    font-family: var(--mono);
-    font-weight: 600;
-    color: var(--accent);
-    white-space: nowrap;
-    display: block;
-    margin-bottom: 0.15rem;
-    font-size: 0.95rem;
-  }
-
-  .metric-detail { color: var(--muted); font-size: 0.82rem; }
-
-  /* ─── Contribution cards ──────────────────────────────────── */
-  .contrib-grid {
+  /* Featured article cards */
+  .featured-articles-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 1rem;
-    margin-top: 1.5rem;
   }
 
-  .contrib-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .contrib-num {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--dim);
-    letter-spacing: 0.08em;
-  }
-
-  .contrib-card h3 { font-size: 0.88rem; color: var(--white); }
-  .contrib-card p  { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
-
-  @media (max-width: 780px) { .contrib-grid { grid-template-columns: 1fr 1fr; } }
-  @media (max-width: 500px) { .contrib-grid { grid-template-columns: 1fr; } }
-
-  /* ─── Learning ─────────────────────────────────────────────── */
-  .learning-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-  }
-
-  .learning-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .learning-item h3 { font-size: 0.9rem; color: var(--white); }
-  .learning-item p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-  .progress-bar {
-    height: 2px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-top: 0.25rem;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent2), var(--accent));
-    border-radius: 2px;
-  }
-
-  /* ─── Contact ──────────────────────────────────────────────── */
-  .contact-inner {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gap);
-    align-items: start;
-  }
-
-  .contact-links { display: flex; flex-direction: column; gap: 0.75rem; }
-
-  .contact-link {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-size: 0.88rem;
-    transition: all 0.15s;
-  }
-
-  .contact-link:hover { border-color: var(--accent2); color: var(--white); }
-
-  .contact-link-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--dim);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-left: auto;
-  }
-
-  .contact-note {
-    padding: 1.5rem;
+  .featured-article {
+    display: block;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-
-  .contact-note strong { color: var(--white); display: block; margin-bottom: 0.5rem; font-size: 1rem; }
-
-  /* ─── Writing ──────────────────────────────────────────────── */
-  .writing-list { display: flex; flex-direction: column; gap: 1px; }
-
-  .writing-item {
-    display: block;
-    padding: 1.5rem 0;
-    border-bottom: 1px solid var(--border);
+    padding: 1.4rem;
     text-decoration: none;
-    transition: none;
+    transition: border-color 0.15s, transform 0.15s;
   }
 
-  .writing-item:first-child { border-top: 1px solid var(--border); }
+  .featured-article:hover { border-color: var(--accent2); transform: translateY(-2px); }
+  .featured-article:hover .featured-article-title { color: var(--accent); }
 
-  .writing-item:hover .writing-title { color: var(--accent); }
+  /* Tag accent on left edge */
+  .featured-article[data-tag="AI"]          { border-left: 3px solid #6db87a; }
+  .featured-article[data-tag="dbt"]         { border-left: 3px solid #c8a96e; }
+  .featured-article[data-tag="Snowflake"]   { border-left: 3px solid #8ecff0; }
+  .featured-article[data-tag="data-quality"]{ border-left: 3px solid #c87a9a; }
 
-  .writing-item-meta {
-    display: flex; align-items: center; gap: 0.6rem;
-    margin-bottom: 0.6rem; flex-wrap: wrap;
-  }
+  .featured-article-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
 
   .writing-tag {
-    font-family: var(--mono); font-size: 0.65rem;
+    font-family: var(--mono); font-size: 0.62rem;
     letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--accent2); background: rgba(200,169,110,0.08);
-    border: 1px solid rgba(200,169,110,0.2);
-    padding: 0.15rem 0.5rem; border-radius: 3px;
+    padding: 0.15rem 0.45rem; border-radius: 3px;
   }
 
-  .writing-date { font-family: var(--mono); font-size: 0.7rem; color: var(--dim); margin-left: auto; }
+  .tag-ai      { color: #6db87a; background: rgba(109,184,122,0.08); border: 1px solid rgba(109,184,122,0.22); }
+  .tag-dbt     { color: #c8a96e; background: rgba(200,169,110,0.08); border: 1px solid rgba(200,169,110,0.22); }
+  .tag-snowflake { color: #8ecff0; background: rgba(142,207,240,0.08); border: 1px solid rgba(142,207,240,0.22); }
+  .tag-dataquality { color: #c87a9a; background: rgba(200,122,154,0.08); border: 1px solid rgba(200,122,154,0.22); }
 
-  .writing-title {
-    font-family: var(--sans); font-size: 1.2rem; font-weight: 600;
-    color: var(--white); letter-spacing: -0.01em;
-    line-height: 1.3; margin-bottom: 0.5rem;
+  .featured-article-date { font-family: var(--mono); font-size: 0.68rem; color: var(--dim); margin-left: auto; }
+
+  .featured-article-title {
+    font-family: var(--sans); font-size: 0.95rem; font-weight: 600;
+    color: var(--white); line-height: 1.35; margin-bottom: 0.5rem;
     transition: color 0.15s;
   }
 
-  .writing-lede { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+  .featured-article-lede { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+
+  .writing-view-all { margin-top: 1.25rem; }
+  .writing-view-all a { font-family: var(--mono); font-size: 0.78rem; color: var(--accent2); transition: color 0.15s; }
+  .writing-view-all a:hover { color: var(--accent); }
+
+  /* ─── Topic pillars ────────────────────────────────────────── */
+  .pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 2rem; }
+
+  .pillar {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem 1.4rem;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+
+  .pillar-icon { font-size: 1.1rem; margin-bottom: 0.2rem; }
+  .pillar h3 { font-size: 0.9rem; color: var(--white); font-weight: 600; }
+  .pillar p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+  /* ─── Featured project ─────────────────────────────────────── */
+  .featured-project {
+    display: flex; flex-direction: column; gap: 0.75rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.75rem;
+    text-decoration: none;
+    transition: border-color 0.2s;
+    max-width: 620px;
+  }
+
+  .featured-project:hover { border-color: var(--accent2); }
+  .featured-project:hover .project-title { color: var(--accent); }
+
+  .project-title { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; color: var(--white); transition: color 0.15s; }
+  .project-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+  .project-link-indicator { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); margin-top: 0.25rem; }
+  .featured-project:hover .project-link-indicator { color: var(--accent2); }
+
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem; }
+  .tag { font-family: var(--mono); font-size: 0.7rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; }
+
+  /* ─── Bio section ──────────────────────────────────────────── */
+  .bio-block {
+    display: grid; grid-template-columns: 1fr auto; gap: 2.5rem; align-items: start;
+  }
+
+  .bio-text p { color: var(--text); font-size: 0.95rem; line-height: 1.75; }
+  .bio-text p + p { margin-top: 0.9rem; }
+
+  .bio-links { display: flex; flex-direction: column; gap: 0.6rem; min-width: 160px; }
+
+  .bio-link {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.65rem 0.9rem; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px;
+    color: var(--muted); font-size: 0.85rem; text-decoration: none;
+    transition: all 0.15s; white-space: nowrap;
+  }
+
+  .bio-link:hover { border-color: var(--accent2); color: var(--white); }
 
   /* ─── Footer ───────────────────────────────────────────────── */
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 2rem 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
+  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
 
-  .footer-inner {
-    max-width: var(--max);
-    width: 100%;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-
+  .footer-inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
   .footer-copy { font-size: 0.78rem; color: var(--dim); font-family: var(--mono); }
   .footer-polish { font-size: 0.82rem; color: var(--muted); text-align: right; }
 
-  /* ─── Divider line accent ──────────────────────────────────── */
-  .rule { width: 40px; height: 1px; background: var(--accent2); margin: 1rem 0; }
-
-  /* ─── Section subtitle ─────────────────────────────────────── */
-  .section-sub {
-    font-size: 0.9rem;
-    color: var(--muted);
-    margin-top: 0.6rem;
-    max-width: 640px;
-    line-height: 1.6;
-  }
-
-  /* ─── Metric badges (project cards) ────────────────────────── */
-  .metric-badge {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--accent);
-    background: rgba(200,169,110,0.08);
-    border: 1px solid rgba(200,169,110,0.2);
-    border-radius: 3px;
-    padding: 0.2rem 0.5rem;
-    white-space: nowrap;
-  }
-
-  .project-metric-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  /* ─── CTA block (contact section) ──────────────────────────── */
-  .cta-block { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
-
-  .cta-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    color: var(--accent2);
-    border: 1px solid rgba(200,169,110,0.3);
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    transition: all 0.15s;
-    line-height: 1;
-    text-decoration: none;
-  }
-
-  .cta-link:hover { background: rgba(200,169,110,0.1); color: var(--accent); border-color: var(--accent2); }
-
   /* ─── Mobile ───────────────────────────────────────────────── */
   @media (max-width: 768px) {
-    .nav-links { display: none; }
-    .about-grid { grid-template-columns: 1fr; }
+    .nav-links { gap: 1.2rem; }
     .hero-inner { grid-template-columns: 1fr; }
     .hero-photo-wrap { order: -1; margin-bottom: 1.5rem; }
-    .hero-photo-frame { max-width: 180px; }
-    .projects-grid { grid-template-columns: 1fr !important; }
-    .contact-inner { grid-template-columns: 1fr; }
-    section { padding: 3rem 0; }
-    #hero { padding-top: 5.5rem; }
+    .hero-photo-frame { max-width: 160px; }
     .hero-actions { flex-direction: column; }
     .btn { justify-content: center; }
-    .writing-item-meta { gap: 0.4rem; }
-    .writing-date { margin-left: 0; }
+    .featured-articles-grid { grid-template-columns: 1fr; }
+    .pillars { grid-template-columns: 1fr; }
+    .bio-block { grid-template-columns: 1fr; }
+    .bio-links { flex-direction: row; flex-wrap: wrap; min-width: unset; }
+    section { padding: 3.5rem 0; }
+    #hero { padding-top: 6rem; padding-bottom: 3.5rem; }
+  }
+
+  @media (max-width: 600px) {
+    .featured-articles-grid { gap: 0.75rem; }
+    .pillars { gap: 0.75rem; }
     .footer-inner { flex-direction: column; text-align: center; }
     .footer-polish { text-align: center; }
-
-    /* Achievements table → stacked cards on mobile */
-    .achievements-table thead { display: none; }
-    .achievements-table,
-    .achievements-table tbody,
-    .achievements-table tr,
-    .achievements-table td { display: block; width: 100%; }
-    .achievements-table tr {
-      background: var(--surface);
-      border: 1px solid var(--border) !important;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-    }
-    .achievements-table tr:last-child { border-bottom: 1px solid var(--border) !important; }
-    .achievements-table tbody tr:hover { background: var(--surface); }
-    .achievements-table td { padding: 0.2rem 0; border: none; }
-    .achievements-table td:first-child {
-      display: block;
-      font-family: var(--mono);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--accent2);
-      padding-left: 0;
-      margin-bottom: 0.35rem;
-      white-space: normal;
-    }
   }
 
   @media (max-width: 480px) {
-    .stack-grid { grid-template-columns: 1fr 1fr; }
-    .learning-grid { grid-template-columns: 1fr; }
-    h1 { font-size: clamp(1.9rem, 9vw, 2.5rem); }
     .container { padding: 0 1rem; }
-    .contact-note { padding: 1rem; }
-    .hero-sub { font-size: 0.95rem; }
-    .project-metric-row { gap: 0.3rem; }
+    .nav-links { gap: 0.85rem; }
+    .nav-links a { font-size: 0.7rem; }
+    h1 { font-size: clamp(1.9rem, 9vw, 2.5rem); }
+    .hero-sub { font-size: 0.93rem; }
+    #hero { padding-top: 5rem; }
   }
 </style>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -700,7 +298,7 @@
 <!-- ─── Navigation ──────────────────────────────────────────── -->
 <nav>
   <div class="inner">
-    <span class="nav-brand">
+    <span class="nav-brand"><a href="/">
       <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
         <rect width="32" height="32" rx="7" fill="#141417"/>
         <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
@@ -708,15 +306,11 @@
         <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
       </svg>
       goldlayer.dev
-    </span>
+    </a></span>
     <ul class="nav-links">
-      <li><a href="#about">about</a></li>
-      <li><a href="#stack">stack</a></li>
-      <li><a href="#projects">projects</a></li>
-      <li><a href="#ventures">ventures</a></li>
-      <li><a href="#writing">writing</a></li>
-      <li><a href="#achievements">impact</a></li>
-      <li><a href="#contact">contact</a></li>
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
     </ul>
   </div>
 </nav>
@@ -736,28 +330,18 @@
           <span class="line-muted">Analytics Engineer</span>
         </h1>
 
-        <p class="hero-hook">
-          If different teams disagree on the numbers,<br>the problem isn't data. It's trust.
+        <p class="hero-niche">
+          Writing on AI in analytics engineering — where it actually helps, where it quietly breaks, and how to govern it.
         </p>
 
         <p class="hero-sub">
-          I build the data layer that ends that conversation — clean definitions, tested pipelines, one version of MRR, churn, and pipeline that everyone can rely on.
-        </p>
-
-        <p class="hero-tags">
-          8+ years in B2B SaaS &nbsp;·&nbsp; Snowflake &nbsp;·&nbsp; dbt &nbsp;·&nbsp; End-to-end analytics systems &nbsp;·&nbsp; Self-service data layers &nbsp;·&nbsp; AI-assisted analytics
+          dbt · Snowflake · DuckDB · Python. 8+ years in B2B SaaS revenue data. Most content on this topic is vague — I try to be specific.
         </p>
 
         <div class="hero-actions">
-          <a href="https://github.com/PZawieja" class="btn btn-primary" target="_blank" rel="noopener">
-            ↗ GitHub
-          </a>
-          <a href="https://linkedin.com/in/piotr-zawieja" class="btn btn-ghost" target="_blank" rel="noopener">
-            LinkedIn
-          </a>
-          <a href="mailto:piotr.zawieja.pl@gmail.com" class="btn btn-ghost">
-            Email
-          </a>
+          <a href="/writing/" class="btn btn-primary">Read the writing →</a>
+          <a href="/projects/" class="btn btn-ghost">View projects</a>
+          <a href="https://linkedin.com/in/piotr-zawieja" class="btn btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
         </div>
       </div>
 
@@ -770,510 +354,129 @@
   </div>
 </section>
 
+<!-- ─── Featured writing ─────────────────────────────────────── -->
+<section id="writing">
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// latest writing</p>
+      <h2>Recent articles</h2>
+    </div>
+
+<!-- WRITING_START -->
+    <div class="featured-articles-grid">
+
+      <a href="writing/analytics-agent-eval-harness.html" class="featured-article" data-tag="AI">
+        <div class="featured-article-meta">
+          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
+          <span class="featured-article-date">26 Jun 2026 · 11 min</span>
+        </div>
+        <h3 class="featured-article-title">How to know if your analytics agent still works: a deterministic eval harness</h3>
+        <p class="featured-article-lede">Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
+      </a>
+      <a href="writing/dbt-agentic-engine-build-log.html" class="featured-article" data-tag="AI">
+        <div class="featured-article-meta">
+          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
+          <span class="featured-article-date">26 Jun 2026 · 11 min</span>
+        </div>
+        <h3 class="featured-article-title">Building an analytics agent on a real dbt project: what actually broke</h3>
+        <p class="featured-article-lede">A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</p>
+      </a>
+      <a href="writing/revenue-intelligence-agent-ai-cs-copilot.html" class="featured-article" data-tag="AI">
+        <div class="featured-article-meta">
+          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
+          <span class="featured-article-date">23 Jun 2026 · 11 min</span>
+        </div>
+        <h3 class="featured-article-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h3>
+        <p class="featured-article-lede">A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
+      </a>
+
+    </div>
+      <p class="writing-view-all"><a href="writing/">View all articles →</a></p>
+    <!-- WRITING_END -->
+
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-icon">⚙</div>
+        <h3>AI in analytics engineering</h3>
+        <p>Agents, evals, governed SQL generation — what production-ready actually means when you put an LLM near your data.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">$</div>
+        <h3>dbt &amp; Snowflake</h3>
+        <p>Practical patterns for revenue metrics, incremental models, data contracts, and trust at scale.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">◈</div>
+        <h3>Data quality &amp; governance</h3>
+        <p>When and how to test, how to own a metric layer, and how to make self-serve data actually work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Featured project ──────────────────────────────────────── -->
+<section id="projects">
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// open source</p>
+      <h2>Featured project</h2>
+    </div>
+
+    <a href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener" class="featured-project">
+      <p class="project-title">Revenue Intelligence Agent</p>
+      <p class="project-desc">
+        Governance-first AI demo for Customer Success teams. LLM queries restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Built to mirror how I'd deploy this in production: zero hallucination risk on metric queries, full audit trail.
+      </p>
+      <div class="project-tags">
+        <span class="tag">dbt</span>
+        <span class="tag">DuckDB</span>
+        <span class="tag">Python</span>
+        <span class="tag">Streamlit</span>
+        <span class="tag">AI guardrails</span>
+      </div>
+      <p class="project-link-indicator">↗ github.com/PZawieja/revenue-intelligence-agent</p>
+    </a>
+
+    <p style="margin-top:1.25rem">
+      <a href="/projects/" style="font-family:var(--mono);font-size:0.78rem;color:var(--accent2)">All projects →</a>
+    </p>
+  </div>
+</section>
+
 <!-- ─── About ─────────────────────────────────────────────────── -->
 <section id="about">
   <div class="container">
     <div class="section-header">
-      <p class="label">// background</p>
-      <h2>Revenue data, at scale</h2>
+      <p class="label">// about</p>
+      <h2>Who I am</h2>
     </div>
 
-    <div class="about-grid">
-      <div class="about-text">
+    <div class="bio-block">
+      <div class="bio-text">
         <p>
-          I'm an Analytics Engineer specialising in <strong>revenue and GTM data</strong> for B2B SaaS. My work sits at the intersection of data engineering, analytics, and business intelligence — building the warehouse layer that finance, CS, and product teams rely on daily.
+          Analytics Engineer with 8+ years in B2B SaaS revenue data. I build the warehouse layer that ends the "whose numbers are right?" argument — clean definitions, tested pipelines, one version of MRR, churn, and pipeline that everyone can rely on.
         </p>
         <p>
-          Across my career in B2B SaaS I've led CRM unification projects, rebuilt revenue data pipelines from the ground up, and shipped machine learning models into production CS workflows. Most recently: post-merger integration at a ~200-person company with a dual-entity data stack — unifying two product lines into a single, trusted revenue view. I've owned Snowflake, dbt, Salesforce, and Tableau end-to-end across the whole revenue data lifecycle.
+          My current focus is <strong>AI as a governed layer</strong> on top of warehouse assets. Not replacing analytical rigour, but amplifying it with auditable, production-ready LLM tooling. That's also the gap I write into: there isn't enough specific, technical content on how AI changes the analytics engineering job. I'm trying to fix that.
         </p>
         <p>
-          My current focus is integrating <strong>AI as a governed layer</strong> on top of warehouse assets — not replacing analytical rigour, but amplifying it with safer, auditable LLM tooling.
+          <a href="/about/">Full background, stack, and impact →</a>
         </p>
       </div>
 
-      <ul class="facts-list">
-        <li>8+ years in B2B SaaS analytics, primarily subscription/revenue data</li>
-        <li>Berlin-based, open to relocation to Warsaw/Cracow or fully remote internationally</li>
-        <li>Fluent in English; native Polish</li>
-        <li>Comfortable as individual contributor or technical lead</li>
-        <li>Domain focus: GTM &amp; revenue analytics, customer retention, product usage, self-serve reporting</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Stack ──────────────────────────────────────────────────── -->
-<section id="stack">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// technology</p>
-      <h2>Core stack</h2>
-    </div>
-
-    <div class="stack-grid">
-      <div class="stack-card">
-        <p class="stack-card-label">Warehouse</p>
-        <div class="stack-card-items">
-          <span class="tag">Snowflake</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">BigQuery</span>
-          <span class="tag">Postgres</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Transformation</p>
-        <div class="stack-card-items">
-          <span class="tag">dbt Core</span>
-          <span class="tag">dbt Cloud</span>
-          <span class="tag">SQL</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Languages</p>
-        <div class="stack-card-items">
-          <span class="tag">Python</span>
-          <span class="tag">SQL (Snowflake / BigQuery)</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">BI &amp; Viz</p>
-        <div class="stack-card-items">
-          <span class="tag">Tableau</span>
-          <span class="tag">Power BI</span>
-          <span class="tag">Streamlit</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Orchestration</p>
-        <div class="stack-card-items">
-          <span class="tag">Airflow</span>
-          <span class="tag">dbt Cloud jobs</span>
-          <span class="tag">GitHub Actions</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Sources &amp; AI</p>
-        <div class="stack-card-items">
-          <span class="tag">Salesforce</span>
-          <span class="tag">Chargebee</span>
-          <span class="tag">Claude API</span>
-          <span class="tag">OpenAI</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Projects ───────────────────────────────────────────────── -->
-<section id="projects">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// open source work</p>
-      <h2>Portfolio projects</h2>
-    </div>
-
-    <div class="projects-grid">
-
-      <a href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">$</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>GTM Revenue Analytics Platform</h3>
-        <p>
-          End-to-end SaaS revenue modeling — MRR waterfall, NRR cohort analysis, ARR bridge, churn by tenure. All five revenue motions defined, tested, and enforced in a single dbt intermediate model. Streamlit dashboard included.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">5 revenue motions · 1 source of truth</span>
-          <span class="metric-badge">CI-tested contracts</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Streamlit</span>
-          <span class="tag">SaaS metrics</span>
-          <span class="tag">CI/CD</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">⚙</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Revenue Intelligence Agent</h3>
-        <p>
-          Governance-first AI demo for Customer Success teams. LLM queries are restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Mirrors how I'd build this in production.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Zero free-form SQL</span>
-          <span class="metric-badge">Intent → pre-approved template</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Python</span>
-          <span class="tag">Streamlit</span>
-          <span class="tag">AI guardrails</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">⚗</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Experimentation Analytics Platform</h3>
-        <p>
-          Production-grade A/B testing pipeline. Assignment and exposure tracked as separate events, daily exposure quality monitoring, explicit ITT vs exposure-based cohort selection. Statistical output only after integrity checks pass.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">ITT + exposure cohorts</span>
-          <span class="metric-badge">Integrity-gated output</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Spark-compatible</span>
-          <span class="tag">Statistics</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">✈</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Air Traffic Pulse</h3>
-        <p>
-          Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern used in production revenue monitoring systems.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Live ADS-B · 4 European cities</span>
-          <span class="metric-badge">Observe → baseline → flag</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">Python</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">dbt</span>
-          <span class="tag">Anomaly detection</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">◈</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Event Analytics Platform</h3>
-        <p>
-          Behavioural event pipeline from raw stream to governed self-service layer. Clean staging → intermediate → mart separation prevents raw event schemas from bleeding into BI tools.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Raw stream → governed marts</span>
-          <span class="metric-badge">Schema isolation enforced</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">Python</span>
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Funnel analytics</span>
-        </div>
-      </a>
-
-    </div>
-  </div>
-</section>
-
-<!-- ─── Ventures ────────────────────────────────────────────────── -->
-<section id="ventures">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// ventures</p>
-      <h2>Products I built and run</h2>
-      <p class="section-sub">Side projects that ship to real customers. Building end-to-end products is the fastest way to understand why data quality, reliability, and trust actually matter.</p>
-    </div>
-
-    <div class="projects-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-
-      <a href="https://getcareerlens.com" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">🔎</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>CareerLens</h3>
-        <p>
-          Paste a job description and your CV — get an honest second opinion before you invest your time. Fit level, missing vs critical skills, red flags in the wording, realistic comp range, and what the role probably involves day-to-day. First 3 analyses free.
-        </p>
-        <div class="project-tags">
-          <span class="tag">SaaS</span>
-          <span class="tag">AI</span>
-          <span class="tag">Job search</span>
-          <span class="tag">Data careers</span>
-        </div>
-      </a>
-
-      <a href="https://www.spotiq.app/" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">◎</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>SpotIQ</h3>
-        <p>
-          Google Business Profile audit that ranks every issue by revenue impact — not just SEO score. AI compares you against local competitors and tells you exactly what to fix tonight.
-        </p>
-        <div class="project-tags">
-          <span class="tag">SaaS</span>
-          <span class="tag">AI</span>
-          <span class="tag">Local SEO</span>
-          <span class="tag">€49 one-time</span>
-        </div>
-      </a>
-
-      <a href="https://menuboost.app/" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">▤</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>MenuIQ</h3>
-        <p>
-          Your menu is leaving money on every table. Menu optimisation tool for restaurants — identifies what to change, remove, or reprice to increase revenue per cover.
-        </p>
-        <div class="project-tags">
-          <span class="tag">SaaS</span>
-          <span class="tag">Restaurants</span>
-          <span class="tag">Menu optimisation</span>
-        </div>
-      </a>
-
-      <a href="https://play.google.com/store/apps/details?id=com.piotr.ecochallenge" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">🌱</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>One Green Thing</h3>
-        <p>
-          Android app for daily eco challenges — one small, achievable action per day. Habit tracking with heatmap visualisation, custom challenges, and Polish/English support.
-        </p>
-        <div class="project-tags">
-          <span class="tag">Android</span>
-          <span class="tag">Habit tracking</span>
-          <span class="tag">Google Play</span>
-        </div>
-      </a>
-
-    </div>
-  </div>
-</section>
-
-<!-- ─── Writing ─────────────────────────────────────────────────── -->
-<section id="writing">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// writing</p>
-      <h2>Articles</h2>
-    </div>
-
-<!-- WRITING_START -->
-    <div class="writing-list">
-
-      <a href="writing/analytics-agent-eval-harness.html" class="writing-item">
-        <div class="writing-item-meta">
-          <span class="writing-tag">AI</span><span class="writing-tag">dbt</span>
-          <span class="writing-date">26 Jun 2026 · 11 min read</span>
-        </div>
-        <h3 class="writing-title">How to know if your analytics agent still works: a deterministic eval harness</h3>
-        <p class="writing-lede">Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
-      </a>
-      <a href="writing/dbt-agentic-engine-build-log.html" class="writing-item">
-        <div class="writing-item-meta">
-          <span class="writing-tag">AI</span><span class="writing-tag">dbt</span>
-          <span class="writing-date">26 Jun 2026 · 11 min read</span>
-        </div>
-        <h3 class="writing-title">Building an analytics agent on a real dbt project: what actually broke</h3>
-        <p class="writing-lede">A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</p>
-      </a>
-      <a href="writing/revenue-intelligence-agent-ai-cs-copilot.html" class="writing-item">
-        <div class="writing-item-meta">
-          <span class="writing-tag">AI</span><span class="writing-tag">dbt</span>
-          <span class="writing-date">23 Jun 2026 · 11 min read</span>
-        </div>
-        <h3 class="writing-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h3>
-        <p class="writing-lede">A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
-      </a>
-      <a href="writing/reconciling-metric-definitions-llm.html" class="writing-item">
-        <div class="writing-item-meta">
-          <span class="writing-tag">AI</span><span class="writing-tag">dbt</span>
-          <span class="writing-date">21 Jun 2026 · 8 min read</span>
-        </div>
-        <h3 class="writing-title">Reconciling competing metric definitions across teams with an LLM</h3>
-        <p class="writing-lede">An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.</p>
-      </a>
-      <a href="writing/forecasting-llm-vs-time-series-model.html" class="writing-item">
-        <div class="writing-item-meta">
-          <span class="writing-tag">AI</span>
-          <span class="writing-date">21 Jun 2026 · 9 min read</span>
-        </div>
-        <h3 class="writing-title">Forecasting with an LLM vs. a real time-series model: where each one is the right call</h3>
-        <p class="writing-lede">An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.</p>
-      </a>
-
-    </div>
-      <p style="margin-top:1.5rem"><a href="writing/" style="font-family:var(--mono);font-size:0.78rem;color:var(--muted)">View all articles →</a></p>
-    <!-- WRITING_END -->
-  </div>
-</section>
-
-<!-- ─── Achievements ───────────────────────────────────────────── -->
-<section id="achievements">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// production impact</p>
-      <h2>Selected achievements</h2>
-    </div>
-
-    <table class="achievements-table">
-      <thead>
-        <tr>
-          <th>Domain</th>
-          <th>Impact</th>
-          <th>Context</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Revenue accuracy</td>
-          <td>
-            <span class="metric">12–15% customer overlap found</span>
-            <span class="metric-detail">8–10% revenue overstatement corrected</span>
-          </td>
-          <td>CRM data reconciliation across two product lines following a post-merger integration. Identified customer overlap and corrected revenue double-counting in subscription data.</td>
-        </tr>
-        <tr>
-          <td>Pipeline performance</td>
-          <td>
-            <span class="metric">78 min → 7 min</span>
-            <span class="metric-detail">91% reduction in CARR pipeline runtime</span>
-          </td>
-          <td>Full rebuild of a subscription revenue pipeline — incremental materialisation, query restructuring, and partitioning strategy. Daily refresh completed well within business hours.</td>
-        </tr>
-        <tr>
-          <td>Churn ML model</td>
-          <td>
-            <span class="metric">86% accuracy · AUC-ROC 0.91</span>
-            <span class="metric-detail">~5% churn reduction in target segment</span>
-          </td>
-          <td>XGBoost churn risk model built on warehouse-sourced features and deployed to production. Scored weekly per account; integrated into customer success tooling.</td>
-        </tr>
-        <tr>
-          <td>Data migration</td>
-          <td>
-            <span class="metric">100k+ records migrated</span>
-            <span class="metric-detail">Zero data loss, zero downtime</span>
-          </td>
-          <td>Subscription data migration during a billing platform consolidation. Full validation suite run against source and destination before cutover; zero rollbacks required.</td>
-        </tr>
-        <tr>
-          <td>Reporting efficiency</td>
-          <td>
-            <span class="metric">~40% reduction</span>
-            <span class="metric-detail">in manual reporting time</span>
-          </td>
-          <td>Standardised dbt models replacing ad-hoc analyst SQL across the reporting layer. Executive dashboards and recurring business reviews moved to self-serve certified extracts.</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="rule" style="margin-top:2.5rem"></div>
-
-    <div class="contrib-grid">
-
-      <div class="contrib-card">
-        <span class="contrib-num">01</span>
-        <h3>Revenue unification across a dual-entity stack</h3>
-        <p>Post-merger integration at a ~200-person company: unified CRM and billing data across two product lines, resolved 12–15% customer overlap, corrected 8–10% revenue overstatement. Finance and RevOps moved to a single definition of truth.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">02</span>
-        <h3>Governed AI on warehouse assets</h3>
-        <p>Built a parameterised query layer on top of certified dbt marts for Customer Success. LLM classifies intent and fills pre-reviewed templates — no free-form SQL generation. Routine questions answered automatically; analysts freed for complex work.</p>
-      </div>
-
-      <div class="contrib-card">
-        <span class="contrib-num">03</span>
-        <h3>Analytics as a product</h3>
-        <p>Introduced ownership models, documentation standards, and certified mart contracts across the analytics layer — reducing ad-hoc data requests by ~40% and enabling self-serve reporting for Finance, CS, and Product without analyst bottlenecks.</p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ─── Currently Learning ────────────────────────────────────── -->
-<section id="learning">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// current focus</p>
-      <h2>Currently learning</h2>
-    </div>
-
-    <div class="learning-grid">
-      <div class="learning-item">
-        <h3>LLM tool use &amp; agents</h3>
-        <p>Building governed AI layers on top of warehouse assets — intent routing, parameterised SQL templates, output validation.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>dbt Mesh, contracts &amp; semantic layer</h3>
-        <p>Cross-project dependencies, model contracts, and the dbt semantic layer — unified metric definitions queryable across tools without duplicating logic.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Snowflake Cortex</h3>
-        <p>Native ML functions, Cortex Analyst, and document AI for embedding AI directly into the warehouse layer.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Analytics engineering leadership</h3>
-        <p>Principal-level skills: team enablement, data contracts as organisational boundaries, and analytics-as-a-product thinking.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Contact ────────────────────────────────────────────────── -->
-<section id="contact">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// get in touch</p>
-      <h2>Let's talk</h2>
-    </div>
-
-    <div class="contact-inner">
-      <div class="contact-links">
-        <a href="https://linkedin.com/in/piotr-zawieja" class="contact-link" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.6"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      <div class="bio-links">
+        <a href="https://linkedin.com/in/piotr-zawieja" class="bio-link" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.55;flex-shrink:0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
           LinkedIn
-          <span class="contact-link-label">preferred</span>
         </a>
-        <a href="https://github.com/PZawieja" class="contact-link" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.6"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        <a href="https://github.com/PZawieja" class="bio-link" target="_blank" rel="noopener">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.55;flex-shrink:0"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
           GitHub
-          <span class="contact-link-label">portfolio</span>
         </a>
-        <a href="mailto:piotr.zawieja.pl@gmail.com" class="contact-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-          piotr.zawieja.pl@gmail.com
-          <span class="contact-link-label">email</span>
+        <a href="mailto:piotr.zawieja.pl@gmail.com" class="bio-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.55;flex-shrink:0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
+          Email
         </a>
-      </div>
-
-      <div class="contact-note">
-        <strong>What I'm looking for</strong>
-        Senior or Principal Analytics Engineer roles where the work is hard, the data is messy, and there's a real engineering culture around how analytics gets built. I bring production-ready dbt and Snowflake expertise with a strong track record in revenue analytics, post-merger data integration, and governed AI on warehouse assets.<br><br>
-        Revenue and GTM data is my home domain, but the patterns — clean definitions, tested pipelines, one trusted metric layer — transfer well across industries. Fully remote, EU/UK timezones.
       </div>
     </div>
   </div>
@@ -1282,30 +485,10 @@
 <!-- ─── Footer ─────────────────────────────────────────────────── -->
 <footer>
   <div class="footer-inner">
-    <span class="footer-copy">© 2026 Piotr Zawieja · Built with HTML &amp; CSS, deployed on GitHub Pages</span>
+    <span class="footer-copy">© 2026 Piotr Zawieja · Built with HTML &amp; CSS, deployed on GitHub Pages · <a href="/writing/feed.xml" style="color:inherit">RSS</a></span>
     <span class="footer-polish">Szukam roli Senior / Principal Analytics Engineera w Polsce lub zdalnie.</span>
   </div>
 </footer>
-
-<script>
-  // Minimal — highlight active nav link on scroll
-  const sections = document.querySelectorAll('section[id]');
-  const navLinks = document.querySelectorAll('.nav-links a');
-
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        navLinks.forEach(link => {
-          link.style.color = link.getAttribute('href') === '#' + entry.target.id
-            ? 'var(--accent)'
-            : '';
-        });
-      }
-    });
-  }, { rootMargin: '-40% 0px -55% 0px' });
-
-  sections.forEach(s => observer.observe(s));
-</script>
 
 </body>
 </html>

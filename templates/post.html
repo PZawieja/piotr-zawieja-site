@@ -343,6 +343,79 @@
     .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
   }
 
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── Prev / Next nav ──────────────────────────────────────── */
+  .post-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 1rem; margin-top: 2rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .post-nav-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s; max-width: 45%;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .post-nav-link:hover { color: var(--accent); }
+  .post-nav-link.next { text-align: right; margin-left: auto; }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
   /* ─── Byline ───────────────────────────────────────────────── */
   .article-footer {
     margin-top: 3rem; padding-top: 2rem;
@@ -361,6 +434,20 @@
   }
   .back-link:hover { color: var(--accent); }
 
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
   /* ─── Mobile ───────────────────────────────────────────────── */
   @media (max-width: 600px) {
     .article-wrap { padding: 5rem 1.25rem 4rem; }
@@ -374,6 +461,12 @@
     .ts-row { grid-template-columns: 1fr; }
     .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
     .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+    .post-nav { flex-direction: column; gap: 0.75rem; }
+    .post-nav-link { max-width: 100%; }
+    .post-nav-link.next { margin-left: 0; text-align: left; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -384,7 +477,7 @@
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">
+    <span class="nav-brand"><a href="/">
       <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
         <rect width="32" height="32" rx="7" fill="#141417"/>
         <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
@@ -393,7 +486,11 @@
       </svg>
       goldlayer.dev
     </a></span>
-    <a href="../writing/" class="nav-back">← writing</a>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
   </div>
 </nav>
 
@@ -412,9 +509,39 @@
     {{ content | safe }}
   </div>
 
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  {% if related_posts %}
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      {% for rel in related_posts %}
+      <a href="{{ rel.slug }}.html" class="related-card">
+        <span class="related-tag">{{ rel.tags[0] }}</span>
+        <p class="related-title">{{ rel.title }}</p>
+        <span class="related-date">{{ rel.date_formatted }} · {{ rel.read_time }} min</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <nav class="post-nav" aria-label="Article navigation">
+    {% if prev_post %}
+    <a href="{{ prev_post.slug }}.html" class="post-nav-link prev">← {{ prev_post.title }}</a>
+    {% else %}
+    <span></span>
+    {% endif %}
+    {% if next_post %}
+    <a href="{{ next_post.slug }}.html" class="post-nav-link next">{{ next_post.title }} →</a>
+    {% endif %}
+  </nav>
+
   <footer class="article-footer">
     <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="../writing/" class="back-link">← all writing</a>
+    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
 </article>

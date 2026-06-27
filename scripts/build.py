@@ -97,11 +97,25 @@ def parse_posts() -> list:
     return posts
 
 
+def _related_posts(post: dict, all_posts: list, count: int = 3) -> list:
+    primary_tag = post["tags"][0] if post["tags"] else None
+    if not primary_tag:
+        return []
+    return [p for p in all_posts if p["slug"] != post["slug"] and primary_tag in p["tags"]][:count]
+
+
 def build_posts(posts: list, env: Environment) -> None:
     template = env.get_template("post.html")
     WRITING_DIR.mkdir(exist_ok=True)
-    for post in posts:
-        html = template.render(**post)
+    for i, post in enumerate(posts):
+        prev_post = posts[i + 1] if i + 1 < len(posts) else None
+        next_post = posts[i - 1] if i > 0 else None
+        html = template.render(
+            **post,
+            related_posts=_related_posts(post, posts),
+            prev_post=prev_post,
+            next_post=next_post,
+        )
         out = WRITING_DIR / f"{post['slug']}.html"
         out.write_text(html, encoding="utf-8")
         print(f"  ✓ writing/{post['slug']}.html")
@@ -125,32 +139,33 @@ def update_index_html(posts: list) -> None:
         sys.exit(1)
 
     items = []
-    for post in posts[:5]:
+    for post in posts[:3]:
+        primary_tag = post["tags"][0] if post["tags"] else ""
         tags_html = "".join(
-            f'<span class="writing-tag">{t}</span>' for t in post["tags"][:3]
+            f'<span class="writing-tag tag-{t.lower().replace("-", "")}">{t}</span>'
+            for t in post["tags"][:2]
         )
         items.append(
-            f'      <a href="writing/{post["slug"]}.html" class="writing-item">\n'
-            f'        <div class="writing-item-meta">\n'
+            f'      <a href="writing/{post["slug"]}.html" class="featured-article" data-tag="{primary_tag}">\n'
+            f'        <div class="featured-article-meta">\n'
             f'          {tags_html}\n'
-            f'          <span class="writing-date">{post["date_formatted"]} · {post["read_time"]} min read</span>\n'
+            f'          <span class="featured-article-date">{post["date_formatted"]} · {post["read_time"]} min</span>\n'
             f'        </div>\n'
-            f'        <h3 class="writing-title">{post["title"]}</h3>\n'
-            f'        <p class="writing-lede">{post["description"]}</p>\n'
+            f'        <h3 class="featured-article-title">{post["title"]}</h3>\n'
+            f'        <p class="featured-article-lede">{post["description"]}</p>\n'
             f'      </a>'
         )
 
-    list_html = "\n".join(items)
+    cards_html = "\n".join(items)
     view_all = (
-        '\n      <p style="margin-top:1.5rem">'
-        '<a href="writing/" style="font-family:var(--mono);font-size:0.78rem;color:var(--muted)">'
-        'View all articles →</a></p>'
-    ) if len(posts) > 5 else ""
+        '\n      <p class="writing-view-all">'
+        '<a href="writing/">View all articles →</a></p>'
+    ) if len(posts) > 3 else ""
 
     new_block = (
         f"<!-- WRITING_START -->\n"
-        f"    <div class=\"writing-list\">\n\n"
-        f"{list_html}\n\n"
+        f"    <div class=\"featured-articles-grid\">\n\n"
+        f"{cards_html}\n\n"
         f"    </div>{view_all}\n"
         f"    <!-- WRITING_END -->"
     )

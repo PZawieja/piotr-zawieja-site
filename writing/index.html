@@ -60,6 +60,10 @@
   .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
   .nav-back:hover { color: var(--accent); }
 
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; text-decoration: none; transition: color 0.15s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
   /* ─── Layout ───────────────────────────────────────────────── */
   .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
 
@@ -231,6 +235,8 @@
   @media (max-width: 600px) {
     .page-wrap { padding: 5.5rem 0 4rem; }
     .writing-title { font-size: 1.05rem; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.7rem; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -241,7 +247,7 @@
 
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="../index.html">
+    <span class="nav-brand"><a href="/">
       <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
         <rect width="32" height="32" rx="7" fill="#141417"/>
         <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
@@ -250,7 +256,11 @@
       </svg>
       goldlayer.dev
     </a></span>
-    <a href="../index.html" class="nav-back">← home</a>
+    <ul class="nav-links">
+      <li><a href="/writing/" class="active">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
   </div>
 </nav>
 

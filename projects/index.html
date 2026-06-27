@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects — Piotr Zawieja</title>
+<meta name="description" content="Open-source analytics engineering projects and shipped products — dbt, DuckDB, Python, AI.">
+<meta property="og:title" content="Projects — Piotr Zawieja">
+<meta property="og:description" content="Open-source analytics engineering projects and shipped products — dbt, DuckDB, Python, AI.">
+<meta property="og:url" content="https://goldlayer.dev/projects/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     900px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h2 { font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
+  h3 { font-family: var(--sans); font-size: 0.95rem; font-weight: 600; color: var(--white); }
+
+  .label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); }
+
+  a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
+  a:hover { color: var(--white); }
+  p { color: var(--text); }
+
+  /* ─── Layout ───────────────────────────────────────────────── */
+  .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
+  section { padding: 4rem 0; border-top: 1px solid var(--border); }
+  section:first-of-type { border-top: none; }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); letter-spacing: 0.05em; }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+
+  .nav-links { display: flex; gap: 1.8rem; list-style: none; }
+  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; text-decoration: none; transition: color 0.15s; }
+  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
+
+  /* ─── Page header ──────────────────────────────────────────── */
+  .page-top { padding: 7rem 0 3rem; }
+
+  .page-title { font-family: var(--serif); font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; color: var(--white); letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.75rem; }
+  .page-sub { font-size: 1rem; color: var(--muted); max-width: 560px; line-height: 1.65; }
+
+  /* ─── Section header ───────────────────────────────────────── */
+  .section-header { margin-bottom: 2rem; }
+  .section-header .label { margin-bottom: 0.5rem; }
+  .section-sub { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; max-width: 640px; line-height: 1.6; }
+
+  /* ─── Project grid ─────────────────────────────────────────── */
+  .projects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .ventures-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  .project-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    transition: border-color 0.2s, transform 0.2s;
+    text-decoration: none;
+  }
+
+  .project-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+
+  .project-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .project-icon { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .project-link-icon { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); transition: color 0.15s, transform 0.2s; display: inline-block; }
+  .project-card:hover .project-link-icon { color: var(--accent2); transform: translate(3px, -3px); }
+
+  .project-card h3 { font-size: 0.95rem; color: var(--white); }
+  .project-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.55; flex: 1; }
+
+  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
+  .tag { font-family: var(--mono); font-size: 0.7rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; }
+
+  .metric-badge { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); background: rgba(200,169,110,0.08); border: 1px solid rgba(200,169,110,0.2); border-radius: 3px; padding: 0.2rem 0.5rem; white-space: nowrap; }
+  .project-metric-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  /* ─── Footer ───────────────────────────────────────────────── */
+  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
+  .footer-inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .footer-copy { font-size: 0.78rem; color: var(--dim); font-family: var(--mono); }
+  .footer-polish { font-size: 0.82rem; color: var(--muted); text-align: right; }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .nav-links { gap: 1.2rem; }
+    .projects-grid, .ventures-grid { grid-template-columns: 1fr; }
+    section { padding: 3rem 0; }
+  }
+
+  @media (max-width: 480px) {
+    .page-top { padding: 5.5rem 0 2rem; }
+    .container { padding: 0 1rem; }
+    .nav-links { gap: 0.85rem; }
+    .nav-links a { font-size: 0.7rem; }
+  }
+</style>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/" class="active">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<div class="page-top">
+  <div class="container">
+    <p class="label">// projects</p>
+    <h1 class="page-title">Built things</h1>
+    <p class="page-sub">Open-source analytics engineering work and shipped products. All open-source projects use dbt + DuckDB and are designed to mirror production patterns.</p>
+  </div>
+</div>
+
+<!-- ─── Open source ─────────────────────────────────────────── -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// open source</p>
+      <h2>Analytics engineering portfolio</h2>
+      <p class="section-sub">Production-pattern dbt projects. Each demonstrates a pattern from real revenue and GTM analytics work.</p>
+    </div>
+
+    <div class="projects-grid">
+
+      <a href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">$</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>GTM Revenue Analytics Platform</h3>
+        <p>
+          End-to-end SaaS revenue modeling — MRR waterfall, NRR cohort analysis, ARR bridge, churn by tenure. All five revenue motions defined, tested, and enforced in a single dbt intermediate model. Streamlit dashboard included.
+        </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">5 revenue motions · 1 source of truth</span>
+          <span class="metric-badge">CI-tested contracts</span>
+        </div>
+        <div class="project-tags">
+          <span class="tag">dbt</span>
+          <span class="tag">DuckDB</span>
+          <span class="tag">Streamlit</span>
+          <span class="tag">SaaS metrics</span>
+          <span class="tag">CI/CD</span>
+        </div>
+      </a>
+
+      <a href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">⚙</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>Revenue Intelligence Agent</h3>
+        <p>
+          Governance-first AI demo for Customer Success teams. LLM queries are restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Mirrors how I'd build this in production.
+        </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Zero free-form SQL</span>
+          <span class="metric-badge">Intent → pre-approved template</span>
+        </div>
+        <div class="project-tags">
+          <span class="tag">dbt</span>
+          <span class="tag">DuckDB</span>
+          <span class="tag">Python</span>
+          <span class="tag">Streamlit</span>
+          <span class="tag">AI guardrails</span>
+        </div>
+      </a>
+
+      <a href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">⚗</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>Experimentation Analytics Platform</h3>
+        <p>
+          Production-grade A/B testing pipeline. Assignment and exposure tracked as separate events, daily exposure quality monitoring, explicit ITT vs exposure-based cohort selection. Statistical output only after integrity checks pass.
+        </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">ITT + exposure cohorts</span>
+          <span class="metric-badge">Integrity-gated output</span>
+        </div>
+        <div class="project-tags">
+          <span class="tag">dbt</span>
+          <span class="tag">DuckDB</span>
+          <span class="tag">Spark-compatible</span>
+          <span class="tag">Statistics</span>
+        </div>
+      </a>
+
+      <a href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">✈</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>Air Traffic Pulse</h3>
+        <p>
+          Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern used in production revenue monitoring systems.
+        </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Live ADS-B · 4 European cities</span>
+          <span class="metric-badge">Observe → baseline → flag</span>
+        </div>
+        <div class="project-tags">
+          <span class="tag">Python</span>
+          <span class="tag">DuckDB</span>
+          <span class="tag">dbt</span>
+          <span class="tag">Anomaly detection</span>
+        </div>
+      </a>
+
+      <a href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">◈</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>Event Analytics Platform</h3>
+        <p>
+          Behavioural event pipeline from raw stream to governed self-service layer. Clean staging → intermediate → mart separation prevents raw event schemas from bleeding into BI tools.
+        </p>
+        <div class="project-metric-row">
+          <span class="metric-badge">Raw stream → governed marts</span>
+          <span class="metric-badge">Schema isolation enforced</span>
+        </div>
+        <div class="project-tags">
+          <span class="tag">Python</span>
+          <span class="tag">dbt</span>
+          <span class="tag">DuckDB</span>
+          <span class="tag">Funnel analytics</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ─── Products ────────────────────────────────────────────── -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <p class="label">// products</p>
+      <h2>Shipped to real users</h2>
+      <p class="section-sub">Side projects that ship to real customers. Building end-to-end products is the fastest way to understand why data quality, reliability, and trust actually matter.</p>
+    </div>
+
+    <div class="ventures-grid">
+
+      <a href="https://getcareerlens.com" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">🔎</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>CareerLens</h3>
+        <p>
+          Paste a job description and your CV — get an honest second opinion before you invest your time. Fit level, missing vs critical skills, red flags in the wording, realistic comp range, and what the role probably involves day-to-day. First 3 analyses free.
+        </p>
+        <div class="project-tags">
+          <span class="tag">SaaS</span>
+          <span class="tag">AI</span>
+          <span class="tag">Job search</span>
+          <span class="tag">Data careers</span>
+        </div>
+      </a>
+
+      <a href="https://www.spotiq.app/" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">◎</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>SpotIQ</h3>
+        <p>
+          Google Business Profile audit that ranks every issue by revenue impact — not just SEO score. AI compares you against local competitors and tells you exactly what to fix tonight.
+        </p>
+        <div class="project-tags">
+          <span class="tag">SaaS</span>
+          <span class="tag">AI</span>
+          <span class="tag">Local SEO</span>
+          <span class="tag">€49 one-time</span>
+        </div>
+      </a>
+
+      <a href="https://menuboost.app/" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">▤</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>MenuIQ</h3>
+        <p>
+          Your menu is leaving money on every table. Menu optimisation tool for restaurants — identifies what to change, remove, or reprice to increase revenue per cover.
+        </p>
+        <div class="project-tags">
+          <span class="tag">SaaS</span>
+          <span class="tag">Restaurants</span>
+          <span class="tag">Menu optimisation</span>
+        </div>
+      </a>
+
+      <a href="https://play.google.com/store/apps/details?id=com.piotr.ecochallenge" target="_blank" rel="noopener" class="project-card">
+        <div class="project-card-top">
+          <div class="project-icon">🌱</div>
+          <span class="project-link-icon">↗</span>
+        </div>
+        <h3>One Green Thing</h3>
+        <p>
+          Android app for daily eco challenges — one small, achievable action per day. Habit tracking with heatmap visualisation, custom challenges, and Polish/English support.
+        </p>
+        <div class="project-tags">
+          <span class="tag">Android</span>
+          <span class="tag">Habit tracking</span>
+          <span class="tag">Google Play</span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <span class="footer-copy">© 2026 Piotr Zawieja · <a href="/writing/feed.xml" style="color:inherit">RSS</a></span>
+    <span class="footer-polish">Szukam roli Senior / Principal Analytics Engineera w Polsce lub zdalnie.</span>
+  </div>
+</footer>
+
+</body>
+</html>
