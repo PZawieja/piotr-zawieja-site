@@ -559,6 +559,11 @@ Write a plain-English explanation (3-4 paragraphs) that:
 <p>Paste the actual dbt run error and the relevant model SQL into the prompt. The more specific the input, the less you'll need to edit the output.</p>
 </div>
 
+<figure>
+<img src="../assets/posts/ai-analytics-not-sql-generation/postmortem.png" alt="Slack #stakeholder-updates channel showing an AI-drafted incident summary explaining a DBT join error in plain English">
+<figcaption>The output goes from technical error logs to a stakeholder-ready Slack message — the same information, a different audience.</figcaption>
+</figure>
+
 <hr />
 <h2>2. Turning "we need customer health" into a metric specification</h2>
 <p>The most expensive moment in analytics work isn't writing the model — it's writing the <em>wrong</em> model. This happens when a vague stakeholder request gets encoded directly into a dbt project without anyone pressure-testing what they actually meant.</p>
@@ -628,6 +633,11 @@ Generate a CSV seed file with 20 rows that thoroughly tests this logic. Include:
 5,104,starter,2026-01-01,2026-01-15,49.00
 </code></pre>
 <p>Validate the pro-rating math yourself — AI gets boundary arithmetic wrong often enough to verify — but you go from "three rows I made up" to "twenty rows covering real edge cases" in two minutes.</p>
+<figure>
+<img src="../assets/posts/ai-analytics-not-sql-generation/seed-data.png" alt="dbt model view showing fct_sales with AI-generated embedded schema definitions, column-level tests, and lineage graph">
+<figcaption>Seed data and schema definitions generated from the model SQL — the edge cases you wouldn't think to write manually.</figcaption>
+</figure>
+
 <hr />
 <h2>5. Writing schema.yml descriptions that are actually useful</h2>
 <p>Every dbt project has the same problem: the models have descriptions, and they all say "this model contains order data." Nobody wrote real descriptions because writing twenty-word descriptions for every column in forty models is tedious beyond reason.</p>

@@ -55,6 +55,11 @@ The output needs editing — it's always a bit corporate in tone — but it take
 <p>Paste the actual dbt run error and the relevant model SQL into the prompt. The more specific the input, the less you'll need to edit the output.</p>
 </div>
 
+<figure>
+<img src="../assets/posts/ai-analytics-not-sql-generation/postmortem.png" alt="Slack #stakeholder-updates channel showing an AI-drafted incident summary explaining a DBT join error in plain English">
+<figcaption>The output goes from technical error logs to a stakeholder-ready Slack message — the same information, a different audience.</figcaption>
+</figure>
+
 ---
 
 ## 2. Turning "we need customer health" into a metric specification
@@ -151,6 +156,11 @@ subscription_id,customer_id,plan_type,start_date,end_date,monthly_amount
 ```
 
 Validate the pro-rating math yourself — AI gets boundary arithmetic wrong often enough to verify — but you go from "three rows I made up" to "twenty rows covering real edge cases" in two minutes.
+
+<figure>
+<img src="../assets/posts/ai-analytics-not-sql-generation/seed-data.png" alt="dbt model view showing fct_sales with AI-generated embedded schema definitions, column-level tests, and lineage graph">
+<figcaption>Seed data and schema definitions generated from the model SQL — the edge cases you wouldn't think to write manually.</figcaption>
+</figure>
 
 ---
 
