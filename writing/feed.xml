@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>40 data alerts at 6am. AI triaged them in 90 seconds.</title>
+      <link>https://goldlayer.dev/writing/ai-triage-data-monitoring-alerts.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/ai-triage-data-monitoring-alerts.html</guid>
+      <pubDate>Sun, 28 Jun 2026 08:08:43 +0000</pubDate>
+      <description>Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</description>
+    </item>
+    <item>
       <title>Six analytics jobs I've handed to AI — none of them are writing SQL</title>
       <link>https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html</guid>

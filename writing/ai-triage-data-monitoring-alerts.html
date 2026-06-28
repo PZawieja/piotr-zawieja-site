@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40 data alerts at 6am. AI triaged them in 90 seconds. — Piotr Zawieja</title>
+<meta name="description" content="Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.">
+<meta property="og:title" content="40 data alerts at 6am. AI triaged them in 90 seconds.">
+<meta property="og:description" content="Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.">
+<meta property="og:url" content="https://goldlayer.dev/writing/ai-triage-data-monitoring-alerts.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">data-quality</span>
+      <span class="meta-date">28 Jun 2026 · 10 min read</span>
+    </div>
+    <h1 class="article-title">40 data alerts at 6am. AI triaged them in 90 seconds.</h1>
+    <p class="article-lede">Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</p>
+  </header>
+
+  <div class="article-body">
+    <p>It's 6:14am. Your phone lit up at 5:50 with a Slack notification. You open the data observability channel and there are 40 alerts waiting — a cascade of red from the nightly run. Revenue metrics, session counts, a handful of dbt test failures, some row count anomalies, a schema change warning.</p>
+<p>One of these is the reason your CFO will send a confused message at 9am. The other 39 are noise.</p>
+<p>The problem isn't that monitoring produced 40 alerts. The problem is that you have to read all 40 to find the one that matters — and you have to do it before standup.</p>
+<hr />
+<h2>Why alert triage breaks at scale</h2>
+<p>Most data teams reach a predictable failure mode with observability tooling. You set up monitoring because you want to catch issues early. The tool works — it catches a lot. But "a lot" turns out to mean dozens of alerts a day across your pipeline, and suddenly you have a new problem: alert fatigue.</p>
+<p>Think of it like a car alarm going off in the street. The first time, people look. By the third time, everyone assumes it's a false positive and ignores it. Alert fatigue in data monitoring follows the same pattern — teams start muting channels, setting higher thresholds, or just not looking until something breaks in production.</p>
+<p>The fix isn't fewer alerts. You still want the car alarm to go off — you just want someone to tell you instantly whether it's a cat sitting on the bonnet or an actual break-in.</p>
+<p>That's the triage problem. And it's exactly what AI is well-suited for.</p>
+<hr />
+<h2>What triage actually means</h2>
+<p>Triage is not anomaly detection. Your monitoring tool already does detection. Triage is classification: given a set of alerts that have already fired, which ones need human attention right now, which can wait, and which can be auto-resolved?</p>
+<p>The classification dimensions that matter:</p>
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">Real vs. noise</span>
+<span class="ts-desc">Is the deviation statistically meaningful, or within expected variance for this time of day, day of week, or reporting cycle?</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Upstream vs. local</span>
+<span class="ts-desc">Did this model fail because a source it depends on failed first? If yes, fixing the source fixes everything — don't touch the downstream model.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Blast radius</span>
+<span class="ts-desc">How many downstream models, dashboards, or metric definitions depend on the failing model? A failure in a staging model with 20 dependents is more urgent than one with zero.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Action required</span>
+<span class="ts-desc">Should a human intervene now, schedule a fix for today, or can this be auto-acknowledged as a known pattern?</span>
+</div>
+</div>
+
+<p>A human triage analyst does all four of these intuitively — but it takes five minutes per alert, knowledge of the full pipeline, and a clear head at 6am. AI can do the same classification in seconds if you give it the right context.</p>
+<hr />
+<h2>The context AI needs</h2>
+<p>Sending raw alert notifications to an LLM is like asking a doctor to diagnose from symptoms alone, with no patient history and no list of current medications. The symptom is "row count dropped." What the doctor actually needs: what this patient's baseline looks like, what changed recently, and whether the upstream organ is also failing.</p>
+<p>The mistake is feeding raw alert notifications to an LLM and asking it to triage. Alert notifications contain very little information — usually just a model name, a metric, and a threshold breach. You need to enrich each alert before the LLM can reason about it.</p>
+<p>For each alert, you need:</p>
+<pre><code class="language-python">alert_context = {
+    &quot;alert_id&quot;: &quot;alert_0042&quot;,
+    &quot;model&quot;: &quot;fct_daily_revenue&quot;,
+    &quot;check_type&quot;: &quot;row_count_anomaly&quot;,
+    &quot;expected_range&quot;: &quot;8000–12000&quot;,
+    &quot;actual_value&quot;: 4200,
+    &quot;fired_at&quot;: &quot;2026-06-28T05:47:00Z&quot;,
+    &quot;historical_false_positive_rate&quot;: 0.12,   # this alert fires ~12% of runs without a real issue
+    &quot;upstream_failing&quot;: [&quot;stg_stripe_events&quot;],  # models upstream that also failed this run
+    &quot;downstream_dependents&quot;: 14,               # models + exposures downstream
+    &quot;last_git_change&quot;: &quot;2 days ago&quot;,           # how recently the model was modified
+    &quot;recent_same_alert_count&quot;: 0,              # how many times this fired in the last 7 days
+}
+</code></pre>
+<p>The two most important enrichments are <strong>upstream failures</strong> and <strong>historical false positive rate</strong>. If a model failed because its source failed, the alert is not actionable — you fix the source. If a particular alert has a 40% historical false positive rate, the LLM needs to know that before it suggests waking someone up.</p>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>dbt's <code>manifest.json</code> and <code>run_results.json</code> contain the lineage and run status you need to compute upstream failures and blast radius automatically. Parse them in your triage script rather than maintaining a separate graph.</p>
+</div>
+
+<hr />
+<h2>The triage script</h2>
+<p>The classification rules in the prompt work like a rubric posted on the wall of a call centre: the clearer the rules, the more consistent the output — regardless of which LLM version is on shift.</p>
+<p>Here's the structure that works in practice. The key design decisions: batch all alerts into one prompt (not one prompt per alert — that's slow and expensive), use structured JSON output, and set a conservative threshold for "auto-resolve."</p>
+<pre><code class="language-python">import anthropic
+import json
+
+client = anthropic.Anthropic()
+
+def triage_alerts(alerts: list[dict]) -&gt; list[dict]:
+    alerts_json = json.dumps(alerts, indent=2)
+
+    prompt = f&quot;&quot;&quot;You are a data reliability engineer triaging overnight monitoring alerts.
+For each alert, classify it on four dimensions and return structured JSON.
+
+Classification rules:
+- upstream_caused: true if any model in upstream_failing is non-empty AND the alert type
+  is row_count or freshness (not a schema change or custom test)
+- severity: &quot;critical&quot; if downstream_dependents &gt; 10 AND historical_false_positive_rate &lt; 0.2;
+  &quot;high&quot; if downstream_dependents &gt; 3; &quot;low&quot; otherwise
+- likely_noise: true if historical_false_positive_rate &gt; 0.3 OR (the actual_value is within
+  20% of the expected range boundary)
+- action: one of &quot;page_oncall&quot; | &quot;fix_today&quot; | &quot;monitor&quot; | &quot;auto_acknowledge&quot;
+  - page_oncall: severity=critical AND NOT upstream_caused AND NOT likely_noise
+  - auto_acknowledge: upstream_caused OR likely_noise
+  - fix_today: severity=high AND NOT upstream_caused
+  - monitor: everything else
+
+Alerts to triage:
+{alerts_json}
+
+Return a JSON array with one object per alert:
+{{
+  &quot;alert_id&quot;: &quot;...&quot;,
+  &quot;upstream_caused&quot;: true/false,
+  &quot;severity&quot;: &quot;critical|high|low&quot;,
+  &quot;likely_noise&quot;: true/false,
+  &quot;action&quot;: &quot;page_oncall|fix_today|monitor|auto_acknowledge&quot;,
+  &quot;reasoning&quot;: &quot;one sentence explaining the classification&quot;
+}}&quot;&quot;&quot;
+
+    response = client.messages.create(
+        model=&quot;claude-sonnet-4-6&quot;,
+        max_tokens=2048,
+        messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: prompt}],
+    )
+
+    return json.loads(response.content[0].text)
+</code></pre>
+<p>The <code>reasoning</code> field is important — it gives the on-call engineer a one-sentence explanation they can scan, rather than asking them to re-derive the classification themselves. "Upstream stg_stripe_events failed; this is a cascade" is more useful than just "auto_acknowledge."</p>
+<hr />
+<h2>What to do with the output</h2>
+<p>Think of it like an emergency room: the receptionist doesn't treat patients, but they do decide who goes to the waiting room, who goes straight to triage, and who gets a doctor immediately. The triage output plays the same role — it routes, it doesn't fix.</p>
+<p>The triage output is most useful when it routes to different channels automatically. Don't dump all results back into the same Slack channel you already muted.</p>
+<pre><code class="language-python">def route_triage_results(results: list[dict]):
+    for r in results:
+        if r[&quot;action&quot;] == &quot;page_oncall&quot;:
+            send_pagerduty(r)         # wake someone up
+        elif r[&quot;action&quot;] == &quot;fix_today&quot;:
+            create_jira_ticket(r)     # goes into the backlog for morning
+        elif r[&quot;action&quot;] == &quot;monitor&quot;:
+            post_to_slack(&quot;#data-alerts-low&quot;, r)   # visible but not urgent
+        elif r[&quot;action&quot;] == &quot;auto_acknowledge&quot;:
+            acknowledge_in_tool(r[&quot;alert_id&quot;])     # silence without human review
+            log_to_audit_trail(r)     # keep a record
+</code></pre>
+<p>The <code>auto_acknowledge</code> path is the one that saves the most time — and the one you need to be most careful about. The audit trail isn't optional. If you're automatically suppressing alerts, you need a record of every suppression so you can verify the false positive rate assumption holds and catch the cases where the AI got it wrong.</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>Don't auto-acknowledge schema change alerts, even if the historical false positive rate is high. A schema change in a source system is almost always worth human eyes, because it can silently corrupt downstream metrics even when no dbt test fires.</p>
+</div>
+
+<hr />
+<h2>Where this breaks down</h2>
+<p>This approach works well for volume triage — reducing 40 alerts to 3 that need attention. It's much weaker on two things.</p>
+<p><strong>Novel failure modes.</strong> AI classifies based on patterns it can reason about from the metadata you provide. A completely new type of failure — a source system changing its timezone, a reporting calendar shift, a one-off data migration — won't have historical false positive rate data and won't be upstream-caused in the obvious sense. These tend to get classified as "fix_today" rather than "page_oncall," which means the 6am page doesn't fire even though it should.</p>
+<p><strong>Correlated failures that aren't lineage-linked.</strong> If two models fail at the same time for the same business reason (say, a payment provider incident that affects both your revenue and your churn models through separate lineage paths), the triage script sees two independent alerts. It won't always connect them without explicit cross-alert reasoning.</p>
+<div class="pull-quote">
+Triage buys you time and focus. It doesn't replace the domain knowledge that tells you a 20% revenue drop at 5am on a Monday is almost always a pipeline issue, not actual revenue.
+</div>
+
+<p>For both of these edge cases, the fix is human review of the "auto_acknowledge" log at least once a week. Treat it the same way you treat a spam folder — mostly right, but worth a periodic scan.</p>
+<hr />
+<h2>The payoff</h2>
+<p>On a mature pipeline with well-tuned monitoring, roughly 60–70% of overnight alerts are upstream-caused cascades or known-noisy checks. Auto-acknowledging those — with a clear reasoning field and an audit trail — means your on-call engineer wakes up to three actionable items instead of forty.</p>
+<p>The remaining 30–40% still need human eyes. But you can give those humans the triage output alongside the alert: here's the severity, here's the blast radius, here's why we think this is real. That's a much better starting point than raw alert text at 6am.</p>
+<p>The 90 seconds in the title is real — that's roughly the latency for a single Claude API call with 40 enriched alerts. The enrichment (parsing manifest.json, computing historical rates, resolving upstream failures) takes another minute or two in the script. The total time from "nightly run complete" to "Slack has three prioritized, reasoned alerts" is under five minutes.</p>
+<p>What does your current alert triage process look like — are you reading every one, or have you already built something to filter the noise?</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Triage is not detection</strong> — your monitoring tool already fires the alerts; AI's job is classifying them by severity, cause, and required action, not finding new anomalies.</li>
+<li><strong>Enrich before you prompt</strong> — raw alert notifications don't contain enough signal; upstream failure status and historical false positive rate are the two most valuable fields to add.</li>
+<li><strong>Batch alerts into one prompt</strong> — one API call for 40 alerts is faster and cheaper than 40 calls, and lets the LLM reason about correlated failures.</li>
+<li><strong>Route outputs to different channels</strong> — auto-acknowledge, create ticket, post to low-priority channel, and page on-call are four different destinations that prevent the triage output from becoming noise itself.</li>
+<li><strong>Always keep an audit trail for auto-acknowledgements</strong> — if AI is suppressing alerts automatically, you need a log you review weekly to catch classification errors before they become blind spots.</li>
+<li><strong>Novel failures and cross-lineage correlations are the weak spots</strong> — AI triage is strong on pattern-matching and weak on genuinely new failure modes; human review of the suppressed log catches what the classifier misses.</li>
+</ul>
+</div>
+  </div>
+
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      
+      <a href="ai-analytics-not-sql-generation.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Six analytics jobs I've handed to AI — none of them are writing SQL</p>
+        <span class="related-date">28 Jun 2026 · 11 min</span>
+      </a>
+      
+      <a href="analytics-agent-eval-harness.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">How to know if your analytics agent still works: a deterministic eval harness</p>
+        <span class="related-date">26 Jun 2026 · 11 min</span>
+      </a>
+      
+      <a href="dbt-agentic-engine-build-log.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Building an analytics agent on a real dbt project: what actually broke</p>
+        <span class="related-date">26 Jun 2026 · 11 min</span>
+      </a>
+      
+    </div>
+  </div>
+  
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="/writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>
