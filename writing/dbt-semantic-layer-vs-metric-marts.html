@@ -388,24 +388,6 @@
     font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
   }
 
-  /* ─── Prev / Next nav ──────────────────────────────────────── */
-  .post-nav {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 1rem; margin-top: 2rem; padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-
-  .post-nav-link {
-    font-family: var(--mono); font-size: 0.75rem;
-    color: var(--muted); text-decoration: none;
-    transition: color 0.15s; max-width: 45%;
-    display: flex; align-items: center; gap: 0.4rem;
-  }
-
-  .post-nav-link:hover { color: var(--accent); }
-  .post-nav-link.next { text-align: right; margin-left: auto; }
-
   /* ─── RSS nudge ────────────────────────────────────────────── */
   .rss-nudge {
     margin-top: 2rem; padding: 1rem 1.25rem;
@@ -507,9 +489,6 @@
     .nav-links { gap: 1rem; }
     .nav-links a { font-size: 0.72rem; }
     .related-grid { grid-template-columns: 1fr; }
-    .post-nav { flex-direction: column; gap: 0.75rem; }
-    .post-nav-link { max-width: 100%; }
-    .post-nav-link.next { margin-left: 0; text-align: left; }
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -744,15 +723,6 @@ models:
     </div>
   </div>
   
-
-  <nav class="post-nav" aria-label="Article navigation">
-    
-    <a href="snowflake-cortex-analyst-in-practice.html" class="post-nav-link prev">← Snowflake Cortex Analyst in practice: what the demo doesn't show you</a>
-    
-    
-    <a href="dbt-tests-business-logic-errors.html" class="post-nav-link next">How to write dbt tests that catch real business logic errors (not just nulls) →</a>
-    
-  </nav>
 
   <footer class="article-footer">
     <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
