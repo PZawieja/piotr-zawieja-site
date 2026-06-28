@@ -562,6 +562,11 @@
 </div>
 
 <p>A human triage analyst does all four of these intuitively — but it takes five minutes per alert, knowledge of the full pipeline, and a clear head at 6am. AI can do the same classification in seconds if you give it the right context.</p>
+<figure>
+<img src="../assets/posts/ai-triage-data-monitoring-alerts/triage-filter.png" alt="Diagram showing dozens of red ALERT notifications funnelled through a filtering layer and emerging as three prioritised notifications: critical, high, and monitor">
+<figcaption>The triage goal: many alerts in, a short prioritised list out. The filter is AI classification — not fewer monitors, just fewer false pages.</figcaption>
+</figure>
+
 <hr />
 <h2>The context AI needs</h2>
 <p>Sending raw alert notifications to an LLM is like asking a doctor to diagnose from symptoms alone, with no patient history and no list of current medications. The symptom is "row count dropped." What the doctor actually needs: what this patient's baseline looks like, what changed recently, and whether the upstream organ is also failing.</p>

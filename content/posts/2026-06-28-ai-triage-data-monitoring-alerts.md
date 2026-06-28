@@ -59,6 +59,11 @@ The classification dimensions that matter:
 
 A human triage analyst does all four of these intuitively — but it takes five minutes per alert, knowledge of the full pipeline, and a clear head at 6am. AI can do the same classification in seconds if you give it the right context.
 
+<figure>
+<img src="../assets/posts/ai-triage-data-monitoring-alerts/triage-filter.png" alt="Diagram showing dozens of red ALERT notifications funnelled through a filtering layer and emerging as three prioritised notifications: critical, high, and monitor">
+<figcaption>The triage goal: many alerts in, a short prioritised list out. The filter is AI classification — not fewer monitors, just fewer false pages.</figcaption>
+</figure>
+
 ---
 
 ## The context AI needs
