@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six analytics jobs I've handed to AI — none of them are writing SQL — Piotr Zawieja</title>
+<meta name="description" content="SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.">
+<meta property="og:title" content="Six analytics jobs I've handed to AI — none of them are writing SQL">
+<meta property="og:description" content="SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.">
+<meta property="og:url" content="https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── Prev / Next nav ──────────────────────────────────────── */
+  .post-nav {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 1rem; margin-top: 2rem; padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .post-nav-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s; max-width: 45%;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+
+  .post-nav-link:hover { color: var(--accent); }
+  .post-nav-link.next { text-align: right; margin-left: auto; }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+    .post-nav { flex-direction: column; gap: 0.75rem; }
+    .post-nav-link { max-width: 100%; }
+    .post-nav-link.next { margin-left: 0; text-align: left; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-date">28 Jun 2026 · 11 min read</span>
+    </div>
+    <h1 class="article-title">Six analytics jobs I've handed to AI — none of them are writing SQL</h1>
+    <p class="article-lede">SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</p>
+  </header>
+
+  <div class="article-body">
+    <p>Every conference talk about AI in analytics ends the same way: a demo of SQL generation. Prompt in, query out, gasps from the audience.</p>
+<p>It's fine. But it's not where I've saved the most time.</p>
+<p>After eighteen months of putting AI into my analytics engineering workflow, the tasks that actually moved the needle have nothing to do with writing SQL. The highest-ROI uses are all in the parts of the job that aren't code — the translation layer between business questions and data models, the explanations nobody has time to write, the gaps that only become visible when you step back from the query editor.</p>
+<p>Here are six.</p>
+<hr />
+<h2>1. Writing the first draft of a data incident postmortem</h2>
+<p>You wake up to a Slack message: "Revenue is down 40% in the dashboard." By the time you've dug through the lineage, checked the git log, and confirmed it's a pipeline failure in the currency conversion step — not an actual revenue drop — you're out of time and out of mental energy to write an explanation for the VP of Finance.</p>
+<p>This is the job I now hand to AI immediately.</p>
+<p>Think of it like having a translator in the room. You understand what happened technically; AI translates that into language the stakeholder can actually use.</p>
+<p>The prompt structure that works:</p>
+<pre><code>You are a data engineer writing an incident summary for a non-technical stakeholder.
+
+Context:
+- Metric affected: [metric name and percentage change]
+- Root cause: [technical description in one paragraph]
+- Models involved: [list from dbt lineage]
+- Recent changes: [paste relevant git log entries]
+- Resolution: [what you did or plan to do]
+
+Write a plain-English explanation (3-4 paragraphs) that:
+1. States what the stakeholder saw and why it looked alarming
+2. Explains the root cause without jargon
+3. Describes the fix and when to expect clean data
+4. Closes with what prevents recurrence
+</code></pre>
+<p>The output needs editing — it's always a bit corporate in tone — but it takes five minutes instead of forty. The AI's job here isn't intelligence, it's translation.</p>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>Paste the actual dbt run error and the relevant model SQL into the prompt. The more specific the input, the less you'll need to edit the output.</p>
+</div>
+
+<hr />
+<h2>2. Turning "we need customer health" into a metric specification</h2>
+<p>The most expensive moment in analytics work isn't writing the model — it's writing the <em>wrong</em> model. This happens when a vague stakeholder request gets encoded directly into a dbt project without anyone pressure-testing what they actually meant.</p>
+<p>"We need a customer health score" can mean seventeen different things. I now run every ambiguous business request through an AI-assisted translation step before opening my text editor.</p>
+<p>This is like having an experienced BA on call: someone who asks the dumb questions before the project is already half-built.</p>
+<p>The prompt:</p>
+<pre><code>A stakeholder asked: &quot;[exact quote of what they said]&quot;
+
+I'm an analytics engineer. Before writing any SQL, translate this into a structured metric specification.
+
+Generate:
+1. Three different interpretations of what they might mean, each with a concrete example
+2. The upstream data sources each interpretation would require
+3. The business questions each interpretation can and cannot answer
+4. The three clarifying questions I should ask before building anything
+</code></pre>
+<p>What you get back isn't a model — it's a structured conversation starter. I've caught three cases in the last six months where this step revealed that the stakeholder and their manager had completely different definitions of the metric, before I'd written a single line of SQL.</p>
+<div class="pull-quote">
+The most expensive model to build is the one that answers the wrong question. AI can surface that mismatch before you've touched the keyboard.
+</div>
+
+<hr />
+<h2>3. Finding the gaps in your data model</h2>
+<p>Here's a trick I use before any major project handoff: describe your existing dimensional model to an LLM and ask what it can't answer.</p>
+<p>It's the same function as a good code reviewer who asks "what about this edge case?" — except applied to your data model design, and available at 11pm when your actual colleagues are not.</p>
+<pre><code>Here is the data model for our revenue analytics area:
+
+Fact tables: [list with grain]
+Dimension tables: [list with key attributes]
+
+Our stakeholders care about: [list of teams and their typical questions]
+
+What business questions cannot be answered with this model?
+List at least ten, ordered by how likely a stakeholder is to ask them.
+</code></pre>
+<p>The output is reliably humbling. It catches gaps you're too close to see — things like "you can't track customer lifetime value because you have no concept of customer identity across products" or "you can answer churn rate for current customers but not for churned customers who reactivated."</p>
+<p>This isn't AI doing data modeling. It's AI doing the "step back and be the skeptical outsider" role that's genuinely hard to do yourself when you've been staring at the same schema for six months.</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>The LLM will sometimes hallucinate gaps that don't actually exist, especially if your model description is incomplete. Use its output as a checklist to verify, not a verdict to trust.</p>
+</div>
+
+<hr />
+<h2>4. Generating edge-case seed data</h2>
+<p>dbt seeds are great for unit-testing model logic. The problem is that test data you write manually tends to test the happy path. You add a null, maybe a duplicate, then you stop.</p>
+<p>AI generates the edge cases you wouldn't think of — the same way a QA engineer who has seen production break thinks differently from the developer who wrote the code.</p>
+<p>The prompt:</p>
+<pre><code>I'm testing a dbt model that calculates monthly recurring revenue. The logic:
+- Sums active subscriptions by month, grouped by plan_type
+- Handles plan upgrades mid-month by pro-rating the amount
+
+Generate a CSV seed file with 20 rows that thoroughly tests this logic. Include:
+- Happy path rows
+- Subscriptions that start and end within the same month
+- Upgrades that happen on the 1st, 15th, and last day of the month
+- A subscription with a NULL end_date
+- A subscription where plan_type changes on the same day as a billing event
+- Rows with amounts of $0 and amounts over $100,000
+- A subscription spanning a leap year February
+</code></pre>
+<p>The output is a CSV you can drop into <code>seeds/</code>:</p>
+<pre><code class="language-csv">subscription_id,customer_id,plan_type,start_date,end_date,monthly_amount
+1,100,starter,2026-01-01,2026-01-31,49.00
+2,101,pro,2026-01-15,2026-01-15,299.00
+3,102,starter,2026-01-01,,49.00
+4,103,enterprise,2026-02-28,2026-02-29,999.00
+5,104,starter,2026-01-01,2026-01-15,49.00
+</code></pre>
+<p>Validate the pro-rating math yourself — AI gets boundary arithmetic wrong often enough to verify — but you go from "three rows I made up" to "twenty rows covering real edge cases" in two minutes.</p>
+<hr />
+<h2>5. Writing schema.yml descriptions that are actually useful</h2>
+<p>Every dbt project has the same problem: the models have descriptions, and they all say "this model contains order data." Nobody wrote real descriptions because writing twenty-word descriptions for every column in forty models is tedious beyond reason.</p>
+<p>AI is good at this, but only if you give it enough context. The mistake is pasting column names and asking for definitions. The trick is pasting the SQL — and asking for descriptions derived from the actual logic.</p>
+<p>Think of it like asking someone to explain what the model <em>does</em>, not just what it <em>is called</em>.</p>
+<pre><code>Here is a dbt model called fct_monthly_recurring_revenue:
+
+[paste full model SQL]
+
+Upstream models:
+- stg_subscriptions: one row per active subscription period
+- dim_customers: customer metadata including plan tier and signup date
+- dim_dates: date spine
+
+Write a schema.yml block for this model. For each column:
+1. Infer what it contains from the SQL logic, not just the name
+2. Write a description explaining the business meaning, not the technical derivation
+3. Flag columns where the definition is ambiguous or where you'd add a data test
+</code></pre>
+<p>The output gives you descriptions like "Monthly recurring revenue contribution from this subscription, pro-rated for partial months at plan start or end" instead of "The MRR amount." That's the difference between documentation that helps and documentation that exists.</p>
+<div class="callout callout-info">
+<span class="callout-label">context</span>
+<p>This works best on intermediate and mart models where the logic is complex enough that column names don't tell the full story. On staging models with simple renaming, the names usually are the documentation.</p>
+</div>
+
+<hr />
+<h2>6. Plain-English impact analysis before a breaking change</h2>
+<p>Before you change the grain of a fact table or rename a key column, you want to know what breaks downstream. <code>dbt ls --select &lt;model&gt;+</code> gives you a list of model names. Understanding <em>what</em> each downstream model does with your column is a different question.</p>
+<p>This is the difference between a search result and an explanation. AI can turn the first into the second.</p>
+<pre><code class="language-bash"># Get the downstream lineage
+dbt ls --select fct_orders+ --output path &gt; /tmp/downstream.txt
+</code></pre>
+<p>Then feed it to an LLM along with the proposed change:</p>
+<pre><code>Here is a list of models downstream of fct_orders:
+[paste output]
+
+I'm planning to change the grain of fct_orders from one row per order to
+one row per order line item.
+
+For each downstream model:
+1. Explain in one sentence what it likely does with fct_orders based on its name
+2. Identify whether a grain change would likely break it
+3. Suggest what I'd need to verify in that model
+</code></pre>
+<p>The AI doesn't have the actual SQL of those models, so this is inference from naming conventions — not analysis of real logic. But it turns "I don't know where to start" into "here are the eight models I need to verify" in a minute, which is a useful starting point before you do the actual verification.</p>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<span class="tradeoff-cell">Use case</span>
+<span class="tradeoff-cell">What AI replaces</span>
+<span class="tradeoff-cell">What you still own</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Incident postmortem</span>
+<span class="tradeoff-cell">First draft writing (40 min)</span>
+<span class="tradeoff-cell">Root cause diagnosis, tone editing</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Metric spec translation</span>
+<span class="tradeoff-cell">First-pass interpretation</span>
+<span class="tradeoff-cell">Stakeholder conversation, final definition</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Model gap analysis</span>
+<span class="tradeoff-cell">Outsider skeptic role</span>
+<span class="tradeoff-cell">Validating which gaps actually matter</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Seed generation</span>
+<span class="tradeoff-cell">Brainstorming edge cases</span>
+<span class="tradeoff-cell">Verifying the math is right</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">schema.yml descriptions</span>
+<span class="tradeoff-cell">First-draft column descriptions</span>
+<span class="tradeoff-cell">Accuracy check against real logic</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Impact analysis</span>
+<span class="tradeoff-cell">Checklist generation</span>
+<span class="tradeoff-cell">Reading the actual downstream SQL</span>
+</div>
+</div>
+
+<hr />
+<p>What ties these six uses together: AI's job in each case is <strong>translation</strong>, not generation. Translating a business request into a structured spec. Translating a technical incident into a stakeholder message. Translating a lineage list into a plain-English impact checklist.</p>
+<p>Code generation demos well. These tasks don't. They also don't tend to appear in "AI for data" blog posts. But they're where the time actually goes in analytics work — and where AI is, in my experience, most reliably useful without requiring careful validation of every line it produces.</p>
+<p>What's the most time-consuming non-coding task in your analytics work right now?</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>AI's translation jobs outperform its generation jobs</strong> — converting between technical and business-readable formats is where it saves the most time with the least risk.</li>
+<li><strong>Postmortem drafts are the easiest win</strong> — give AI the root cause, affected models, and resolution; spend five minutes editing instead of forty minutes writing from scratch.</li>
+<li><strong>Metric spec translation catches design errors early</strong> — surfacing multiple interpretations of a stakeholder request before writing any SQL is the cheapest time to find a misalignment.</li>
+<li><strong>Gap analysis is hard to do yourself</strong> — describing your model to an LLM and asking what it can't answer surfaces blindspots that are invisible from inside the project.</li>
+<li><strong>Edge-case seeds beat manual test data</strong> — AI consistently generates the boundary conditions (same-day plan changes, leap year dates, zero-value records) that manual seed files skip.</li>
+<li><strong>schema.yml quality depends on prompt depth</strong> — paste the full SQL and upstream context, not just column names; the difference in output quality is not small.</li>
+<li><strong>Impact analysis is checklist generation, not verification</strong> — use AI to build the list of models to inspect; do the actual inspection yourself by reading the SQL.</li>
+</ul>
+</div>
+  </div>
+
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      
+      <a href="analytics-agent-eval-harness.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">How to know if your analytics agent still works: a deterministic eval harness</p>
+        <span class="related-date">26 Jun 2026 · 11 min</span>
+      </a>
+      
+      <a href="dbt-agentic-engine-build-log.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Building an analytics agent on a real dbt project: what actually broke</p>
+        <span class="related-date">26 Jun 2026 · 11 min</span>
+      </a>
+      
+      <a href="revenue-intelligence-agent-ai-cs-copilot.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</p>
+        <span class="related-date">23 Jun 2026 · 11 min</span>
+      </a>
+      
+    </div>
+  </div>
+  
+
+  <nav class="post-nav" aria-label="Article navigation">
+    
+    <a href="snowflake-variant-flatten.html" class="post-nav-link prev">← You've been flattening Snowflake JSON wrong</a>
+    
+    
+  </nav>
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="/writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>

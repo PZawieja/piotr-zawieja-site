@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Six analytics jobs I've handed to AI — none of them are writing SQL</title>
+      <link>https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html</guid>
+      <pubDate>Sun, 28 Jun 2026 07:45:06 +0000</pubDate>
+      <description>SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</description>
+    </item>
+    <item>
       <title>You've been flattening Snowflake JSON wrong</title>
       <link>https://goldlayer.dev/writing/snowflake-variant-flatten.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-variant-flatten.html</guid>
