@@ -1,7 +1,7 @@
 ---
 title: Your analytics agent is confident. That's the problem.
 date: 2026-06-30
-published_at: '2026-06-30T07:49:31Z'
+published_at: '2026-06-30T08:20:08Z'
 slug: agents-on-semantic-layer-101
 description: Semantic layer agents fail silently. Here's what breaks, how to prevent
   hallucinations, and why your agent should ask before it answers.
@@ -11,6 +11,11 @@ tags:
 read_time: 15
 status: published
 ---
+
+<div class="callout callout-info">
+<span class="callout-label">series</span>
+<p>This is Part 0 of <em>Agents on your semantic layer</em>: Part 0: why they fail (this post) · <a href="https://goldlayer.dev/writing/semantic-layer-agent-build.html">Part 1: build the foundation</a> · <a href="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">Part 2: harden it</a></p>
+</div>
 
 The VP of Sales asks your analytics agent "what's our churn rate this quarter?" The agent pauses two seconds. Returns a number. No hedging, no caveats. Looks great.
 
@@ -318,6 +323,8 @@ None of this is technically hard. The code for all seven of these is a few hundr
 The agent is the easy part.
 
 What's the most ambiguous metric at your company — the one where two people in the same meeting are looking at different numbers without realizing it?
+
+Ready to build it? [Part 1: the foundation](https://goldlayer.dev/writing/semantic-layer-agent-build.html) walks through every line of code — three tools, one loop, about 80 lines. [Part 2: hardening it](https://goldlayer.dev/writing/semantic-layer-agent-harden.html) adds the disambiguation pre-flight, template library, and three-tier memory described above.
 
 <div class="takeaways">
 <h2>Takeaways</h2>

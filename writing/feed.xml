@@ -7,10 +7,24 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>The Part 1 agent works. Three additions make it production-safe.</title>
+      <link>https://goldlayer.dev/writing/semantic-layer-agent-harden.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/semantic-layer-agent-harden.html</guid>
+      <pubDate>Tue, 30 Jun 2026 08:20:16 +0000</pubDate>
+      <description>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</description>
+    </item>
+    <item>
+      <title>Three tools. One loop. A working analytics agent on your dbt Semantic Layer.</title>
+      <link>https://goldlayer.dev/writing/semantic-layer-agent-build.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/semantic-layer-agent-build.html</guid>
+      <pubDate>Tue, 30 Jun 2026 08:20:12 +0000</pubDate>
+      <description>Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.</description>
+    </item>
+    <item>
       <title>Your analytics agent is confident. That's the problem.</title>
       <link>https://goldlayer.dev/writing/agents-on-semantic-layer-101.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/agents-on-semantic-layer-101.html</guid>
-      <pubDate>Tue, 30 Jun 2026 07:49:31 +0000</pubDate>
+      <pubDate>Tue, 30 Jun 2026 08:20:08 +0000</pubDate>
       <description>Semantic layer agents fail silently. Here's what breaks, how to prevent hallucinations, and why your agent should ask before it answers.</description>
     </item>
     <item>

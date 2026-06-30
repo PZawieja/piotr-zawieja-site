@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Three tools. One loop. A working analytics agent on your dbt Semantic Layer. — Piotr Zawieja</title>
+<meta name="description" content="Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.">
+<meta property="og:title" content="Three tools. One loop. A working analytics agent on your dbt Semantic Layer.">
+<meta property="og:description" content="Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.">
+<meta property="og:url" content="https://goldlayer.dev/writing/semantic-layer-agent-build.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-date">30 Jun 2026 · 11 min read</span>
+    </div>
+    <h1 class="article-title">Three tools. One loop. A working analytics agent on your dbt Semantic Layer.</h1>
+    <p class="article-lede">Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.</p>
+  </header>
+
+  <div class="article-body">
+    <div class="callout callout-info">
+<span class="callout-label">series</span>
+<p>This is Part 1 of <em>Agents on your semantic layer</em>: <a href="https://goldlayer.dev/writing/agents-on-semantic-layer-101.html">Part 0 — why they fail</a> · Part 1: build the foundation (this post) · <a href="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">Part 2: harden it</a></p>
+</div>
+
+<p>Part 0 explained why semantic layer agents fail in production — hallucinated metric names, wrong dimension grain, silent wrong answers. This post builds the version that avoids those failures. By the end you'll have a Python agent that answers "what was our MRR last quarter?" against your real dbt Semantic Layer on Snowflake. Three tools, one loop, about 80 lines.</p>
+<hr />
+<h2>What we're building</h2>
+<p>The architecture is deliberately minimal.</p>
+<p><img src="../assets/posts/semantic-layer-agent-build/architecture.png" alt="System architecture diagram on dark background: User question flows into Python Agent, which connects to three tool boxes (list_metrics, execute_metric_query, clarify_or_decline), which connect to dbt Semantic Layer, which sits on top of Snowflake. Response flows back to the user."></p>
+<p>Three tools, not thirty. <code>list_metrics</code> gives the agent a map — it calls this first every session so it never guesses at metric names. <code>execute_metric_query</code> runs the actual query against your Semantic Layer. <code>clarify_or_decline</code> gives the agent a safe exit when it can't confidently map a question to a metric. A fourth tool — a "compare metrics" helper, a schema explorer — would add surface area without changing what the agent can actually answer. Add tools when a real question breaks these three, not before.</p>
+<p>The reasoning engine is Claude. The data layer is your dbt Cloud Semantic Layer, which handles all the SQL — which tables to join, which filters to apply, what "MRR" means in your specific models. The agent doesn't write SQL. It asks the Semantic Layer for results by name.</p>
+<hr />
+<h2>Prerequisites</h2>
+<div class="callout callout-info">
+<span class="callout-label">context</span>
+<p>You need a dbt Cloud account with the Semantic Layer enabled and at least one metric defined in your project. If you're running MetricFlow locally without dbt Cloud, the <code>sl_query()</code> helper below will look different — the agent logic from Step 4 onward is identical.</p>
+</div>
+
+<pre><code class="language-bash">uv init analytics-agent
+cd analytics-agent
+uv add anthropic requests python-dotenv
+</code></pre>
+<p>Create a <code>.env</code> file at the project root:</p>
+<pre><code class="language-bash">ANTHROPIC_API_KEY=sk-ant-...
+DBT_SL_URL=https://semantic-layer.cloud.getdbt.com/api/graphql
+DBT_SL_TOKEN=your_dbt_cloud_service_token
+DBT_ENV_ID=your_environment_id
+</code></pre>
+<p>Your <code>DBT_SL_TOKEN</code> is a dbt Cloud service token with <strong>Semantic Layer Only</strong> permissions. Your <code>DBT_ENV_ID</code> is the numeric ID from your dbt Cloud environment settings.</p>
+<hr />
+<h2>Step 1 — Connect to the Semantic Layer</h2>
+<p>Think of this as the foundation layer. Everything else calls this one function.</p>
+<pre><code class="language-python">import json
+import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def sl_query(gql: str, variables: dict | None = None) -&gt; dict:
+    resp = requests.post(
+        os.environ[&quot;DBT_SL_URL&quot;],
+        headers={
+            &quot;Authorization&quot;: f&quot;Bearer {os.environ['DBT_SL_TOKEN']}&quot;,
+            &quot;Content-Type&quot;: &quot;application/json&quot;,
+        },
+        json={&quot;query&quot;: gql, &quot;variables&quot;: variables or {}},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    if &quot;errors&quot; in data:
+        raise RuntimeError(data[&quot;errors&quot;])
+    return data
+</code></pre>
+<p>One function, one job: POST to the Semantic Layer API and raise on errors. Everything that follows builds on this.</p>
+<hr />
+<h2>Step 2 — Tool 1: list_metrics</h2>
+<p>The agent's orientation call. Every session starts with this. The agent learns what metrics exist, what each one measures, and what dimensions it can be sliced by — before it touches any user question.</p>
+<pre><code class="language-python">_LIST_METRICS_GQL = &quot;&quot;&quot;
+query ListMetrics($environmentId: BigInt!) {
+    metrics(environmentId: $environmentId) {
+        name
+        description
+        type
+        dimensions {
+            name
+            description
+        }
+    }
+}
+&quot;&quot;&quot;
+
+def list_metrics() -&gt; list[dict]:
+    result = sl_query(
+        _LIST_METRICS_GQL,
+        {&quot;environmentId&quot;: int(os.environ[&quot;DBT_ENV_ID&quot;])},
+    )
+    return result[&quot;data&quot;][&quot;metrics&quot;]
+</code></pre>
+<p>The dimension descriptions matter more than anything else in this call. If <code>customer_id</code> and <code>account_id</code> exist as separate dimensions, their descriptions in your dbt schema.yml should say exactly that: <code>customer_id: the individual contact person, NOT the company/account</code>. Write those descriptions for the LLM, not for humans. The agent reads them verbatim when deciding which dimension to use.</p>
+<hr />
+<h2>Step 3 — Tool 2: execute_metric_query</h2>
+<p>The query execution tool. It takes a metric name, a list of dimensions to group by, optional SQL filter expressions, and a row limit. The Semantic Layer handles all the join logic underneath.</p>
+<pre><code class="language-python">_QUERY_GQL = &quot;&quot;&quot;
+query RunMetric(
+    $environmentId: BigInt!
+    $metrics: [MetricInput!]!
+    $groupBy: [GroupByInput!]
+    $where: [WhereInput!]
+    $limit: Int
+) {
+    query(
+        environmentId: $environmentId
+        metrics: $metrics
+        groupBy: $groupBy
+        where: $where
+        limit: $limit
+    ) {
+        sql
+        jsonResult
+    }
+}
+&quot;&quot;&quot;
+
+def execute_metric_query(
+    metric_name: str,
+    dimensions: list[str],
+    filters: list[str] | None = None,
+    limit: int = 100,
+) -&gt; dict:
+    variables: dict = {
+        &quot;environmentId&quot;: int(os.environ[&quot;DBT_ENV_ID&quot;]),
+        &quot;metrics&quot;: [{&quot;name&quot;: metric_name}],
+        &quot;groupBy&quot;: [{&quot;name&quot;: d} for d in dimensions],
+        &quot;limit&quot;: limit,
+    }
+    if filters:
+        variables[&quot;where&quot;] = [{&quot;sql&quot;: f} for f in filters]
+    result = sl_query(_QUERY_GQL, variables)
+    return result[&quot;data&quot;][&quot;query&quot;]
+</code></pre>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>The <code>sql</code> field in the response is the query the Semantic Layer generated. Log it alongside the result during development — seeing the SQL is the fastest way to diagnose a wrong answer.</p>
+</div>
+
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>The dbt Cloud Semantic Layer uses an async query pattern for large result sets — it may return a <code>queryId</code> instead of inline <code>jsonResult</code>. If you see a <code>queryId</code> field instead of results, add a polling loop that calls <code>fetchResults(queryId: ...)</code> until <code>status == "SUCCESSFUL"</code>. Check the <a href="https://docs.getdbt.com/docs/dbt-cloud-apis/sl-graphql">dbt Semantic Layer GraphQL docs</a> for the current schema.</p>
+</div>
+
+<hr />
+<h2>Step 4 — Tool 3: clarify_or_decline</h2>
+<p>This tool doesn't hit the API. It's a structured signal from the agent that it needs more information — or that it can't answer at all.</p>
+<pre><code class="language-python">def clarify_or_decline(
+    reason: str,
+    clarifying_question: str | None = None,
+) -&gt; dict:
+    return {
+        &quot;status&quot;: &quot;needs_clarification&quot;,
+        &quot;reason&quot;: reason,
+        &quot;question&quot;: clarifying_question,
+    }
+</code></pre>
+<p>Part 2 wires the response back into the conversation and stores the user's answer in memory. For now, the critical thing is giving Claude a named, typed exit. Without it, the model treats "I'm not sure" as a failure state and invents an answer instead.</p>
+<hr />
+<h2>Step 5 — Tell Claude about the tools</h2>
+<p><img src="../assets/posts/semantic-layer-agent-build/tool-defs.png" alt="Three dark panels side by side showing tool definitions: list_metrics panel in blue with description highlighted in gold, execute_metric_query panel showing input schema with metric_name and dimensions fields, clarify_or_decline panel in red accent with description saying 'do NOT guess' highlighted"></p>
+<p>The <code>description</code> field in each tool definition is what Claude reads to decide when to call it. Write it like an instruction, not documentation.</p>
+<pre><code class="language-python">import anthropic
+
+client = anthropic.Anthropic()
+
+TOOLS = [
+    {
+        &quot;name&quot;: &quot;list_metrics&quot;,
+        &quot;description&quot;: (
+            &quot;List all available metrics from the dbt Semantic Layer. &quot;
+            &quot;Call this at the start of every session, before any query. &quot;
+            &quot;Never guess at metric names — always check what exists first.&quot;
+        ),
+        &quot;input_schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {},
+            &quot;required&quot;: [],
+        },
+    },
+    {
+        &quot;name&quot;: &quot;execute_metric_query&quot;,
+        &quot;description&quot;: (
+            &quot;Run a metric query against the dbt Semantic Layer. &quot;
+            &quot;Before calling this, state your interpretation to the user: &quot;
+            &quot;'I'm going to return [metric] for [period], grouped by [dimension]. Is that right?' &quot;
+            &quot;Only proceed after they confirm.&quot;
+        ),
+        &quot;input_schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;metric_name&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;description&quot;: &quot;Exact metric name from list_metrics — do not invent names&quot;,
+                },
+                &quot;dimensions&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;},
+                    &quot;description&quot;: &quot;Dimension names to group by, from the metric's dimension list&quot;,
+                },
+                &quot;filters&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {&quot;type&quot;: &quot;string&quot;},
+                    &quot;description&quot;: &quot;SQL WHERE expressions, e.g. [\&quot;metric_time__quarter = 'Q1-2026'\&quot;]&quot;,
+                },
+                &quot;limit&quot;: {&quot;type&quot;: &quot;integer&quot;, &quot;default&quot;: 100},
+            },
+            &quot;required&quot;: [&quot;metric_name&quot;, &quot;dimensions&quot;],
+        },
+    },
+    {
+        &quot;name&quot;: &quot;clarify_or_decline&quot;,
+        &quot;description&quot;: (
+            &quot;Use this when you cannot map the user's question to a metric with confidence, &quot;
+            &quot;or when the question contains an ambiguous term you haven't resolved. &quot;
+            &quot;This is the correct response when uncertain — do NOT guess at metric names &quot;
+            &quot;or business logic definitions.&quot;
+        ),
+        &quot;input_schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;reason&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;description&quot;: &quot;Why you can't answer with confidence&quot;,
+                },
+                &quot;clarifying_question&quot;: {
+                    &quot;type&quot;: &quot;string&quot;,
+                    &quot;description&quot;: &quot;The specific question to ask the user&quot;,
+                },
+            },
+            &quot;required&quot;: [&quot;reason&quot;],
+        },
+    },
+]
+</code></pre>
+<div class="pull-quote">
+The description field is the real system prompt for each tool. "Never guess at metric names" and "do NOT guess at business logic" are the two lines that prevent the most common failure modes.
+</div>
+
+<hr />
+<h2>Step 6 — Write the system prompt</h2>
+<pre><code class="language-python">ORG_DEFINITIONS = &quot;&quot;&quot;
+Company metric definitions — apply these unless the user explicitly overrides:
+- churn: notification_date attribution, MRR basis
+- active_customer: subscription_status = 'active' AND last_payment within 90 days
+- MRR: sum of monthly_value for active subscriptions, excluding trials
+&quot;&quot;&quot;
+
+SYSTEM = f&quot;&quot;&quot;You are an analytics assistant connected to our dbt Semantic Layer on Snowflake.
+
+Rules — non-negotiable:
+1. Call list_metrics at the start of every session, before any other action.
+2. Before running execute_metric_query, tell the user your exact interpretation:
+   &quot;I'm going to return [metric] for [period], grouped by [dimension]. Is that right?&quot;
+   Only execute after they confirm.
+3. If you cannot map a question to a metric with confidence, use clarify_or_decline.
+   A polite request for clarification is always better than a confident wrong answer.
+
+{ORG_DEFINITIONS}&quot;&quot;&quot;
+</code></pre>
+<p>The <code>ORG_DEFINITIONS</code> block is what Part 0 called "Level 3 memory" — company-wide agreed definitions injected into every session. Fill this in with your actual agreed definitions before your first real deployment. Part 2 shows how to make this dynamic so it includes per-user preferences on top of the base definitions.</p>
+<hr />
+<h2>Step 7 — The agent loop</h2>
+<pre><code class="language-python">def dispatch(name: str, inputs: dict) -&gt; str:
+    if name == &quot;list_metrics&quot;:
+        return json.dumps(list_metrics())
+    if name == &quot;execute_metric_query&quot;:
+        return json.dumps(execute_metric_query(**inputs))
+    if name == &quot;clarify_or_decline&quot;:
+        return json.dumps(clarify_or_decline(**inputs))
+    return json.dumps({&quot;error&quot;: f&quot;unknown tool: {name}&quot;})
+
+
+def run_agent(question: str) -&gt; str:
+    messages = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]
+
+    while True:
+        response = client.messages.create(
+            model=&quot;claude-opus-4-8&quot;,
+            max_tokens=4096,
+            system=SYSTEM,
+            tools=TOOLS,
+            messages=messages,
+        )
+
+        if response.stop_reason == &quot;end_turn&quot;:
+            return next(b.text for b in response.content if hasattr(b, &quot;text&quot;))
+
+        if response.stop_reason == &quot;tool_use&quot;:
+            messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: response.content})
+            tool_results = [
+                {
+                    &quot;type&quot;: &quot;tool_result&quot;,
+                    &quot;tool_use_id&quot;: block.id,
+                    &quot;content&quot;: dispatch(block.name, block.input),
+                }
+                for block in response.content
+                if block.type == &quot;tool_use&quot;
+            ]
+            messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: tool_results})
+
+
+if __name__ == &quot;__main__&quot;:
+    import sys
+    print(run_agent(&quot; &quot;.join(sys.argv[1:])))
+</code></pre>
+<p>That's the complete loop. Claude creates a message, checks whether it needs a tool, you dispatch it, feed the result back, repeat until Claude has an answer and stops.</p>
+<p>Run it:</p>
+<pre><code class="language-bash">python agent.py &quot;What was our MRR last quarter?&quot;
+</code></pre>
+<p><img src="../assets/posts/semantic-layer-agent-build/agent-output.png" alt="Dark terminal window showing: $ python agent.py 'What was our MRR last quarter?' — then agent output: calling list_metrics... found 12 metrics. Then: I'm going to return monthly_recurring_revenue for Q1 2026. Is that right? User: yes. Then: MRR for Q1 2026 was $847,200 (from metric: monthly_recurring_revenue, grain: quarter)."></p>
+<hr />
+<h2>What you have now</h2>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>A real analytics agent against your real data. The agent calls <code>list_metrics</code> first, maps the question to a real metric name, states its interpretation, waits for your confirmation, then runs the query. Test it with 3–5 of your most common analytics questions before moving to Part 2.</p>
+</div>
+
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>Ask it "what's our churn rate?" and it will pick whichever churn definition it infers from context — contract end date or notification date — without asking. It will be confident. It may be wrong about what you meant. That's the next problem. <a href="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">Part 2</a> adds a pre-flight disambiguation check, a template library for common question patterns, and per-user memory so it stops asking the same clarifying question twice.</p>
+</div>
+
+<div class="pull-quote">
+The loop is 30 lines. The tools are 40 lines. Everything else in this post is plumbing. Once the wiring is done, the agent mechanics fit on one screen.
+</div>
+
+<p>What's the first question your team asks every Monday morning? That's the one to test before you move to Part 2.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Three tools cover the full range</strong> — list (orientation), query (execution), decline (safety valve). Don't add a fourth until a real question breaks these three.</li>
+<li><strong>The tool description is the real instruction</strong> — what you write in each tool's <code>description</code> is what Claude reads to decide when to call it. "Never guess at metric names" in <code>list_metrics</code> does more work than the same sentence in the system prompt.</li>
+<li><strong>list_metrics before everything</strong> — if the agent doesn't call this first, it will invent metric names that sound plausible. Make it the first rule in the system prompt and the first line of every tool description.</li>
+<li><strong>Interpretation confirmation before execution</strong> — requiring the agent to state what it's about to query is the single cheapest safeguard. It catches wrong dimension grain, wrong time period, and wrong metric — all before any data is touched.</li>
+<li><strong>ORG_DEFINITIONS removes half the disambiguation questions</strong> — fill in your actual agreed definitions before deploying to real users. The company-wide definition of "churn" should not be decided by the LLM at query time.</li>
+</ul>
+</div>
+  </div>
+
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      
+      <a href="semantic-layer-agent-harden.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">The Part 1 agent works. Three additions make it production-safe.</p>
+        <span class="related-date">30 Jun 2026 · 12 min</span>
+      </a>
+      
+      <a href="agents-on-semantic-layer-101.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Your analytics agent is confident. That's the problem.</p>
+        <span class="related-date">30 Jun 2026 · 15 min</span>
+      </a>
+      
+      <a href="ai-triage-data-monitoring-alerts.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">40 data alerts at 6am. AI triaged them in 90 seconds.</p>
+        <span class="related-date">28 Jun 2026 · 10 min</span>
+      </a>
+      
+    </div>
+  </div>
+  
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="/writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>

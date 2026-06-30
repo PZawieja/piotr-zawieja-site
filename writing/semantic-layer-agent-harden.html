@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Part 1 agent works. Three additions make it production-safe. — Piotr Zawieja</title>
+<meta name="description" content="Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.">
+<meta property="og:title" content="The Part 1 agent works. Three additions make it production-safe.">
+<meta property="og:description" content="Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.">
+<meta property="og:url" content="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <span class="nav-brand"><a href="/">
+      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
+        <rect width="32" height="32" rx="7" fill="#141417"/>
+        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
+        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
+        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
+      </svg>
+      goldlayer.dev
+    </a></span>
+    <ul class="nav-links">
+      <li><a href="/writing/">writing</a></li>
+      <li><a href="/projects/">projects</a></li>
+      <li><a href="/about/">about</a></li>
+    </ul>
+  </div>
+</nav>
+
+<article class="article-wrap">
+
+  <header>
+    <div class="article-meta">
+      <span class="meta-tag">AI</span>
+      <span class="meta-tag">dbt</span>
+      <span class="meta-date">30 Jun 2026 · 12 min read</span>
+    </div>
+    <h1 class="article-title">The Part 1 agent works. Three additions make it production-safe.</h1>
+    <p class="article-lede">Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
+  </header>
+
+  <div class="article-body">
+    <div class="callout callout-info">
+<span class="callout-label">series</span>
+<p>This is Part 2 of <em>Agents on your semantic layer</em>: <a href="https://goldlayer.dev/writing/agents-on-semantic-layer-101.html">Part 0 — why they fail</a> · <a href="https://goldlayer.dev/writing/semantic-layer-agent-build.html">Part 1: build the foundation</a> · Part 2: harden it (this post)</p>
+</div>
+
+<p>The Part 1 agent answers questions. Ask it "what's our churn rate?" and it returns a number — confidently, without asking which churn definition to use. That number will be plausible and based on whichever interpretation the model inferred from context. Which may not be what your VP meant.</p>
+<p>This post adds three layers that close the gap: a pre-flight disambiguation check that catches ambiguous terms before the LLM ever sees them, a template library for common question patterns that skips the reasoning step entirely, and three-tier memory so the agent stops asking the same clarifying question every session.</p>
+<hr />
+<h2>The three things that will break you</h2>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<span class="tradeoff-cell">Problem</span>
+<span class="tradeoff-cell">How it shows up</span>
+<span class="tradeoff-cell">What fixes it</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Ambiguous question</span>
+<span class="tradeoff-cell">"What's our churn?" → wrong definition picked, no warning</span>
+<span class="tradeoff-cell">Disambiguation pre-flight</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Same clarification every session</span>
+<span class="tradeoff-cell">Users stop using the agent after the third time it asks the same question</span>
+<span class="tradeoff-cell">Session + user memory</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell">Novel question forced to a template</span>
+<span class="tradeoff-cell">Pattern match succeeds; answer is wrong because the pattern was wrong</span>
+<span class="tradeoff-cell">Confidence threshold on template matching</span>
+</div>
+</div>
+
+<p>All three are fixable before you touch the agent loop. The first two are pure Python — no LLM calls, no latency, no token cost. The third is a constraint on the template matcher you'll write in Step 6.</p>
+<hr />
+<h2>Step 5 — The disambiguation pre-flight</h2>
+<p>Think of this as a spell checker for business terms — except instead of checking spelling, it checks whether a term has multiple valid definitions at your company. Before the agent touches any query, it scans the question for known ambiguous terms and fires a clarifying question if it finds one.</p>
+<pre><code class="language-python">DISAMBIGUATION: dict[str, dict] = {
+    &quot;churn&quot;: {
+        &quot;question&quot;: (
+            &quot;When you say churn — do you mean attribution to the contract end date &quot;
+            &quot;or the cancellation notification date? And customer count or MRR?&quot;
+        ),
+    },
+    &quot;revenue&quot;: {
+        &quot;question&quot;: &quot;Do you need MRR, ARR, or recognized revenue?&quot;,
+    },
+    &quot;active&quot;: {
+        &quot;question&quot;: &quot;Active by subscription status, last login, or last payment date?&quot;,
+    },
+}
+
+
+def check_disambiguation(question: str, resolved: set[str]) -&gt; str | None:
+    q = question.lower()
+    for term, cfg in DISAMBIGUATION.items():
+        if term in q and term not in resolved:
+            return cfg[&quot;question&quot;]
+    return None
+</code></pre>
+<p>The <code>resolved</code> set tracks which terms have already been clarified this session. Wire it in before the agent loop:</p>
+<pre><code class="language-python">def run_agent(question: str, resolved: set[str] | None = None) -&gt; str:
+    resolved = resolved or set()
+
+    clarification = check_disambiguation(question, resolved)
+    if clarification:
+        return f&quot;Before I pull that number — {clarification}&quot;
+
+    # ... rest of the loop from Part 1
+</code></pre>
+<p>When the user answers the clarification question, extract the resolved term, add it to <code>resolved</code>, and pass it into the next <code>run_agent</code> call. The check runs in microseconds and adds zero latency to unambiguous questions.</p>
+<div class="callout callout-tip">
+<span class="callout-label">tip</span>
+<p>Start with 3–5 terms — the ones your team actually disagrees on. Add more only when a real question slips through without asking. Maintain DISAMBIGUATION like a glossary: if Finance and RevOps don't agree on a definition, the agent shouldn't pick one silently either.</p>
+</div>
+
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>The disambiguation check only catches terms you've explicitly listed. Any ambiguous term you haven't added will still be resolved silently by the model. Check your query log regularly and add anything that appears more than once in the wrong-answer bucket.</p>
+</div>
+
+<hr />
+<h2>Step 6 — The template library</h2>
+<p>For questions that match a known pattern, templates skip the LLM reasoning step entirely and go straight to a structured <code>execute_metric_query</code> call. Same answer, lower latency, fully deterministic behavior.</p>
+<p>Think of templates like macros in a spreadsheet. You write the formula once, parameterize the variable parts, and apply it instantly every time. The LLM's job becomes pattern recognition — "does this question fit a known form?" — rather than reasoning from scratch.</p>
+<pre><code class="language-python">import re
+from dataclasses import dataclass
+from typing import Callable
+
+
+@dataclass
+class Template:
+    name: str
+    pattern: str
+    build: Callable[[dict], dict]
+
+
+TEMPLATES: list[Template] = [
+    Template(
+        name=&quot;period_metric&quot;,
+        pattern=r&quot;what was (?P&lt;metric&gt;.+?) (?:in |for |)(?P&lt;period&gt;last \w+|q[1-4] \d{4}|this \w+)&quot;,
+        build=lambda m: {
+            &quot;metric_name&quot;: m[&quot;metric&quot;].strip(),
+            &quot;dimensions&quot;: [&quot;metric_time&quot;],
+            &quot;filters&quot;: [f&quot;metric_time__quarter = '{m['period'].upper()}'&quot;],
+        },
+    ),
+    Template(
+        name=&quot;top_n&quot;,
+        pattern=r&quot;which (?P&lt;dim&gt;\w+) had the (?:highest|best|most) (?P&lt;metric&gt;.+)&quot;,
+        build=lambda m: {
+            &quot;metric_name&quot;: m[&quot;metric&quot;].strip(),
+            &quot;dimensions&quot;: [m[&quot;dim&quot;]],
+            &quot;limit&quot;: 10,
+        },
+    ),
+    Template(
+        name=&quot;yoy&quot;,
+        pattern=r&quot;(?P&lt;metric&gt;.+?) (?:vs\.?|versus|compared to) (?:same period |)last year&quot;,
+        build=lambda m: {
+            &quot;metric_name&quot;: m[&quot;metric&quot;].strip(),
+            &quot;dimensions&quot;: [&quot;metric_time&quot;],
+            &quot;filters&quot;: [
+                &quot;metric_time__year IN (YEAR(CURRENT_DATE), YEAR(CURRENT_DATE) - 1)&quot;
+            ],
+        },
+    ),
+]
+
+
+def match_template(question: str) -&gt; tuple[str | None, dict | None]:
+    for tmpl in TEMPLATES:
+        if m := re.search(tmpl.pattern, question.lower()):
+            return tmpl.name, tmpl.build(m.groupdict())
+    return None, None
+</code></pre>
+<p>Wire template matching into the agent entry point, after disambiguation:</p>
+<pre><code class="language-python">def run_agent(question: str, resolved: set[str] | None = None) -&gt; str:
+    resolved = resolved or set()
+
+    clarification = check_disambiguation(question, resolved)
+    if clarification:
+        return f&quot;Before I pull that number — {clarification}&quot;
+
+    tmpl_name, tmpl_args = match_template(question)
+    if tmpl_name and tmpl_args:
+        result = execute_metric_query(**tmpl_args)
+        return f&quot;[template: {tmpl_name}]\n{json.dumps(result, indent=2)}&quot;
+
+    # full agent loop for everything else
+    ...
+</code></pre>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>Regex pattern matching is greedy — it will match partial strings and produce wrong variable extractions. Test every template against at least five real questions from your team before deploying. A wrong template applied with confidence is identical to hallucination: correct-looking, wrong result, no error signal.</p>
+</div>
+
+<hr />
+<h2>Step 7 — Three-tier memory</h2>
+<p>The disambiguation check asked "contract end or notification date?" Once the user answers, the agent should never ask again this session. And once you know a user's preference, ideally never ask again at all.</p>
+<p>Like a colleague who remembers your preferences — a good one keeps notes. Session notes cover today. Longer-term notes cover their working relationship with you. And a shared style guide covers conventions the whole team agreed on. Memory in an analytics agent works the same way.</p>
+<pre><code class="language-python">import json
+from pathlib import Path
+
+
+class SessionMemory:
+    def __init__(self, user_id: str):
+        self._session: dict[str, str] = {}
+        self._path = Path(f&quot;.memory/{user_id}.json&quot;)
+        self._persistent: dict[str, str] = (
+            json.loads(self._path.read_text()) if self._path.exists() else {}
+        )
+
+    def get(self, key: str) -&gt; str | None:
+        return self._session.get(key) or self._persistent.get(key)
+
+    def set(self, key: str, value: str, persist: bool = False) -&gt; None:
+        self._session[key] = value
+        if persist:
+            self._persistent[key] = value
+            self._path.parent.mkdir(exist_ok=True)
+            self._path.write_text(json.dumps(self._persistent, indent=2))
+
+    def resolved_terms(self) -&gt; set[str]:
+        return set(self._session) | set(self._persistent)
+
+    def context_block(self) -&gt; str:
+        if not self._persistent:
+            return &quot;&quot;
+        prefs = &quot;\n&quot;.join(f&quot;- {k}: {v}&quot; for k, v in self._persistent.items())
+        return f&quot;User preferences (apply unless overridden this session):\n{prefs}&quot;
+</code></pre>
+<p><img src="../assets/posts/semantic-layer-agent-harden/memory-stack.png" alt="Three horizontal stacked layers on dark background: top layer in blue labeled 'Session dict' showing key-value pairs cleared on process exit; middle layer in gold labeled 'User JSON (.memory/user_id.json)' showing persisted preferences across sessions; bottom layer in green labeled 'ORG_DEFINITIONS (system prompt)' showing company-wide agreed definitions always applied"></p>
+<p>Three tiers:</p>
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">session dict</span>
+<span class="ts-desc">In-memory, cleared when the process exits. Free to implement — no storage needed. Use this for all answers within a single conversation.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">user JSON</span>
+<span class="ts-desc">One file per user_id under <code>.memory/</code>. Survives restarts. When a user answers a disambiguation question they've answered before, don't ask — apply it.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">ORG_DEFINITIONS</span>
+<span class="ts-desc">Company-wide, injected into every session's system prompt. Set by you, not the user. The agreed definitions that override individual preferences.</span>
+</div>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">context</span>
+<p>The <code>.memory/</code> directory works fine for internal tools and single-tenant deployments. For multi-tenant or larger-scale deployments, replace the file store with a DB table — the <code>get</code>, <code>set</code>, <code>context_block</code> interface stays the same, and nothing else in the agent changes.</p>
+</div>
+
+<hr />
+<h2>Step 8 — The complete hardened loop</h2>
+<p>All four additions wired together: disambiguation, template matching, session memory, and proper <code>clarify_or_decline</code> handling.</p>
+<pre><code class="language-python">def run_agent(question: str, user_id: str = &quot;default&quot;) -&gt; str:
+    memory = SessionMemory(user_id)
+
+    # Pre-flight 1: disambiguation
+    clarification = check_disambiguation(question, memory.resolved_terms())
+    if clarification:
+        return f&quot;Before I pull that number — {clarification}&quot;
+
+    # Pre-flight 2: template match
+    tmpl_name, tmpl_args = match_template(question)
+    if tmpl_name and tmpl_args:
+        result = execute_metric_query(**tmpl_args)
+        return f&quot;[template: {tmpl_name}]\n{json.dumps(result, indent=2)}&quot;
+
+    # Full agent loop for everything else
+    system = f&quot;{SYSTEM}\n\n{memory.context_block()}&quot;
+    messages = [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}]
+
+    while True:
+        response = client.messages.create(
+            model=&quot;claude-opus-4-8&quot;,
+            max_tokens=4096,
+            system=system,
+            tools=TOOLS,
+            messages=messages,
+        )
+
+        if response.stop_reason == &quot;end_turn&quot;:
+            return next(b.text for b in response.content if hasattr(b, &quot;text&quot;))
+
+        if response.stop_reason == &quot;tool_use&quot;:
+            messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: response.content})
+            tool_results = []
+            for block in response.content:
+                if block.type != &quot;tool_use&quot;:
+                    continue
+                if block.name == &quot;clarify_or_decline&quot;:
+                    cq = block.input.get(&quot;clarifying_question&quot;)
+                    return cq if cq else block.input.get(&quot;reason&quot;, &quot;I need more context.&quot;)
+                tool_results.append({
+                    &quot;type&quot;: &quot;tool_result&quot;,
+                    &quot;tool_use_id&quot;: block.id,
+                    &quot;content&quot;: dispatch(block.name, block.input),
+                })
+            messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: tool_results})
+</code></pre>
+<div class="pull-quote">
+Pre-flight checks happen before the LLM sees the question. Disambiguation and template matching add zero API latency to any question they handle — which should be most of your high-frequency questions.
+</div>
+
+<hr />
+<h2>Step 9 — Five tests to run before calling it done</h2>
+<p><img src="../assets/posts/semantic-layer-agent-harden/test-results.png" alt="Five-row test table on dark background. Column headers: Test question, Naive agent result (red), Hardened agent result (green). Row 1: 'What is our churn rate?' — red: returns a number silently — green: 'Before I pull that — notification date or contract end? MRR or customer count?'. Row 2: Same churn question, second session — red: asks again — green: applies saved preference, no question. Row 3: 'What was mrr_monthly last quarter?' — red: invents metric name — green: calls list_metrics, maps to real name. Row 4: 'How does MRR compare to last year?' — red: full LLM reasoning, ~3s — green: template match, instant. Row 5: 'What is our customer lifetime value?' — red: guesses a metric name — green: clarify_or_decline: 'I don't have a CLV metric in the Semantic Layer — do you want to compute it from MRR and churn?'"></p>
+<div class="decision-tree">
+<p class="decision-tree-title">Five tests to run before your first real deployment</p>
+<div class="decision-step">
+<span class="decision-q">Ask "What's our churn rate?" cold</span>
+<span class="decision-a">Should fire the disambiguation question — not return a number</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Answer the disambiguation, then ask again next session (same user_id)</span>
+<span class="decision-a">Should skip the question and apply the saved preference</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Ask for a metric name that doesn't exist in the Semantic Layer</span>
+<span class="decision-a">Should call list_metrics, map to the real name, or use clarify_or_decline</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Ask a question that matches a template ("How does MRR compare to last year?")</span>
+<span class="decision-a">Should use the template path — no LLM reasoning, instant response</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Ask about something your Semantic Layer doesn't have ("customer lifetime value")</span>
+<span class="decision-a">Should call clarify_or_decline — not guess at a metric or invent one</span>
+</div>
+</div>
+
+<p>Run all five against your real Semantic Layer before your first user. The first and the last are the ones that cause the most damage in production. The middle three tell you whether the performance optimizations are working.</p>
+<hr />
+<h2>What you've built</h2>
+<p>This is the complete setup stack from Part 0 — now implemented:</p>
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">list_metrics</span>
+<span class="ts-desc">Called at session start. Agent never guesses metric names.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">disambiguation</span>
+<span class="ts-desc">Pre-flight check before any LLM call. Catches "churn", "revenue", "active" before the model guesses.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">ORG_DEFINITIONS</span>
+<span class="ts-desc">Company-wide agreed definitions in the system prompt. Applied to every session.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">template library</span>
+<span class="ts-desc">Common patterns resolved without LLM reasoning. Deterministic, fast, no token cost.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">interpretation confirmation</span>
+<span class="ts-desc">System prompt rule: state interpretation before executing. Catches wrong grain and wrong period.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">clarify_or_decline</span>
+<span class="ts-desc">Explicit tool with a strong description. Claude uses it instead of guessing.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">user memory</span>
+<span class="ts-desc">Session dict + user JSON. Disambiguation answers persist across sessions per user_id.</span>
+</div>
+</div>
+
+<p>The code for all seven of these is under 200 lines of Python. The hard part was never the code — it was getting your team to agree on what "churn" means at your company. If you did that work before you started building, the rest is plumbing.</p>
+<p>What's the first question at your company that this agent would answer wrong? That's where to start the DISAMBIGUATION dict.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Pre-flight beats post-flight</strong> — check for ambiguity before touching the LLM, not after. The disambiguation pre-flight is deterministic, adds zero latency to clean questions, and catches the most common failure class before any API cost is incurred.</li>
+<li><strong>Templates cover most high-frequency questions</strong> — in most analytics orgs, 80% of daily queries fit fewer than 10 patterns. Template those first. Every question handled by a template is instant, deterministic, and free.</li>
+<li><strong>Three tiers of memory, one interface</strong> — session dict, user JSON, org definitions. Build them in that order. The <code>get</code> / <code>set</code> / <code>context_block</code> interface stays the same whether the backing store is a dict or a database.</li>
+<li><strong>clarify_or_decline needs a schema, not just instructions</strong> — giving Claude a typed tool with a strong description is more reliable than telling it in the system prompt to ask when uncertain. The tool is what makes it say no rather than guess.</li>
+<li><strong>Five tests reveal more than unit tests</strong> — run the five scenarios above against your real Semantic Layer. Mock tests won't catch wrong metric names, ambiguous dimension selections, or the difference between "user says contract end" and "agent assumed notification date".</li>
+</ul>
+</div>
+  </div>
+
+  <div class="rss-nudge">
+    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+  </div>
+
+  
+  <div class="related-section">
+    <p class="related-label">// more like this</p>
+    <div class="related-grid">
+      
+      <a href="semantic-layer-agent-build.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Three tools. One loop. A working analytics agent on your dbt Semantic Layer.</p>
+        <span class="related-date">30 Jun 2026 · 11 min</span>
+      </a>
+      
+      <a href="agents-on-semantic-layer-101.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">Your analytics agent is confident. That's the problem.</p>
+        <span class="related-date">30 Jun 2026 · 15 min</span>
+      </a>
+      
+      <a href="ai-triage-data-monitoring-alerts.html" class="related-card">
+        <span class="related-tag">AI</span>
+        <p class="related-title">40 data alerts at 6am. AI triaged them in 90 seconds.</p>
+        <span class="related-date">28 Jun 2026 · 10 min</span>
+      </a>
+      
+    </div>
+  </div>
+  
+
+  <footer class="article-footer">
+    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
+    <a href="/writing/" class="back-link">← all writing</a>
+  </footer>
+
+</article>
+
+<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+<script>
+  (function () {
+    var overlay = document.getElementById('lightbox-overlay');
+    var overlayImg = document.getElementById('lightbox-img');
+    document.querySelectorAll('.article-body img').forEach(function (img) {
+      img.addEventListener('click', function () {
+        overlayImg.src = img.src;
+        overlayImg.alt = img.alt;
+        overlay.classList.add('active');
+      });
+    });
+    overlay.addEventListener('click', function () {
+      overlay.classList.remove('active');
+    });
+  })();
+</script>
+
+</body>
+</html>
