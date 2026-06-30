@@ -15,6 +15,7 @@ status: published
 <div class="callout callout-info">
 <span class="callout-label">series</span>
 <p>This is Part 1 of <em>Agents on your semantic layer</em>: <a href="https://goldlayer.dev/writing/agents-on-semantic-layer-101.html">Part 0 — why they fail</a> · Part 1: build the foundation (this post) · <a href="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">Part 2: harden it</a></p>
+<p>Companion code: <a href="https://github.com/PZawieja/semantic-layer-agent">github.com/PZawieja/semantic-layer-agent</a></p>
 </div>
 
 Part 0 explained why semantic layer agents fail in production — hallucinated metric names, wrong dimension grain, silent wrong answers. This post builds the version that avoids those failures. By the end you'll have a Python agent that answers "what was our MRR last quarter?" against your real dbt Semantic Layer on Snowflake. Three tools, one loop, about 80 lines.

@@ -15,6 +15,7 @@ status: published
 <div class="callout callout-info">
 <span class="callout-label">series</span>
 <p>This is Part 0 of <em>Agents on your semantic layer</em>: Part 0: why they fail (this post) · <a href="https://goldlayer.dev/writing/semantic-layer-agent-build.html">Part 1: build the foundation</a> · <a href="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">Part 2: harden it</a></p>
+<p>Companion code: <a href="https://github.com/PZawieja/semantic-layer-agent">github.com/PZawieja/semantic-layer-agent</a></p>
 </div>
 
 The VP of Sales asks your analytics agent "what's our churn rate this quarter?" The agent pauses two seconds. Returns a number. No hedging, no caveats. Looks great.
