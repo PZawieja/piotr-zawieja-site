@@ -1,5 +1,5 @@
 ---
-title: Your analytics agent is confident. That's the problem.
+title: 'Agents on your semantic layer, Part 0: Your analytics agent is confident. That''s the problem.'
 date: 2026-06-30
 published_at: '2026-06-30T08:20:08Z'
 slug: agents-on-semantic-layer-101

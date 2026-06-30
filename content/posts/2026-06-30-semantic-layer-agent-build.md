@@ -1,5 +1,5 @@
 ---
-title: Three tools. One loop. A working analytics agent on your dbt Semantic Layer.
+title: 'Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.'
 date: 2026-06-30
 published_at: '2026-06-30T08:20:12Z'
 slug: semantic-layer-agent-build

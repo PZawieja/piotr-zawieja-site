@@ -1,5 +1,5 @@
 ---
-title: The Part 1 agent works. Three additions make it production-safe.
+title: 'Agents on your semantic layer, Part 2: Three additions that make it production-safe.'
 date: 2026-06-30
 published_at: '2026-06-30T08:20:16Z'
 slug: semantic-layer-agent-harden
