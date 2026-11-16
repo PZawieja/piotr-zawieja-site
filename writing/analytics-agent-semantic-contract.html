@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give your analytics agent a contract, not a bigger prompt — Piotr Zawieja</title>
+<meta name="description" content="A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.">
+<meta property="og:title" content="Give your analytics agent a contract, not a bigger prompt">
+<meta property="og:description" content="A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.">
+<meta property="og:url" content="https://goldlayer.dev/writing/analytics-agent-semantic-contract.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/analytics-agent-semantic-contract/semantic-contract.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>16 Nov 2026 · 12 min read</span>
+        </div>
+        <h1 class="article-title">Give your analytics agent a contract, not a bigger prompt</h1>
+        <p class="article-deck">A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#a-metric-name-is-a-label-not-a-definition">A metric name is a label, not a definition</a></li>
+<li><a href="#what-belongs-in-the-contract">What belongs in the contract?</a></li>
+<li><a href="#a-worked-example-northstar-bikes">A worked example: Northstar Bikes</a></li>
+<li><a href="#keep-the-models-job-small">Keep the model’s job small</a></li>
+<li><a href="#what-the-semantic-contract-does-not-solve">What the semantic contract does not solve</a></li>
+<li><a href="#start-with-one-metric">Start with one metric</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>An analyst at a fictional online shop asks an analytics agent:</p>
+<blockquote>
+<p>“How much did we sell in Germany last week?”</p>
+</blockquote>
+<p>The agent returns <strong>€160</strong>. It might be right. It might have used order date instead of payment date, billing country instead of shipping country, or a version of “sales” that includes tax and shipping. The answer can look perfectly reasonable while answering a different question.</p>
+<p>The temptation is to add another paragraph to the system prompt: <em>Use the right metric. Don’t make assumptions. Be accurate.</em> But a prompt cannot settle a business definition the business has not settled.</p>
+<p>The fix starts one layer below the prompt: give the agent a <strong>semantic contract</strong>—an explicit, testable definition of what it can ask for and what the result means.</p>
+<div class="callout callout-info">
+<span class="callout-label">field guide · 01</span>
+<p>This is the first article in a practical field guide to trustworthy analytics agents. It focuses on the contract between business meaning, the data model, and the query interface. If you want to see the agent loop first, start with <a href="https://goldlayer.dev/writing/semantic-layer-agent-build.html">the earlier build walkthrough</a>. The examples below use a fictional shop and invented data.</p>
+</div>
+
+<h2 id="a-metric-name-is-a-label-not-a-definition">A metric name is a label, not a definition</h2>
+<p>Imagine finding a jar labelled “sauce” in a shared kitchen. The label tells you almost nothing about what is inside, what it is for, or whether it contains something you cannot eat. A metric named <code>revenue</code> has the same problem. It is a useful label; it is not the full recipe.</p>
+<p>Two reasonable people may use “revenue” to mean different things:</p>
+<ul>
+<li>cash collected or revenue recognized under accounting rules</li>
+<li>before or after discounts, cancellations, and refunds</li>
+<li>with or without tax, shipping, or marketplace fees</li>
+<li>attributed to the order date, payment date, or refund date</li>
+</ul>
+<p>The model has no reliable way to discover which interpretation your team agreed on unless that meaning is represented somewhere it can use.</p>
+<p>Think of the semantic contract as the <strong>recipe card</strong> behind the label. People decide what the metric should mean. The semantic model records that decision. A semantic query engine uses the model to build a query. The agent’s job is to map a question to that defined interface—not to invent the recipe.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/analytics-agent-semantic-contract/semantic-contract-mobile.svg">
+<img src="../assets/posts/analytics-agent-semantic-contract/semantic-contract.svg" alt="Diagram showing a question flowing into a paid item sales contract that defines its grain, time zone, country dimension, currency, and exclusions. A governed metric API returns a synthetic answer with its definition and date range.">
+</picture>
+<figcaption>The agent interprets the request; the semantic layer supplies the approved meaning and query path; the application remains responsible for authorization and validation.</figcaption>
+</figure>
+
+<h2 id="what-belongs-in-the-contract">What belongs in the contract?</h2>
+<p>There is no single file format or universal semantic-layer product that every team must use. The contract might live in dbt, Cube, LookML, a warehouse semantic view, or another governed metric service. The important part is that the meaning is explicit and the query interface can enforce what is valid.</p>
+<p>Start with the details that would change the answer:</p>
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">Metric identity</span>
+<span class="ts-desc">A stable name and a plain-language definition. Avoid relying on a label such as “revenue” to carry several competing meanings.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Calculation and scope</span>
+<span class="ts-desc">The aggregation, included records, exclusions, unit, and currency. Say whether discounts, refunds, tax, and shipping are included—or point to separate metrics for them.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Grain</span>
+<span class="ts-desc">What one row represents in the underlying model: an order, an order line, a customer-day, or something else. Grain is what keeps a valid-looking join from multiplying a measure.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Time meaning</span>
+<span class="ts-desc">The event or snapshot date to use, the business calendar, week start, and relevant time zone. “Last week” is not a complete query until those rules are known.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Entities and dimensions</span>
+<span class="ts-desc">How models relate, and which fields are valid ways to group or filter a metric. Describe distinctions such as ship-to country versus billing country.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">Ownership and freshness</span>
+<span class="ts-desc">Who owns the definition, where the data comes from, and when it was last updated or reconciled. This context helps people interpret the result; it is not a substitute for data tests.</span>
+</div>
+</div>
+
+<p>Not every metric needs a long description. The useful test is: <strong>could two reasonable users make different choices here and get different numbers?</strong> If yes, document the choice and encode it in the model or query boundary where possible.</p>
+<p>For example, dbt’s current documentation for v1.12 and later describes semantic models with entities, dimensions, and metrics. The exact configuration differs from older dbt projects, so use the documentation for your installed version rather than copying a YAML snippet from an older tutorial. The concepts—grain, relationships, time, and metric definition—are more portable than any one product’s syntax.</p>
+<h2 id="a-worked-example-northstar-bikes">A worked example: Northstar Bikes</h2>
+<p>Let’s make the opening question answerable. Northstar Bikes is fictional and sells only in euros.</p>
+<p>The team agrees to expose a metric called <code>paid_item_sales</code>:</p>
+<ul>
+<li><strong>Definition:</strong> sum of paid order-line value after discounts.</li>
+<li><strong>Excludes:</strong> tax, shipping, test orders, and voided orders.</li>
+<li><strong>Refunds:</strong> reported separately by refund date; this metric is before refunds.</li>
+<li><strong>Grain:</strong> one row per order line.</li>
+<li><strong>Time:</strong> <code>paid_at</code>, grouped into complete Monday-to-Sunday weeks in <code>Europe/Berlin</code>.</li>
+<li><strong>Country:</strong> shipping destination, not billing address.</li>
+<li><strong>Currency:</strong> EUR.</li>
+</ul>
+<p>This is a business choice for the example, not a universal definition of sales. Another company may need a different metric. The contract makes the choice visible instead of asking the model to guess.</p>
+<p>For the complete week from 9 November through 15 November 2026, suppose the trusted model contains these rows:</p>
+<table>
+<thead>
+<tr>
+<th>Order line</th>
+<th>Ship-to</th>
+<th>Paid at (Berlin time)</th>
+<th style="text-align: right;">Item value after discount</th>
+<th>Included?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A-104</td>
+<td>Germany</td>
+<td>Mon 9 Nov, 09:14</td>
+<td style="text-align: right;">€100</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>A-109</td>
+<td>Germany</td>
+<td>Fri 13 Nov, 14:02</td>
+<td style="text-align: right;">€60</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>A-110</td>
+<td>Austria</td>
+<td>Wed 11 Nov, 11:30</td>
+<td style="text-align: right;">€90</td>
+<td>No — different country</td>
+</tr>
+<tr>
+<td>A-113</td>
+<td>Germany</td>
+<td>Sun 8 Nov, 23:30</td>
+<td style="text-align: right;">€40</td>
+<td>No — outside the week</td>
+</tr>
+<tr>
+<td>A-115</td>
+<td>Germany</td>
+<td>Fri 13 Nov, 15:10</td>
+<td style="text-align: right;">€500</td>
+<td>No — test order</td>
+</tr>
+</tbody>
+</table>
+<p>Under this contract, the answer for Germany is <strong>€160</strong>. The number is not impressive; the important part is that another analyst can reproduce it and see exactly what it means.</p>
+<p>The agent should not silently turn “How much did Germany make?” into this metric. “Make” might mean paid sales or contribution profit. It should ask which one the user means. If the user asks “What were paid item sales in Germany last week?”, the application can use the agreed defaults and show them alongside the result:</p>
+<blockquote>
+<p><strong>€160</strong> in paid item sales for Germany, 9–15 November 2026. This uses shipping country and payment date; it excludes tax, shipping, test orders, and voided orders. Refunds are reported separately.</p>
+</blockquote>
+<p>That is usually more helpful than making the user approve every routine query. Ask when a choice is genuinely ambiguous or the consequence of a wrong interpretation is high; otherwise, answer with the definition and filters visible.</p>
+<h2 id="keep-the-models-job-small">Keep the model’s job small</h2>
+<p>A useful architecture separates four responsibilities:</p>
+<ol>
+<li><strong>The business owns meaning.</strong> Finance or the relevant domain owner agrees what the metric means and resolves conflicts.</li>
+<li><strong>The semantic model records it.</strong> Metric logic, grain, time dimensions, entities, and valid dimensions are reviewed and versioned with the data model.</li>
+<li><strong>The query service enforces it.</strong> A semantic API or constrained tool validates the metric, dimensions, filters, and time range, then executes the query.</li>
+<li><strong>The agent translates and explains.</strong> It maps the user’s wording to the available contract, asks when it cannot do so safely, and explains the returned result.</li>
+</ol>
+<p>That third boundary matters. A function call or an MCP connection is a way to expose tools; it does not, by itself, make a query governed. The application still needs to validate tool arguments and decide which operations are allowed. Where a semantic query API is available, expose structured inputs such as a metric name, approved dimensions, typed filters, and a bounded time range—not a free-form SQL string that the model can turn into arbitrary warehouse access.</p>
+<p>Keep authorization outside the prompt. Use server-side credentials with the least privileges the use case needs, and preserve the intended user or role restrictions in the data platform. A sentence saying “only show this user their accounts” is not an access-control boundary. The query service and warehouse permissions must enforce that rule.</p>
+<p>The response should carry enough context to be checked: the metric used, the time range and time zone, filters or groupings, currency or unit, and data freshness when available. Don’t ask the model to invent provenance after the query; return it from the system that actually ran the query.</p>
+<h2 id="what-the-semantic-contract-does-not-solve">What the semantic contract does not solve</h2>
+<p>A well-defined metric is a strong guardrail, not a truth machine. It cannot repair stale source data, a bad upstream transformation, a wrong grain declaration, or a business definition that nobody has agreed on. If an order-line table is accidentally duplicated, a beautifully named metric can still return a beautifully wrong total.</p>
+<p>Test the contract like production data code:</p>
+<ul>
+<li>Check keys and relationships at the declared grain.</li>
+<li>Reconcile representative metric queries against a trusted report or independently reviewed result.</li>
+<li>Include boundary cases: week starts, time zones, late-arriving events, null dimensions, currency conversion, refunds, and cancellations where relevant.</li>
+<li>Test that unsupported metrics and dimensions are rejected, not silently substituted.</li>
+<li>Check results under the roles your users actually have.</li>
+<li>Review metric-definition changes with the business owner and make the change visible to downstream users.</li>
+</ul>
+<p>For an agent, test more than whether its tool call succeeds. Include questions that are clear, ambiguous, unsupported, and near a time boundary. Verify that it selects the right metric and filters, asks a useful clarification when required, and describes the returned data accurately.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Answer, clarify, or decline?</p>
+<div class="decision-step">
+<span class="decision-q">One clear metric</span>
+<span class="decision-a">Query it, then show the definition, time range, and filters used.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Two plausible meanings</span>
+<span class="decision-a">Ask the smallest question that distinguishes them: sales or profit, for example.</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">No approved metric or access</span>
+<span class="decision-a">Say what is missing or unavailable; don’t invent a metric or find a way around permissions.</span>
+</div>
+</div>
+
+<p>If you’ve read my earlier agent-build example, I used confirmation before every query to make the safety behavior easy to see. Treat that as a conservative prototype choice, not a rule that every production agent should interrupt every user. Make the clarification policy explicit, then test it against real question patterns and the impact of a wrong answer.</p>
+<h2 id="start-with-one-metric">Start with one metric</h2>
+<p>You do not need to model the whole warehouse before building an agent. Pick one question people ask often and one metric they already trust. Sit with its owner and write down the definition, grain, time behavior, dimensions, and access rules. Encode the parts the semantic layer supports, test them against known results, and expose only the query operations the agent needs.</p>
+<p>When that works, add the next metric. A small, well-defined surface is more useful than a giant catalog whose names look authoritative but whose meaning is unclear.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>A metric name is not a metric definition.</strong> Specify the calculation, scope, grain, time, units, and valid relationships that can change the answer.</li>
+<li><strong>Let the business choose the meaning.</strong> The semantic model can record and execute that decision; the LLM should not make it up at query time.</li>
+<li><strong>Use a constrained, authorized query boundary.</strong> Typed metric queries, server-side validation, and data-platform permissions matter more than extra prompt warnings.</li>
+<li><strong>Be transparent without being obstructive.</strong> Show the definition and filters; ask only when the ambiguity or impact calls for it.</li>
+<li><strong>Test the whole contract.</strong> Validate the data, joins, edge cases, access rules, and the agent’s metric selection—not just whether a query ran.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 16 November 2026. Vendor configuration and product capabilities change; verify the documentation for the version and deployment you use.</p>
+<ul>
+<li><a href="https://docs.getdbt.com/docs/build/semantic-models">dbt semantic models</a> — current v1.12+ model components and configuration.</li>
+<li><a href="https://docs.getdbt.com/docs/use-dbt-semantic-layer/dbt-sl">dbt Semantic Layer</a> — centrally defined metrics, query integrations, and permissions.</li>
+<li><a href="https://docs.getdbt.com/docs/use-dbt-semantic-layer/setup-sl">Administer the dbt Semantic Layer</a> — credentials and least-privilege setup.</li>
+<li><a href="https://docs.getdbt.com/docs/dbt-ai/about-mcp">About the dbt MCP server</a> — current MCP integrations and available tool categories.</li>
+<li><a href="https://developers.openai.com/api/docs/guides/function-calling">OpenAI function calling</a> and <a href="https://platform.claude.com/docs/en/agents-and-tools/tool-use/overview">Anthropic tool use</a> — structured tool calls are requests that the application handles; the application executes and returns tool results.</li>
+</ul>
+<p>The semantic contract is the recipe card. The agent can help choose the right card and explain what came back. It should not be asked to make up the recipe while everyone is waiting for dinner.</p>
+
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

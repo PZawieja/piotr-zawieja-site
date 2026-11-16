@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Give your analytics agent a contract, not a bigger prompt</title>
+      <link>https://goldlayer.dev/writing/analytics-agent-semantic-contract.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-semantic-contract.html</guid>
+      <pubDate>Mon, 16 Nov 2026 14:00:00 +0000</pubDate>
+      <description>A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</description>
+    </item>
+    <item>
       <title>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</title>
       <link>https://goldlayer.dev/writing/semantic-layer-agent-harden.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/semantic-layer-agent-harden.html</guid>

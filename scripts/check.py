@@ -191,7 +191,7 @@ def check_rendered_html(slug: str, template_classes: set[str]) -> None:
 def check_index_html() -> None:
     text = INDEX_HTML.read_text(encoding="utf-8")
 
-    # exactly one "View all" link in the writing section
+    # The Fern homepage promotes one current article and two recent notes.
     writing_block = re.search(
         r"<!-- WRITING_START -->(.*?)<!-- WRITING_END -->", text, re.DOTALL
     )
@@ -199,17 +199,20 @@ def check_index_html() -> None:
         fail("index.html: WRITING_START/END markers missing")
         return
 
-    view_all_count = text.count("View all")
-    if view_all_count == 0:
-        warn("index.html: no 'View all' link found in writing section")
-    elif view_all_count > 1:
-        fail(f"index.html: 'View all' link appears {view_all_count} times (expected 1)")
+    if not re.search(r'<a class="section-link" href="/writing/">All field notes', text):
+        fail("index.html: link to the writing archive missing")
     else:
-        ok("index.html: exactly one 'View all' link")
+        ok("index.html: writing archive link present")
 
-    # count articles listed in writing section
-    articles_in_index = len(re.findall(r'class="writing-item"', writing_block.group(1)))
-    ok(f"index.html: {articles_in_index} article(s) listed in writing section")
+    block = writing_block.group(1)
+    featured_count = len(re.findall(r'class="home-feature"', block))
+    recent_count = len(re.findall(r'class="home-note"', block))
+    if featured_count != 1:
+        fail(f"index.html: {featured_count} featured article(s) in writing block (expected 1)")
+    if recent_count != 2:
+        fail(f"index.html: {recent_count} recent article(s) in writing block (expected 2)")
+    if featured_count == 1 and recent_count == 2:
+        ok("index.html: one featured article and two recent notes")
 
 
 def check_orphans() -> None:
@@ -234,7 +237,8 @@ def check_writing_index(published_slugs: list[str]) -> None:
         fail("writing/index.html missing — run build.py")
         return
     text = wi.read_text(encoding="utf-8")
-    count = len(re.findall(r'class="writing-item"', text))
+    count = len(re.findall(r'class="featured-post"', text))
+    count += len(re.findall(r'class="post-card"', text))
     if count != len(published_slugs):
         fail(
             f"writing/index.html lists {count} articles but {len(published_slugs)} "

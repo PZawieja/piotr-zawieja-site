@@ -62,6 +62,11 @@ The dbt Semantic Layer moves the metric definition out of SQL and into YAML. You
 
 The definition lives in YAML. The result is computed on demand.
 
+<div class="callout callout-info">
+<span class="callout-label">version note · 16 Nov 2026</span>
+<p>The configuration below uses the earlier <code>semantic_models:</code> and <code>measures:</code> syntax. dbt's v1.12+ documentation describes a newer model- and column-level format. Check the docs for your installed version before copying this example; the mart-versus-semantic-layer trade-offs still apply.</p>
+</div>
+
 ```yaml
 # models/marts/finance/_semantic_models.yml
 semantic_models:
@@ -129,15 +134,15 @@ The Semantic Layer starts to pay off when your situation looks like this:
 
 **Metric definitions change often.** If your revenue team redefines "active subscription" twice a quarter, updating three mart tables plus their downstream tests is painful. A single semantic model change propagates everywhere.
 
-**You are building an AI querying layer.** This is the case where the Semantic Layer goes from "nice to have" to "architectural requirement."
+**You are building an AI querying layer.** A semantic layer can provide a useful governed interface to metrics and dimensions, especially when several consumers need the same definitions. It is not the only valid architecture: a curated mart or another constrained query service can also work if it exposes the right definitions, permissions, and validation.
 
 ---
 
 ## The AI querying angle
 
-An LLM that can write SQL against your raw mart tables will eventually write wrong SQL. It will join the wrong grain, miss a filter, double-count on a fan-out. The hallucination risk is high because the LLM is operating on schema metadata alone — it has no understanding of what the measures actually represent.
+An LLM asked to generate SQL against raw mart tables has to infer business meaning and join paths from schema, descriptions, examples, and context. That can produce plausible but wrong queries — especially when grain, time semantics, and business filters are not explicit. A semantic layer or another governed query service narrows the query surface, but it cannot guarantee the agent chose the intended metric or that the underlying data is correct.
 
-A semantic model is a structured interface. The LLM reasons about metric names, dimensions, and time grains — all of which have explicit definitions. MetricFlow then translates that intent into SQL. The LLM never writes SQL directly.
+A semantic model can be a structured interface. In a setup where the agent queries metrics through MetricFlow, it selects a metric and supported dimensions while MetricFlow constructs the warehouse SQL. The model does not need to generate SQL directly. Other products expose different interfaces, so check the actual tools and enforce their inputs server-side.
 
 ```python
 # Querying the Semantic Layer via MetricFlow SDK (simplified)
@@ -154,7 +159,7 @@ result = client.query(
 df = result.result_df
 ```
 
-This is the architecture behind Cortex Analyst and similar governed natural-language query products. The LLM gets a governed interface. It can ask "MRR by segment for Q1" and get a correct answer because MetricFlow enforces the definition. Contrast that with an LLM generating ad-hoc SQL against `fct_mrr` — the surface area for silent errors is much larger.
+This is one pattern for governed natural-language analytics. A semantic query can ensure that the configured metric definition and joins are used; it cannot by itself ensure that "MRR by segment for Q1" was the user's intended question. Compare the result with trusted examples, test the agent's metric and filter selection, and keep authorization outside the prompt.
 
 ---
 
@@ -198,7 +203,7 @@ The two approaches are not mutually exclusive during migration. That flexibility
 </div>
 <div class="decision-step">
 <span class="decision-q">Building an LLM-backed querying layer</span>
-<span class="decision-a">Semantic Layer is mandatory — <strong>it's the governance boundary</strong> that keeps the model from writing wrong SQL.</span>
+<span class="decision-a">Prefer a governed metric interface when it fits — <strong>a semantic layer is one option</strong>; curated marts and constrained query services can also work.</span>
 </div>
 <div class="decision-step">
 <span class="decision-q">Still unsure</span>
@@ -214,7 +219,7 @@ The two approaches are not mutually exclusive during migration. That flexibility
 <li><strong>Metric marts encode truth in SQL; the Semantic Layer encodes it in YAML</strong> — this is not a style preference, it determines how and when changes propagate to consumers.</li>
 <li><strong>Metric marts win on query performance and simplicity</strong> — if you have one BI tool, stable definitions, and latency requirements, pre-aggregation is still the right call.</li>
 <li><strong>The Semantic Layer wins when consumers multiply</strong> — three tools querying the same metric definition from one YAML file is strictly better than three copies of the same SQL.</li>
-<li><strong>For AI querying layers, the Semantic Layer is an architectural requirement, not a preference</strong> — a governed interface dramatically reduces the hallucination risk versus LLM-generated ad-hoc SQL.</li>
+<li><strong>For AI querying, use a governed query boundary</strong> — a semantic layer is one good option, not a universal requirement. Validate the agent's interpretation and enforce permissions in the application and data platform.</li>
 <li><strong>Migrate incrementally, starting with one high-churn metric</strong> — pick the metric whose definition changes most often, validate parity with your mart, then expand.</li>
 </ul>
 </div>

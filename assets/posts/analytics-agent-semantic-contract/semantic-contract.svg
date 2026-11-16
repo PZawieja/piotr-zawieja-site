@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">From a business question to a governed analytics answer</title>
+  <desc id="desc">A fictional question flows into a paid item sales contract that defines calculation, grain, time zone, country, currency, and exclusions. A governed query service returns an answer with the chosen definition and period.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#77d6a5"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+  <rect width="1200" height="700" rx="28" fill="#121a1e"/>
+  <rect x="1" y="1" width="1198" height="698" rx="27" fill="none" stroke="#35433e" stroke-width="2"/>
+
+  <text x="54" y="64" class="mono" font-size="18" letter-spacing="3" fill="#77d6a5">FIELD GUIDE · 01</text>
+  <text x="54" y="112" class="sans" font-size="35" font-weight="700" fill="#eff6f1">From question to a governed answer</text>
+  <text x="54" y="148" class="sans" font-size="20" fill="#a4b1ac">The agent interprets. The contract defines. The query service enforces.</text>
+
+  <rect x="48" y="204" width="265" height="190" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="72" y="244" class="mono" font-size="16" letter-spacing="1.5" fill="#e2bd73">1 · THE QUESTION</text>
+  <text x="72" y="294" class="sans" font-size="25" font-weight="600" fill="#eff6f1">
+    <tspan x="72" dy="0">“How much did we</tspan>
+    <tspan x="72" dy="35">sell in Germany</tspan>
+    <tspan x="72" dy="35">last week?”</tspan>
+  </text>
+
+  <path d="M323 300h31" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="365" y="184" width="480" height="390" rx="16" fill="#1b272b" stroke="#77d6a5" stroke-width="2"/>
+  <text x="392" y="224" class="mono" font-size="16" letter-spacing="1.4" fill="#77d6a5">2 · THE SEMANTIC CONTRACT</text>
+  <rect x="390" y="246" width="430" height="58" rx="9" fill="#202e32"/>
+  <text x="410" y="283" class="mono" font-size="25" font-weight="600" fill="#d5fa79">paid_item_sales</text>
+  <text x="394" y="342" class="sans" font-size="18" fill="#a4b1ac">Definition</text>
+  <text x="546" y="342" class="sans" font-size="18" fill="#eff6f1">After discounts · before refunds</text>
+  <path d="M392 357h426" stroke="#35433e"/>
+  <text x="394" y="388" class="sans" font-size="18" fill="#a4b1ac">Grain</text>
+  <text x="546" y="388" class="sans" font-size="18" fill="#eff6f1">One paid order line</text>
+  <path d="M392 403h426" stroke="#35433e"/>
+  <text x="394" y="434" class="sans" font-size="18" fill="#a4b1ac">Time</text>
+  <text x="546" y="434" class="sans" font-size="18" fill="#eff6f1">paid_at · Mon–Sun · Berlin</text>
+  <path d="M392 449h426" stroke="#35433e"/>
+  <text x="394" y="480" class="sans" font-size="18" fill="#a4b1ac">Country</text>
+  <text x="546" y="480" class="sans" font-size="18" fill="#eff6f1">Ship-to · not billing</text>
+  <path d="M392 495h426" stroke="#35433e"/>
+  <text x="394" y="526" class="sans" font-size="18" fill="#a4b1ac">Unit / scope</text>
+  <text x="546" y="526" class="sans" font-size="18" fill="#eff6f1">EUR · no tax or shipping</text>
+
+  <path d="M855 300h30" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="897" y="204" width="255" height="190" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="920" y="244" class="mono" font-size="16" letter-spacing="1.1" fill="#8ecff0">3 · QUERY SERVICE</text>
+  <text x="920" y="290" class="sans" font-size="21" font-weight="600" fill="#eff6f1">Approved metric</text>
+  <text x="920" y="322" class="sans" font-size="17" fill="#a4b1ac">Typed filters · valid joins</text>
+  <text x="920" y="352" class="sans" font-size="17" fill="#a4b1ac">Role-checked · read-only</text>
+  <text x="920" y="378" class="mono" font-size="15" fill="#84928c">No free-form SQL</text>
+
+  <path d="M1024 402v39" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="897" y="455" width="255" height="119" rx="16" fill="#202e32" stroke="#77d6a5" stroke-width="2"/>
+  <text x="920" y="485" class="mono" font-size="15" letter-spacing="1" fill="#77d6a5">SYNTHETIC ANSWER</text>
+  <text x="920" y="526" class="sans" font-size="31" font-weight="700" fill="#d5fa79">€160</text>
+  <text x="1010" y="523" class="sans" font-size="16" fill="#eff6f1">· ship-to DE</text>
+  <text x="920" y="553" class="sans" font-size="16" fill="#a4b1ac">9–15 Nov · Europe/Berlin</text>
+
+  <rect x="48" y="612" width="1104" height="42" rx="9" fill="#202e32"/>
+  <text x="70" y="640" class="sans" font-size="17" fill="#a4b1ac">A contract narrows the space for mistakes. It does not repair bad data or settle an unmade business decision.</text>
+</svg>
