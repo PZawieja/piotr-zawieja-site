@@ -9,7 +9,7 @@
 <meta property="og:description" content="Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.">
 <meta property="og:url" content="https://goldlayer.dev/writing/semantic-layer-agent-harden.html">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/semantic-layer-agent-harden/test-results.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
 <style>
@@ -495,37 +495,54 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">30 Jun 2026 · 12 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h1>
-    <p class="article-lede">Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
   </header>
 
-  <div class="article-body">
-    <div class="callout callout-info">
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>30 Jun 2026 · 12 min read</span>
+        </div>
+        <h1 class="article-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h1>
+        <p class="article-deck">Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-three-things-that-will-break-you">The three things that will break you</a></li>
+<li><a href="#step-5-the-disambiguation-pre-flight">Step 5 — The disambiguation pre-flight</a></li>
+<li><a href="#step-6-the-template-library">Step 6 — The template library</a></li>
+<li><a href="#step-7-three-tier-memory">Step 7 — Three-tier memory</a></li>
+<li><a href="#step-8-the-complete-hardened-loop">Step 8 — The complete hardened loop</a></li>
+<li><a href="#step-9-five-tests-to-run-before-calling-it-done">Step 9 — Five tests to run before calling it done</a></li>
+<li><a href="#what-youve-built">What you've built</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <div class="callout callout-info">
 <span class="callout-label">series</span>
 <p>This is Part 2 of <em>Agents on your semantic layer</em>: <a href="https://goldlayer.dev/writing/agents-on-semantic-layer-101.html">Part 0 — why they fail</a> · <a href="https://goldlayer.dev/writing/semantic-layer-agent-build.html">Part 1: build the foundation</a> · Part 2: harden it (this post)</p>
 <p>Companion code: <a href="https://github.com/PZawieja/semantic-layer-agent">github.com/PZawieja/semantic-layer-agent</a></p>
@@ -534,7 +551,7 @@
 <p>The Part 1 agent answers questions. Ask it "what's our churn rate?" and it returns a number — confidently, without asking which churn definition to use. That number will be plausible and based on whichever interpretation the model inferred from context. Which may not be what your VP meant.</p>
 <p>This post adds three layers that close the gap: a pre-flight disambiguation check that catches ambiguous terms before the LLM ever sees them, a template library for common question patterns that skips the reasoning step entirely, and three-tier memory so the agent stops asking the same clarifying question every session.</p>
 <hr />
-<h2>The three things that will break you</h2>
+<h2 id="the-three-things-that-will-break-you">The three things that will break you</h2>
 <div class="tradeoff-grid">
 <div class="tradeoff-row header">
 <span class="tradeoff-cell">Problem</span>
@@ -560,7 +577,7 @@
 
 <p>All three are fixable before you touch the agent loop. The first two are pure Python — no LLM calls, no latency, no token cost. The third is a constraint on the template matcher you'll write in Step 6.</p>
 <hr />
-<h2>Step 5 — The disambiguation pre-flight</h2>
+<h2 id="step-5-the-disambiguation-pre-flight">Step 5 — The disambiguation pre-flight</h2>
 <p>Think of this as a spell checker for business terms — except instead of checking spelling, it checks whether a term has multiple valid definitions at your company. Before the agent touches any query, it scans the question for known ambiguous terms and fires a clarifying question if it finds one.</p>
 <pre><code class="language-python">DISAMBIGUATION: dict[str, dict] = {
     &quot;churn&quot;: {
@@ -607,7 +624,7 @@ def check_disambiguation(question: str, resolved: set[str]) -&gt; str | None:
 </div>
 
 <hr />
-<h2>Step 6 — The template library</h2>
+<h2 id="step-6-the-template-library">Step 6 — The template library</h2>
 <p>For questions that match a known pattern, templates skip the LLM reasoning step entirely and go straight to a structured <code>execute_metric_query</code> call. Same answer, lower latency, fully deterministic behavior.</p>
 <p>Think of templates like macros in a spreadsheet. You write the formula once, parameterize the variable parts, and apply it instantly every time. The LLM's job becomes pattern recognition — "does this question fit a known form?" — rather than reasoning from scratch.</p>
 <pre><code class="language-python">import re
@@ -683,7 +700,7 @@ def match_template(question: str) -&gt; tuple[str | None, dict | None]:
 </div>
 
 <hr />
-<h2>Step 7 — Three-tier memory</h2>
+<h2 id="step-7-three-tier-memory">Step 7 — Three-tier memory</h2>
 <p>The disambiguation check asked "contract end or notification date?" Once the user answers, the agent should never ask again this session. And once you know a user's preference, ideally never ask again at all.</p>
 <p>Like a colleague who remembers your preferences — a good one keeps notes. Session notes cover today. Longer-term notes cover their working relationship with you. And a shared style guide covers conventions the whole team agreed on. Memory in an analytics agent works the same way.</p>
 <pre><code class="language-python">import json
@@ -740,7 +757,7 @@ class SessionMemory:
 </div>
 
 <hr />
-<h2>Step 8 — The complete hardened loop</h2>
+<h2 id="step-8-the-complete-hardened-loop">Step 8 — The complete hardened loop</h2>
 <p>All four additions wired together: disambiguation, template matching, session memory, and proper <code>clarify_or_decline</code> handling.</p>
 <pre><code class="language-python">def run_agent(question: str, user_id: str = &quot;default&quot;) -&gt; str:
     memory = SessionMemory(user_id)
@@ -793,7 +810,7 @@ Pre-flight checks happen before the LLM sees the question. Disambiguation and te
 </div>
 
 <hr />
-<h2>Step 9 — Five tests to run before calling it done</h2>
+<h2 id="step-9-five-tests-to-run-before-calling-it-done">Step 9 — Five tests to run before calling it done</h2>
 <p><img src="../assets/posts/semantic-layer-agent-harden/test-results.png" alt="Five-row test table on dark background. Column headers: Test question, Naive agent result (red), Hardened agent result (green). Row 1: 'What is our churn rate?' — red: returns a number silently — green: 'Before I pull that — notification date or contract end? MRR or customer count?'. Row 2: Same churn question, second session — red: asks again — green: applies saved preference, no question. Row 3: 'What was mrr_monthly last quarter?' — red: invents metric name — green: calls list_metrics, maps to real name. Row 4: 'How does MRR compare to last year?' — red: full LLM reasoning, ~3s — green: template match, instant. Row 5: 'What is our customer lifetime value?' — red: guesses a metric name — green: clarify_or_decline: 'I don't have a CLV metric in the Semantic Layer — do you want to compute it from MRR and churn?'"></p>
 <div class="decision-tree">
 <p class="decision-tree-title">Five tests to run before your first real deployment</p>
@@ -821,7 +838,7 @@ Pre-flight checks happen before the LLM sees the question. Disambiguation and te
 
 <p>Run all five against your real Semantic Layer before your first user. The first and the last are the ones that cause the most damage in production. The middle three tell you whether the performance optimizations are working.</p>
 <hr />
-<h2>What you've built</h2>
+<h2 id="what-youve-built">What you've built</h2>
 <p>This is the complete setup stack from Part 0 — now implemented:</p>
 <div class="ts-block">
 <div class="ts-row">
@@ -866,63 +883,86 @@ Pre-flight checks happen before the LLM sees the question. Disambiguation and te
 <li><strong>Five tests reveal more than unit tests</strong> — run the five scenarios above against your real Semantic Layer. Mock tests won't catch wrong metric names, ambiguous dimension selections, or the difference between "user says contract end" and "agent assumed notification date".</li>
 </ul>
 </div>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
-      <a href="ai-triage-data-monitoring-alerts.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">40 data alerts at 6am. AI triaged them in 90 seconds.</p>
-        <span class="related-date">28 Jun 2026 · 10 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+            <a href="ai-triage-data-monitoring-alerts.html" class="related-card" data-category="AI">
+              <span>AI · 28 Jun 2026</span>
+              <h3>40 data alerts at 6am. AI triaged them in 90 seconds.</h3>
+              <span>10 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

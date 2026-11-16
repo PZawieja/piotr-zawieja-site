@@ -495,42 +495,61 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-tag">data-quality</span>
-      <span class="meta-date">5 Jun 2026 · 7 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Why your dbt project has 47 models and nobody trusts any of them</h1>
-    <p class="article-lede">The dbt trust problem isn't a tooling issue — it's architectural. It shows up in every team that moved fast and skipped the governance layer.</p>
   </header>
 
-  <div class="article-body">
-    <p>Every data team I talk to eventually confesses the same thing. They adopted dbt six to eighteen months ago. The project has grown. There are models everywhere — staging, intermediate, marts, one-offs, experiments that never got cleaned up. The CI pipeline is green.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>5 Jun 2026 · 7 min read</span>
+        </div>
+        <h1 class="article-title">Why your dbt project has 47 models and nobody trusts any of them</h1>
+        <p class="article-deck">The dbt trust problem isn't a tooling issue — it's architectural. It shows up in every team that moved fast and skipped the governance layer.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#how-you-get-to-47-models">How you get to 47 models</a></li>
+<li><a href="#the-real-problem-is-undocumented-decisions">The real problem is undocumented decisions</a></li>
+<li><a href="#what-actually-fixes-it">What actually fixes it</a><ul>
+<li><a href="#1-enforce-the-layer-contract">1. Enforce the layer contract</a></li>
+<li><a href="#2-write-tests-for-business-rules-not-just-data-shape">2. Write tests for business rules, not just data shape</a></li>
+<li><a href="#3-deprecate-loudly-delete-completely">3. Deprecate loudly, delete completely</a></li>
+<li><a href="#4-treat-the-mart-layer-like-an-api">4. Treat the mart layer like an API</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Every data team I talk to eventually confesses the same thing. They adopted dbt six to eighteen months ago. The project has grown. There are models everywhere — staging, intermediate, marts, one-offs, experiments that never got cleaned up. The CI pipeline is green.</p>
 <p>And nobody trusts the numbers.</p>
 <p>Not Finance. Not the CSM team. Not the product manager who keeps asking for their own Snowflake access because "it's faster than waiting." The dashboards exist. The models pass tests. The CI pipeline is green — which, it turns out, is the data equivalent of a smoke detector with no batteries: technically silent, not actually telling you you're safe. And yet the weekly revenue review still starts with someone pulling up a spreadsheet to double-check.</p>
 <p>This is the dbt trust problem. It is not a tooling problem. It is an architectural and process problem that tooling alone cannot fix.</p>
 <hr />
-<h2>How you get to 47 models</h2>
+<h2 id="how-you-get-to-47-models">How you get to 47 models</h2>
 <p>The pattern is consistent enough that I'd call it a law. It goes like this:</p>
 <p><strong>Month 1–3:</strong> A data engineer — sometimes a senior one, sometimes someone who just did the dbt Fundamentals course — sets up the project. They create a staging layer. They build a few marts. It's clean. There's hope.</p>
 <p><strong>Month 4–8:</strong> The business starts making requests faster than the model structure can absorb them. Someone adds a one-off model for a sales report. Someone else forks <code>fct_orders</code> because they need a slightly different grain. An analyst writes a model directly in the marts folder because staging felt too far away. Nobody reviews it. The CI passes.</p>
@@ -544,7 +563,7 @@
 </ul>
 <p>The project is large. The project is broken in ways that are invisible to <code>dbt test</code>.</p>
 <hr />
-<h2>The real problem is undocumented decisions</h2>
+<h2 id="the-real-problem-is-undocumented-decisions">The real problem is undocumented decisions</h2>
 <p>When a stakeholder looks at two numbers that disagree, they don't think "there's a SQL bug." They think "I can't trust this system." And once that trust breaks, it's very slow to rebuild.</p>
 <p>The root cause is usually not bad SQL. It's that consequential modelling decisions were made without a record.</p>
 <p>Picture two supermarket receipts for the exact same basket of groceries that ring up to different totals — one register applies the loyalty discount before tax, the other after. Both did valid math. Nobody at the till audits the order of operations; they just stop trusting the register. That's what's happening when <code>mart_revenue</code> and <code>mart_finance_v2</code> both claim to report MRR and land a few percent apart. Consider:</p>
@@ -567,8 +586,8 @@
 <p>Both look reasonable. They produce different numbers. Without documentation explaining the business decision behind each, every stakeholder who sees a discrepancy becomes a skeptic.</p>
 <p>The model exists. The test passes. The trust is gone.</p>
 <hr />
-<h2>What actually fixes it</h2>
-<h3>1. Enforce the layer contract</h3>
+<h2 id="what-actually-fixes-it">What actually fixes it</h2>
+<h3 id="1-enforce-the-layer-contract">1. Enforce the layer contract</h3>
 <p>The staging layer should contain exactly one model per source table, with no business logic — only renaming, casting, and deduplication. If a staging model joins two source tables, something is wrong.</p>
 <p>The intermediate layer is where business logic lives. It is not for consumption — it exists to make marts readable. If an analyst is querying an intermediate model directly, the mart layer is missing something.</p>
 <p>The mart layer is what stakeholders and BI tools touch. Every model here should have a documented grain, a documented owner, and documented definitions for every column that represents a business concept.</p>
@@ -583,7 +602,7 @@
   , amount_cents / 100.0         <span class="keyword">as</span> monthly_amount
 <span class="keyword">from</span> {{ source('billing', 'subscriptions') }}</code></pre>
 
-<h3>2. Write tests for business rules, not just data shape</h3>
+<h3 id="2-write-tests-for-business-rules-not-just-data-shape">2. Write tests for business rules, not just data shape</h3>
 <p><code>not_null</code> and <code>unique</code> are hygiene. They are not trust. Business logic errors reach dashboards because the tests were not written to catch them.</p>
 <p>Write tests for the things that matter to stakeholders:</p>
 <pre><code><span class="comment"># schema.yml</span>
@@ -602,10 +621,10 @@ models:
               values: [<span class="string">'active'</span>, <span class="string">'cancelled'</span>, <span class="string">'paused'</span>, <span class="string">'trialing'</span>]</code></pre>
 
 <p>This is the minimum. For revenue-critical models, add reconciliation tests that compare aggregate outputs across models for the same business concept.</p>
-<h3>3. Deprecate loudly, delete completely</h3>
+<h3 id="3-deprecate-loudly-delete-completely">3. Deprecate loudly, delete completely</h3>
 <p>The <code>mart_finance_v2</code> that nobody is supposed to use but everyone queries because it's there — delete it. Not archive it. Delete it. Deleting it feels rude. Leaving it there is ruder — to every analyst who'll spend an afternoon convinced it's the live one.</p>
 <p>Before you delete it, write a YAML description in the replacement model that says exactly what changed and why. A one-sentence note in <code>schema.yml</code> prevents 80% of the stakeholder questions that follow.</p>
-<h3>4. Treat the mart layer like an API</h3>
+<h3 id="4-treat-the-mart-layer-like-an-api">4. Treat the mart layer like an API</h3>
 <p>If you were building a public API, you would version it, document it, and not break consumers without notice. Your mart models are an API — Finance, RevOps, and the product team are your consumers.</p>
 <p>This means: every mart model has a description. Every column that means something to the business has a description. Changes that affect downstream consumers go through a review. Not a formal RFC — just a human who reads the diff and asks "does anything consume this?"</p>
 <p>In a growing company moving from spreadsheets to a proper data stack, this step is usually the one that gets skipped. It's also the one that determines whether dbt becomes the source of truth or becomes the thing the analysts work around.</p>
@@ -645,63 +664,86 @@ models:
 </div>
 
 <p>The project with 47 models is not a failure. It's a growth stage. The signal that you've moved past it is not a smaller model count — it's when a new analyst joins, reads the schema files, and doesn't need to ask anyone what "active customer" means.</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

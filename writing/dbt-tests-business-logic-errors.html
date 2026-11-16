@@ -495,47 +495,65 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-tag">data-quality</span>
-      <span class="meta-date">12 Jun 2026 · 6 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">How to write dbt tests that catch real business logic errors (not just nulls)</h1>
-    <p class="article-lede">Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</p>
   </header>
 
-  <div class="article-body">
-    <p>The test suite is green. CI passed. The model ran clean. Then the weekly business review starts and someone says "these numbers look wrong."</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>12 Jun 2026 · 6 min read</span>
+        </div>
+        <h1 class="article-title">How to write dbt tests that catch real business logic errors (not just nulls)</h1>
+        <p class="article-deck">Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-most-dbt-test-suites-actually-cover">What most dbt test suites actually cover</a></li>
+<li><a href="#three-categories-of-tests-that-matter">Three categories of tests that matter</a><ul>
+<li><a href="#category-1-range-and-threshold-tests">Category 1: Range and threshold tests</a></li>
+<li><a href="#category-2-business-rule-tests">Category 2: Business rule tests</a></li>
+<li><a href="#category-3-cross-model-reconciliation-tests">Category 3: Cross-model reconciliation tests</a></li>
+</ul>
+</li>
+<li><a href="#what-to-prioritise">What to prioritise</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>The test suite is green. CI passed. The model ran clean. Then the weekly business review starts and someone says "these numbers look wrong."</p>
 <p>You pull the query. The data is there, not null, no duplicates, all foreign keys resolve. Everything your tests checked is fine. The numbers are still wrong — a filter on the wrong date field, a metric that excludes a subscription type added last month, a calculation that silently started returning zero for a cohort nobody thought to check.</p>
 <p>This is the dbt testing gap. Most projects test data shape. Very few test data meaning. <code>not_null</code> and <code>unique</code> are necessary — without them you are flying completely blind. But they are not sufficient, and in practice they give teams a false sense of coverage that makes the wrong-number conversation much more painful than it needs to be.</p>
-<h2>What most dbt test suites actually cover</h2>
+<h2 id="what-most-dbt-test-suites-actually-cover">What most dbt test suites actually cover</h2>
 <p>The default dbt test vocabulary — <code>not_null</code>, <code>unique</code>, <code>accepted_values</code>, <code>relationships</code> — maps almost perfectly onto infrastructure failures. Missing data. Duplicate keys. Broken foreign keys. Values outside an enumerated set.</p>
 <p>These tests answer the question: did the pipeline run correctly? They do not answer the question: did the pipeline produce the right output?</p>
 <p>A column can be not-null, unique, and completely wrong from a business perspective. A revenue figure can be populated with plausible-looking numbers that are off by 30% because a new product line was excluded from the mart filter. A churn rate can be technically non-null and technically within an accepted value range while being calculated against the wrong date boundary for three months running.</p>
 <p>The tests that catch infrastructure failures are worth keeping. The gap is the layer above them.</p>
 <p>Think about a supermarket self-checkout. It will beep at you if you forget to scan an item, and it will catch you if you somehow scan the same yogurt twice. What it will never catch is the price on that yogurt being wrong by a decimal point — €0.50 instead of €5.00, scan, beep, have a nice day. The till is satisfied: one scan per item, no duplicates, nothing missing. The <em>shape</em> of the transaction is correct. Whether the <em>amount</em> is correct was never checked, because that was never the scanner's job. <code>not_null</code> and <code>unique</code> are that scanner. They confirm shape. They have no opinion on whether the number is right.</p>
-<h2>Three categories of tests that matter</h2>
-<h3>Category 1: Range and threshold tests</h3>
+<h2 id="three-categories-of-tests-that-matter">Three categories of tests that matter</h2>
+<h3 id="category-1-range-and-threshold-tests">Category 1: Range and threshold tests</h3>
 <p>The first place to add business logic coverage is financial and metric columns. Use <code>dbt_utils.accepted_range</code> to set floor and ceiling values that reflect what the number should actually be — not just that it exists.</p>
 <pre><code class="language-yaml"># models/marts/schema.yml
 models:
@@ -558,7 +576,7 @@ models:
                 where: &quot;status = 'active'&quot;
 </code></pre>
 <p>The <code>monthly_amount</code> test will catch a bug that sets subscription amounts to zero — a case that passes <code>not_null</code> cleanly. The <code>mrr_growth_pct</code> test uses <code>severity: warn</code> because growth above 50% month-over-month is unusual but not impossible; you want a flag in the logs, not a build failure.</p>
-<h3>Category 2: Business rule tests</h3>
+<h3 id="category-2-business-rule-tests">Category 2: Business rule tests</h3>
 <p>Some domain invariants cannot be expressed as range checks. They are rules: every active subscription must have a start date in the past; every cancelled subscription must have a cancellation date. These belong in custom generic tests.</p>
 <pre><code class="language-sql">-- tests/generic/assert_active_subscription_start_date_in_past.sql
 {% test assert_active_subscription_start_date_in_past(model, column_name) %}
@@ -586,7 +604,7 @@ models:
           - assert_active_subscription_start_date_in_past
 </code></pre>
 <p>The <code>accepted_values</code> test on <code>status</code> is doing more work than it looks like here. If someone adds a <code>'suspended'</code> status upstream without updating the mart logic, this test fails immediately. Without the explicit list, <code>'suspended'</code> subscriptions flow silently into your active customer count.</p>
-<h3>Category 3: Cross-model reconciliation tests</h3>
+<h3 id="category-3-cross-model-reconciliation-tests">Category 3: Cross-model reconciliation tests</h3>
 <p>This is the category most projects skip entirely, and it is where the most expensive errors hide. The idea is simple: the same business metric calculated two different ways should produce the same result within a defined tolerance.</p>
 <pre><code class="language-sql">-- tests/assert_mrr_reconciles_to_invoices.sql
 {% set tolerance_pct = 0.01 %}
@@ -619,7 +637,7 @@ from comparison
 where diff_pct &gt; {{ tolerance_pct }}
 </code></pre>
 <p>This test catches the scenario that causes the most damage in practice: a new subscription type is added, the staging model picks it up, but the mart filter was not updated. The mart and the source diverge. Every downstream metric is wrong. The test fails on the first run after the gap appears, not three weeks later in a business review.</p>
-<h2>What to prioritise</h2>
+<h2 id="what-to-prioritise">What to prioritise</h2>
 <p>Not every column needs a business logic test. Prioritising is straightforward: start with anything that ends up in an executive dashboard or board report. That is the content where wrong numbers have the highest cost.</p>
 <p>For revenue columns, the minimum bar is a range test plus a cross-model reconciliation. For status columns, an explicit <code>accepted_values</code> list rather than just <code>not_null</code>. For date columns on historical facts, a check that the value is not in the future.</p>
 <pre><code class="language-yaml"># models/marts/schema.yml — date sanity example
@@ -669,63 +687,86 @@ where diff_pct &gt; {{ tolerance_pct }}
 
 <hr />
 <p>What is the most expensive data error you have caught — or not caught in time — with a dbt test?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

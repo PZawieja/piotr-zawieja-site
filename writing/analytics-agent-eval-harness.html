@@ -495,48 +495,65 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">26 Jun 2026 · 11 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">How to know if your analytics agent still works: a deterministic eval harness</h1>
-    <p class="article-lede">Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
   </header>
 
-  <div class="article-body">
-    <p>There's a moment in every AI project where you've run the thing enough times that it feels like it works, and you ship it. Then three weeks later someone changes the system prompt, or swaps to a newer model, or tweaks one of the tools — and the thing quietly gets worse. Nobody notices until a user says something.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>26 Jun 2026 · 11 min read</span>
+        </div>
+        <h1 class="article-title">How to know if your analytics agent still works: a deterministic eval harness</h1>
+        <p class="article-deck">Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-problem-with-manually-checking">The problem with manually checking</a></li>
+<li><a href="#coupling-to-project-1-without-importing-it">Coupling to project 1 without importing it</a></li>
+<li><a href="#scoring-deterministic-no-llm-as-judge">Scoring: deterministic, no LLM-as-judge</a></li>
+<li><a href="#cost-tracking-from-actual-runs">Cost tracking from actual runs</a></li>
+<li><a href="#regression-gating">Regression gating</a></li>
+<li><a href="#what-the-first-real-run-showed">What the first real run showed</a></li>
+<li><a href="#the-part-thats-missing-from-most-eval-write-ups">The part that's missing from most eval write-ups</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>There's a moment in every AI project where you've run the thing enough times that it feels like it works, and you ship it. Then three weeks later someone changes the system prompt, or swaps to a newer model, or tweaks one of the tools — and the thing quietly gets worse. Nobody notices until a user says something.</p>
 <p>That's not a hypothetical. My previous project, <a href="https://goldlayer.dev/writing/dbt-agentic-engine-build-log.html">dbt-agentic-engine</a> (<a href="https://github.com/PZawieja/dbt-agentic-engine">GitHub</a>), ended with a manual sanity check: I ran 15 eval questions live, read the answers, wrote down a pass/fail in a doc. That's not repeatable, it's not scored, and it has no memory — there's nothing to compare against the next time someone changes something.</p>
 <p><a href="https://github.com/PZawieja/llmops-eval-harness">llmops-eval-harness</a> turns "I manually sanity-checked 15 questions once" into a repeatable, scored, cost-aware check that can gate future changes. This post is a build log: what I built, why I made the tradeoffs I did, and what the first real run actually showed.</p>
 <hr />
-<h2>The problem with manually checking</h2>
+<h2 id="the-problem-with-manually-checking">The problem with manually checking</h2>
 <p>When you run an LLM agent by hand to see if it's working, you're doing three things wrong.</p>
 <p><strong>You're not measuring anything.</strong> "The answer looked right" is not a score. It tells you nothing about whether the answer was better or worse than last week, or how it compares on the questions you didn't happen to check this time.</p>
 <p><strong>You're not tracking cost.</strong> Per-question token counts in a trace file are not the same as "the full eval set cost $X to run." You need to multiply by actual pricing, sum across all questions, and compare runs. That calculation never happens manually because it's tedious.</p>
 <p><strong>You have no baseline.</strong> If you change the model from Sonnet 4.6 to Sonnet 4.7, or rewrite the system prompt, or add a tool — did accuracy go up or down? By how much? You have no idea, because you didn't record the starting point.</p>
 <p>The harness fixes all three.</p>
 <hr />
-<h2>Coupling to project 1 without importing it</h2>
+<h2 id="coupling-to-project-1-without-importing-it">Coupling to project 1 without importing it</h2>
 <p>The harness and the agent live in separate repos. That's intentional: project 1 is a working product with its own dependencies; I don't want to create a shared package or a monorepo just to run evals.</p>
 <p>The coupling happens through one narrow contract: the harness shells out to <code>agent/cli.py</code> per question, captures its stdout as a single JSON object, and parses it.</p>
 <pre><code class="language-python">proc = subprocess.run(
@@ -562,7 +579,7 @@ result = json.loads(proc.stdout.strip().splitlines()[-1])
 <p>The agent loop still appends to <code>traces/trace_log.jsonl</code> exactly as it does for the Streamlit app — the harness doesn't change any agent behavior, it just adds a way to invoke the agent programmatically and read its output. The JSON shape is the same <code>run_question()</code> return dict: <code>final_answer</code>, <code>trace</code>, <code>tool_calls_made</code>, <code>hit_cap</code>, <code>stop_reason</code>, <code>total_usage</code>, <code>run_id</code>.</p>
 <p>One fragile part: if the agent prints debug output to stdout before the JSON, parsing the last line is a workaround. The cleaner fix is for the CLI to use stderr for everything except the JSON result. That's a project-1 change I flagged but didn't make — the workaround works for now and the fix is obvious if it ever breaks.</p>
 <hr />
-<h2>Scoring: deterministic, no LLM-as-judge</h2>
+<h2 id="scoring-deterministic-no-llm-as-judge">Scoring: deterministic, no LLM-as-judge</h2>
 <p>The eval question set has three tiers, each scored differently.</p>
 <p><strong>Lookup and investigation questions</strong> have either <code>expected_data</code> (structured key→value facts) or <code>expected_answer</code> (a comma-separated list of things the answer should mention). Score = fraction of expected facts found as substrings in the agent's <code>final_answer</code>.</p>
 <pre><code class="language-yaml">- id: q06
@@ -605,7 +622,7 @@ def score_unanswerable(final_answer: str) -&gt; dict:
 </code></pre>
 <p>I deliberately didn't use LLM-as-judge in v1. The reasons: it adds cost to every eval run, it introduces non-determinism (the judge can disagree with itself), and it's overkill when your answers are structured enough to substring-match. The spec explicitly notes that if the decline heuristic proves too brittle — false negatives on correct declines phrased unexpectedly — the fix is LLM-as-judge for the unanswerable tier specifically, not a bigger regex.</p>
 <hr />
-<h2>Cost tracking from actual runs</h2>
+<h2 id="cost-tracking-from-actual-runs">Cost tracking from actual runs</h2>
 <p>The spec rule is: cost and latency are reported, not assumed. That means no estimates — every cost number in the output came from a real API call with real token counts.</p>
 <p>The agent loop already accumulates token usage across all tool calls per question. The harness just multiplies:</p>
 <pre><code class="language-python">INPUT_PRICE_PER_MTOK = 3.00   # Claude Sonnet 4.6, sourced June 2026
@@ -625,7 +642,7 @@ def compute_cost(total_usage: dict) -&gt; dict:
 <p>Pricing lives in <code>config.py</code> as named constants. If Anthropic changes the price, there's one line to update. It's not buried in a formula somewhere.</p>
 <p>Latency works the same way: wall-clock time per question is measured around the subprocess call; per-tool-call <code>latency_ms</code> is already in every trace record the agent returns. Both are reported, not one or the other.</p>
 <hr />
-<h2>Regression gating</h2>
+<h2 id="regression-gating">Regression gating</h2>
 <p>The first run writes <code>results/baseline.json</code>. Every subsequent run with <code>--gate</code> compares against that baseline and exits non-zero if any of three conditions are met:</p>
 <ul>
 <li>Accuracy dropped more than 5 percentage points</li>
@@ -656,7 +673,7 @@ def compute_cost(total_usage: dict) -&gt; dict:
 <p><code>MAX_ACCURACY_DROP_PCT</code>, <code>MAX_COST_INCREASE_PCT</code>, <code>MAX_LATENCY_INCREASE_PCT</code> are defined once in <code>config.py</code>. The CLAUDE.md for this project says hard caps are config values, not buried — that rule exists because I've seen analytics code where a threshold that matters is sitting in the middle of a function nobody will ever look at.</p>
 <p>One sharp edge: <code>--gate</code> and <code>--update-baseline</code> together on the same run do nothing useful. The gate compares the current run against the existing baseline before the update — if you're updating, you're declaring this run <em>is</em> the new standard, so gating against the old one is meaningless. The harness warns and exits cleanly in that case.</p>
 <hr />
-<h2>What the first real run showed</h2>
+<h2 id="what-the-first-real-run-showed">What the first real run showed</h2>
 <p>Running all 15 questions live against the agent:</p>
 <pre><code>id   tier           pass  score  cost_usd  latency_ms  tools (actual/est)
 ---  -------------  ----  -----  --------  ----------  ------------------
@@ -687,7 +704,7 @@ total latency: 182852ms
 <p>The fix for q04 and q09 is to replace <code>expected_answer</code> with <code>expected_data</code> (structured key→value) for questions where the phrasing can vary. <code>expected_data</code> is how the investigation-tier questions are structured — it's why q10 scored 0.75 (3 of 4 facts found) instead of 0.00 even with a partial answer. The evaluation set needs updating, not the scoring logic.</p>
 <p>The unanswerable tier was clean: 3/3, no fabricated figures, all correctly declined. That was the tier I was most uncertain about — the heuristic felt brittle when I wrote it — and it held up on first contact.</p>
 <hr />
-<h2>The part that's missing from most eval write-ups</h2>
+<h2 id="the-part-thats-missing-from-most-eval-write-ups">The part that's missing from most eval write-ups</h2>
 <p>Most posts about LLM evaluation describe the methodology. They don't publish the score.</p>
 <p>The score from the first run of this harness is 46.7%. That's worse than I expected when I was writing the question set by hand and qualitatively checking answers. The discrepancy is partly the scoring tool (two questions failed on substring matching despite correct answers), and partly the agent genuinely struggling with multi-hop investigation questions under a conservative tool-call budget.</p>
 <p>Both findings are useful. The scoring limitation tells me <code>expected_answer</code> is the wrong format for questions where phrasing varies. The agent limitation tells me the tool-call cap needs revisiting before investigation-tier accuracy will improve. Neither of those insights was available from the manual sanity check.</p>
@@ -706,63 +723,86 @@ total latency: 182852ms
 </div>
 
 <p>If you've shipped an AI feature and you're not running a scored eval on it regularly, what's your actual evidence that it still works?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

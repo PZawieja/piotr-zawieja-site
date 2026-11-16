@@ -495,37 +495,63 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">12 Jun 2026 · 8 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">AI-assisted SQL review: using Claude to catch data quality issues before they ship</h1>
-    <p class="article-lede">Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</p>
   </header>
 
-  <div class="article-body">
-    <p>SQL review in a dbt project degrades predictably. When the team is small and the project is new, reviews are careful — every CTE gets read, every join gets a question. As the project grows and PRs stack up, reviews get shallower. The standard gets set by whoever is busiest. "Looks good" becomes the default.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>12 Jun 2026 · 8 min read</span>
+        </div>
+        <h1 class="article-title">AI-assisted SQL review: using Claude to catch data quality issues before they ship</h1>
+        <p class="article-deck">Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-this-is-not">What this is not</a></li>
+<li><a href="#the-prompt">The prompt</a></li>
+<li><a href="#what-it-catches">What it catches</a><ul>
+<li><a href="#missing-is_incremental-guard">Missing is_incremental() guard</a></li>
+<li><a href="#aggregation-before-join-fanout">Aggregation before join (fanout)</a></li>
+<li><a href="#hardcoded-date-literal">Hardcoded date literal</a></li>
+</ul>
+</li>
+<li><a href="#where-it-fails">Where it fails</a></li>
+<li><a href="#three-ways-to-integrate-it">Three ways to integrate it</a><ul>
+<li><a href="#1-manual-during-pr-review">1. Manual, during PR review</a></li>
+<li><a href="#2-github-actions-on-pr">2. GitHub Actions on PR</a></li>
+<li><a href="#3-claude-code-skill">3. Claude Code skill</a></li>
+</ul>
+</li>
+<li><a href="#the-actual-point">The actual point</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>SQL review in a dbt project degrades predictably. When the team is small and the project is new, reviews are careful — every CTE gets read, every join gets a question. As the project grows and PRs stack up, reviews get shallower. The standard gets set by whoever is busiest. "Looks good" becomes the default.</p>
 <p>The bugs that slip through are not exotic. They are the same patterns, over and over:</p>
 <ul>
 <li>An incremental model with no <code>WHERE</code> clause guarding the <code>is_incremental()</code> block, so it full-scans the source on every run</li>
@@ -535,7 +561,7 @@
 </ul>
 <p>These patterns are predictable. Predictable means automatable.</p>
 <hr />
-<h2>What this is not</h2>
+<h2 id="what-this-is-not">What this is not</h2>
 <p>Think of it like VAR in soccer. The video review checks the stuff that has a factual answer — was the ball over the line, was the attacker level with the last defender. It does not decide whether a tackle deserved a yellow card or a red one; that still needs a referee's judgment about intent and context. Claude plays the VAR role for SQL: it checks the structural facts (is there a WHERE clause, is DISTINCT doing something suspicious) and leaves the judgment calls to you.</p>
 <p>Not a replacement for human code review. The human reviewer still owns the things that require judgment: is this the right model to build, does this metric definition match what finance agreed, is the grain correct, should this live in staging or intermediate or mart.</p>
 <p>What Claude handles is the structural layer — the class of errors a human reviewer <em>would</em> catch if they were fresh and focused, but regularly misses when they're on their third PR of the afternoon.</p>
@@ -544,7 +570,7 @@
 </code></pre>
 <p>Claude catches the structural problems. The human focuses on business logic.</p>
 <hr />
-<h2>The prompt</h2>
+<h2 id="the-prompt">The prompt</h2>
 <p>The mistake most people make is asking Claude to "review my SQL". That produces a mix of style suggestions, observations, and genuine findings, all weighted equally. It is not useful — it's the data-team equivalent of asking a friend "does this look okay?" and getting a technically true, practically useless answer.</p>
 <p>The approach that works: ask Claude to check for specific failure modes only, and return nothing for patterns it does not find.</p>
 <pre><code>You are reviewing a dbt SQL model for data correctness issues only.
@@ -579,8 +605,8 @@ SQL:
 </code></pre>
 <p>The constraint at the end — no style, no naming — is as important as the checklist. Without it, half the output is noise.</p>
 <hr />
-<h2>What it catches</h2>
-<h3>Missing <code>is_incremental()</code> guard</h3>
+<h2 id="what-it-catches">What it catches</h2>
+<h3 id="missing-is_incremental-guard">Missing <code>is_incremental()</code> guard</h3>
 <pre><code class="language-sql">-- models/intermediate/int_subscription_events.sql
 {{ config(
     materialized='incremental',
@@ -606,7 +632,7 @@ FROM {{ source('billing', 'subscription_events') }}
 WHERE event_at &gt;= (SELECT MAX(event_at) FROM {{ this }})
 {% endif %}
 </code></pre>
-<h3>Aggregation before join (fanout)</h3>
+<h3 id="aggregation-before-join-fanout">Aggregation before join (fanout)</h3>
 <pre><code class="language-sql">WITH daily_mrr AS (
     SELECT
         account_id,
@@ -634,7 +660,7 @@ LEFT JOIN account_details a ON d.account_id = a.account_id
 </code></pre>
 <p>If <code>stg_accounts</code> has multiple rows per <code>account_id</code> — historical records, duplicate imports, a staging model that was not deduplicated — the join multiplies rows silently. The <code>mrr</code> column looks reasonable per row. The total in any dashboard that sums it will be wrong.</p>
 <p>Claude flags: aggregation in <code>daily_mrr</code>, join to <code>account_details</code> on <code>account_id</code>, no evidence <code>account_id</code> is unique in <code>stg_accounts</code>. The human reviewer then checks whether a unique test exists on <code>stg_accounts.account_id</code>. If it does, dismiss the finding. If it does not, the PR should not merge until one is added.</p>
-<h3>Hardcoded date literal</h3>
+<h3 id="hardcoded-date-literal">Hardcoded date literal</h3>
 <pre><code class="language-sql">SELECT *
 FROM {{ ref('fct_revenue') }}
 WHERE revenue_date &gt;= '2025-01-01'
@@ -644,7 +670,7 @@ WHERE revenue_date &gt;= '2025-01-01'
 <pre><code class="language-sql">WHERE revenue_date &gt;= '{{ var(&quot;revenue_start_date&quot;, &quot;2020-01-01&quot;) }}'
 </code></pre>
 <hr />
-<h2>Where it fails</h2>
+<h2 id="where-it-fails">Where it fails</h2>
 <p><strong>Business logic.</strong> Claude does not know what "active customer" means in your domain, what the correct lookback window for your churn calculation is, or whether a particular join condition reflects a legitimate many-to-many relationship. It cannot evaluate whether a model is <em>correct</em>, only whether it contains known structural problems.</p>
 <p><strong>Schema knowledge.</strong> When it flags a potential non-unique join, it is working from the SQL it can see. If a unique test exists in <code>schema.yml</code> for the joined column, Claude cannot see it unless you include that context in the prompt. False positives on join uniqueness are the most common noise in the output.</p>
 <p><strong>Subtle numeric errors.</strong> Off-by-one period boundaries, wrong window function frames, incorrect <code>ROWS BETWEEN</code> clauses — these are logic errors that require understanding the intended calculation. Claude will not catch them.</p>
@@ -675,10 +701,10 @@ WHERE revenue_date &gt;= '2025-01-01'
 </div>
 
 <hr />
-<h2>Three ways to integrate it</h2>
-<h3>1. Manual, during PR review</h3>
+<h2 id="three-ways-to-integrate-it">Three ways to integrate it</h2>
+<h3 id="1-manual-during-pr-review">1. Manual, during PR review</h3>
 <p>The highest-friction option, but the right place to start. Paste the model SQL into claude.ai with the prompt above. Takes about thirty seconds per model. Worth doing manually for any model touching revenue or subscription data before committing to automation.</p>
-<h3>2. GitHub Actions on PR</h3>
+<h3 id="2-github-actions-on-pr">2. GitHub Actions on PR</h3>
 <p>A workflow that triggers on pull requests touching <code>models/**/*.sql</code>, collects changed files via <code>git diff</code>, and posts Claude's findings as a PR comment:</p>
 <pre><code class="language-yaml">name: SQL quality check
 on:
@@ -699,7 +725,7 @@ jobs:
         run: python scripts/sql_review.py
 </code></pre>
 <p>The <code>sql_review.py</code> script collects changed <code>.sql</code> files from <code>git diff</code>, formats each with the prompt template, calls the Anthropic API, and posts findings as a PR comment via the GitHub API. Use <code>claude-haiku-4-5-20251001</code> for this — fast, inexpensive, and sufficient for pattern-matching against a fixed checklist. Pin the versioned model ID rather than using an unversioned alias so the workflow doesn't pick up behavior changes when a new snapshot ships. Cost per PR is negligible.</p>
-<h3>3. Claude Code skill</h3>
+<h3 id="3-claude-code-skill">3. Claude Code skill</h3>
 <p>If you use Claude Code for analytics work, the lightest integration is a <code>/sql-review</code> skill. Create <code>.claude/skills/sql-review.md</code>:</p>
 <pre><code class="language-markdown">Read the SQL file at $ARGUMENTS (or ask which file if none given).
 
@@ -719,7 +745,7 @@ If nothing found, say so.
 </code></pre>
 <p>The skill runs with access to your full project structure, which reduces false positives on the schema knowledge problem — Claude can read neighbouring <code>schema.yml</code> files to verify unique tests.</p>
 <hr />
-<h2>The actual point</h2>
+<h2 id="the-actual-point">The actual point</h2>
 <p>The patterns that slip through code review are predictable because they are boring. Nobody misses a clever architectural error — those get caught because they are interesting. What gets through is the incremental model copy-pasted from another model without updating the <code>WHERE</code> clause, the join that worked fine on dev data and quietly multiplied rows in production.</p>
 <p>Automating the boring checklist does not make the human reviewer redundant. It makes them more focused. If the structural layer is already checked, the reviewer's attention goes to the question that actually requires their domain knowledge: is this model building the right thing.</p>
 <div class="takeaways">
@@ -734,63 +760,86 @@ If nothing found, say so.
 </div>
 
 <p>That is the division of labour worth building.</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

@@ -495,40 +495,56 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">14 Jun 2026 · 7 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">dbt packages worth using in 2026</h1>
-    <p class="article-lede">An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</p>
   </header>
 
-  <div class="article-body">
-    <p>The dbt Hub has a lot of packages. Most projects use two or three consistently and ignore the rest. The question worth answering is not "which packages exist" but "which ones earn their dependency weight" — meaning they reduce complexity, eliminate boilerplate, or catch errors that would otherwise reach production.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>14 Jun 2026 · 7 min read</span>
+        </div>
+        <h1 class="article-title">dbt packages worth using in 2026</h1>
+        <p class="article-deck">An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#dbt_utils-the-baseline">dbt_utils — the baseline</a></li>
+<li><a href="#dbt_expectations-better-testing">dbt_expectations — better testing</a></li>
+<li><a href="#audit_helper-for-migrations">audit_helper — for migrations</a></li>
+<li><a href="#codegen-eliminating-boilerplate">codegen — eliminating boilerplate</a></li>
+<li><a href="#dbt_project_evaluator-meta-testing">dbt_project_evaluator — meta-testing</a></li>
+<li><a href="#whats-not-worth-it">What's not worth it</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>The dbt Hub has a lot of packages. Most projects use two or three consistently and ignore the rest. The question worth answering is not "which packages exist" but "which ones earn their dependency weight" — meaning they reduce complexity, eliminate boilerplate, or catch errors that would otherwise reach production.</p>
 <p>Here is an honest assessment of the packages that do, and the ones that don't.</p>
 <p>Every package you add to <code>packages.yml</code> is a bit like the gadget aisle at a kitchen store. The avocado slicer looks essential in the demo. Six months later it's the thing wedged behind the colander, and you're back to using a knife. A dbt package earns a permanent spot in the kitchen drawer when it solves a problem you hit on every project, not just the one you happened to be reading about when you installed it.</p>
 <hr />
-<h2>dbt_utils — the baseline</h2>
+<h2 id="dbt_utils-the-baseline">dbt_utils — the baseline</h2>
 <p>Almost every dbt project should have dbt_utils installed. It solves problems that are unavoidable.</p>
 <p><strong><code>generate_surrogate_key</code></strong> is the most-used macro in the package. When a source table lacks a reliable primary key, this hashes a list of columns into a consistent surrogate:</p>
 <pre><code class="language-sql">SELECT
@@ -566,7 +582,7 @@ GROUP BY 1
 <p><code>union_relations</code> and <code>star</code> are valuable in specific situations — merging identically-shaped tables across schemas, selecting all columns except a few — but don't see daily use.</p>
 <p>One note on <code>dbt_utils.accepted_range</code>: it is still in dbt-utils 1.x and works fine. If you also have <code>dbt_expectations</code> installed, prefer <code>expect_column_values_to_be_between</code> there instead — it supports a <code>row_condition</code> filter and strict/non-strict bounds. If you only need basic range checks and don't want the full <code>dbt_expectations</code> dependency, <code>dbt_utils.accepted_range</code> is sufficient.</p>
 <hr />
-<h2>dbt_expectations — better testing</h2>
+<h2 id="dbt_expectations-better-testing">dbt_expectations — better testing</h2>
 <p>dbt_expectations ports the Great Expectations library into dbt test syntax. It earns its dependency weight primarily through four tests.</p>
 <p><strong><code>expect_column_values_to_be_between</code></strong> — the correct replacement for <code>accepted_range</code>:</p>
 <pre><code class="language-yaml">- name: monthly_amount_usd
@@ -604,7 +620,7 @@ GROUP BY 1
 </code></pre>
 <p>What dbt_expectations does not do well: the test syntax is verbose compared to plain dbt generic tests, and error messages are harder to parse. Use it for test categories that don't have clean built-in equivalents — don't replace <code>not_null</code> or <code>unique</code> with expectations versions just for consistency.</p>
 <hr />
-<h2>audit_helper — for migrations</h2>
+<h2 id="audit_helper-for-migrations">audit_helper — for migrations</h2>
 <p>audit_helper is the most underused package in the ecosystem. It solves a specific problem: you've rewritten a model and need to verify the new version produces the same results before retiring the old one.</p>
 <p>The core workflow is a comparison query:</p>
 <pre><code class="language-sql">-- analyses/compare_revenue_models.sql
@@ -620,7 +636,7 @@ GROUP BY 1
 <p>This generates a query that shows which rows exist in one model but not the other, which rows match on all columns, and which rows have value differences. It's the data diff you need for any non-trivial migration — the equivalent of counting your boxes before and after the movers leave, instead of just trusting that everything that left the old apartment arrived at the new one.</p>
 <p>Reach for it when refactoring staging models, consolidating two marts, or migrating from a legacy pipeline. Do not add it to CI as ongoing test infrastructure — the comparison queries are designed for one-time validation, not for running in every PR.</p>
 <hr />
-<h2>codegen — eliminating boilerplate</h2>
+<h2 id="codegen-eliminating-boilerplate">codegen — eliminating boilerplate</h2>
 <p>codegen generates dbt YAML from database metadata. Two macros are actually useful.</p>
 <p><strong><code>generate_source</code></strong> — inspects a schema and generates a <code>sources:</code> YAML block with all tables and columns:</p>
 <pre><code class="language-bash">dbt run-operation codegen.generate_source \
@@ -633,7 +649,7 @@ GROUP BY 1
 <p>Both macros output to stdout. You copy the output, paste it into a file, and edit from there. They do not write files directly — this is intentional, since the output always needs adjustment.</p>
 <p>The honest assessment: codegen is most valuable when onboarding a new source with many tables. For a 20-table schema, generating source YAML and base models by hand would take an hour; codegen reduces it to fifteen minutes of editing. For a single new table, writing the YAML directly is faster than looking up the macro syntax.</p>
 <hr />
-<h2>dbt_project_evaluator — meta-testing</h2>
+<h2 id="dbt_project_evaluator-meta-testing">dbt_project_evaluator — meta-testing</h2>
 <p>dbt_project_evaluator tests your dbt project structure against a set of best practices. It runs as a dbt model — it queries the dbt graph metadata and flags violations.</p>
 <p>Checks it runs:<br />
 - Models without <code>not_null</code> tests on primary keys<br />
@@ -649,7 +665,7 @@ packages:
 <p>After installing, run <code>dbt build --select package:dbt_project_evaluator</code> and review the output tables in your warehouse.</p>
 <p>The practical limitation: the default rules are opinionated and not all of them apply to every project. You will need to configure exceptions — the package provides a seed file mechanism for this. The setup investment is worth it on projects with multiple contributors where convention drift is a real risk. On a solo project, it is more rules than you need.</p>
 <hr />
-<h2>What's not worth it</h2>
+<h2 id="whats-not-worth-it">What's not worth it</h2>
 <p><strong>dbt-osmosis</strong> — auto-propagates column descriptions from parent models to children. Sounds useful; in practice the propagation logic creates maintenance confusion when descriptions should diverge downstream, and the behavior on re-runs is surprising.</p>
 <p><strong>dbt-profiler</strong> — generates column-level profiling statistics as dbt models. Useful for initial source exploration; not worth keeping as an ongoing dependency. Profile a new source once with ad-hoc queries and move on.</p>
 <p><strong>re_data</strong> — observability and anomaly detection as a dbt package. Legitimate use case, but if you need dedicated data observability, purpose-built tools (Elementary, Monte Carlo, Anomalo) are better investments than a dbt package trying to do observability in a materialisation layer. Asking your transformation tool to also be your monitoring platform is how you end up with a Swiss Army knife that's mediocre at both jobs.</p>
@@ -695,63 +711,86 @@ packages:
 
 <hr />
 <p>Which packages does your team actually use in production?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

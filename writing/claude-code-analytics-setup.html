@@ -495,41 +495,57 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">8 Jun 2026 · 6 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">How I set up Claude Code for analytics engineering work</h1>
-    <p class="article-lede">Most analytics engineers re-explain their stack every AI session. CLAUDE.md, skills, and a few conventions make Claude useful from the first prompt.</p>
   </header>
 
-  <div class="article-body">
-    <p>Every session starts the same way. You open a new chat, paste a model, and spend the first five minutes re-explaining: we use Snowflake, commas go at the start of lines, staging is one-to-one with sources, marts follow a specific naming convention. The AI helps. It just doesn't know your project yet.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>8 Jun 2026 · 6 min read</span>
+        </div>
+        <h1 class="article-title">How I set up Claude Code for analytics engineering work</h1>
+        <p class="article-deck">Most analytics engineers re-explain their stack every AI session. CLAUDE.md, skills, and a few conventions make Claude useful from the first prompt.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-architecture">The architecture</a></li>
+<li><a href="#the-actual-files">The actual files</a></li>
+<li><a href="#before-and-after">Before and after</a></li>
+<li><a href="#what-this-changes">What this changes</a></li>
+<li><a href="#30-minute-setup">30-minute setup</a></li>
+<li><a href="#what-it-doesnt-solve">What it doesn't solve</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Every session starts the same way. You open a new chat, paste a model, and spend the first five minutes re-explaining: we use Snowflake, commas go at the start of lines, staging is one-to-one with sources, marts follow a specific naming convention. The AI helps. It just doesn't know your project yet.</p>
 <p>If you've seen <em>Memento</em>, you know the condition: Leonard can't form new memories, so he tattoos the important rules onto his own body and leaves Polaroids everywhere, because relying on someone to re-explain his situation every five minutes isn't a system — it's chaos held together by Post-its. A fresh Claude Code chat has the same problem. It's extremely capable and remembers nothing about your last conversation. CLAUDE.md and AGENTS.md are the tattoos — the rules written down permanently so the agent doesn't wake up and ask "wait, what's our staging convention again?" for the fortieth time.</p>
 <p>Claude Code can fix this — but not out of the box. With CLAUDE.md, AGENTS.md, and a handful of skills, it stops being a generic assistant and starts behaving like a senior engineer who already read your style guide. Here's the exact setup.</p>
 <hr />
-<h2>The architecture</h2>
+<h2 id="the-architecture">The architecture</h2>
 <pre><code>dbt-project/
 ├── CLAUDE.md                    ← entry point, kept short
 ├── .claude/
@@ -575,7 +591,7 @@
 </div>
 
 <hr />
-<h2>The actual files</h2>
+<h2 id="the-actual-files">The actual files</h2>
 <p><strong>CLAUDE.md</strong> — keep it under 20 lines. Its job is orientation, not documentation:</p>
 <pre><code class="language-markdown"># Analytics Engineering Agent
 
@@ -630,7 +646,7 @@ Output: SQL file, YAML entry, compile result, list of assumptions made.
 </code></pre>
 <p>Short, declarative, repeatable. No ambiguity about what gets read, what gets written, what gets run.</p>
 <hr />
-<h2>Before and after</h2>
+<h2 id="before-and-after">Before and after</h2>
 <p><strong>Before:</strong> <code>write me a dbt model for MRR</code></p>
 <p>Claude invents column names, picks an arbitrary CTE style, skips the YAML, and uses a subquery because it doesn't know you've banned them — confidently, too, which is somehow worse.</p>
 <p><strong>After:</strong> <code>/develop fct_mrr mart</code></p>
@@ -656,20 +672,20 @@ select * from monthly_revenue
 <p>Plus the YAML entry. Plus <code>dbt compile</code> output. In one shot.</p>
 <p>The difference isn't model quality alone — it's that you didn't have to check whether it followed your conventions, because it read them first.</p>
 <hr />
-<h2>What this changes</h2>
+<h2 id="what-this-changes">What this changes</h2>
 <p><strong>No more context re-explanation.</strong> Conventions live in files, not in your prompt history. Close the session, come back the next day — the agent reads AGENTS.md and knows exactly where it is.</p>
 <p><strong>Skills are version-controlled.</strong> Your <code>/develop</code> skill is a file in the repo. When conventions change, you update the file. Everyone on the team gets the update on the next pull. No more tribal knowledge drift.</p>
 <p><strong>Sub-agents enforce separation of concerns.</strong> The <code>code-reviewer</code> sub-agent is instructed never to modify files. It reads, flags, and stops. You don't accidentally end up with a reviewer that "helpfully" rewrites the SQL it was supposed to review.</p>
 <p><strong>Onboarding shrinks.</strong> A new analytics engineer joins. You hand them the repo. They run <code>/develop</code> on their first ticket. The conventions are embedded in the workflow, not locked inside someone's head.</p>
 <hr />
-<h2>30-minute setup</h2>
+<h2 id="30-minute-setup">30-minute setup</h2>
 <p><strong>Step 1 (5 min):</strong> Create <code>.claude/</code> in your dbt project root. Add <code>AGENTS.md</code> using the skeleton above, filling in your stack and directory conventions.</p>
 <p><strong>Step 2 (10 min):</strong> Write your SQL and dbt conventions into <code>.claude/docs/</code>. Copy from your existing style guide if you have one. If you don't — write down what you'd tell a new hire on day one. That's your conventions doc.</p>
 <p><strong>Step 3 (10 min):</strong> Write your first skill: <code>/develop</code>. Keep it under 20 lines. Explicit beats clever — the more precise the instructions, the less the skill has to guess.</p>
 <p><strong>Step 4 (5 min):</strong> Test it on a real staging model. Run <code>/develop [your_staging_model] intermediate</code>. Check the output against your actual conventions. Fix the skill file where it missed something.</p>
 <p>That's the full loop. The first run will catch two or three gaps. Fix the skill, not the output — you want the skill to get it right next time without your intervention.</p>
 <hr />
-<h2>What it doesn't solve</h2>
+<h2 id="what-it-doesnt-solve">What it doesn't solve</h2>
 <p>It still needs your judgment on business logic. If your MRR definition has edge cases, or your subscription data has non-standard states, the agent doesn't know that unless you document it. Hallucination on complex multi-join SQL is real, and it sounds exactly as confident when it's wrong as when it's right — that part hasn't been fixed by any model generation yet. Review the output before pushing to main — the skill reduces the surface area of what can go wrong, it doesn't eliminate it.</p>
 <hr />
 <div class="takeaways">
@@ -684,63 +700,86 @@ select * from monthly_revenue
 </div>
 
 <p>What's in your AGENTS.md right now — and what convention took you the longest to get right?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

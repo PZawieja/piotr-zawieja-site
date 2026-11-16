@@ -1,293 +1,107 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Projects — Piotr Zawieja</title>
-<meta name="description" content="Open-source analytics engineering projects and shipped products — dbt, DuckDB, Python, AI.">
-<meta property="og:title" content="Projects — Piotr Zawieja">
-<meta property="og:description" content="Open-source analytics engineering projects and shipped products — dbt, DuckDB, Python, AI.">
-<meta property="og:url" content="https://goldlayer.dev/projects/">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
-<meta name="twitter:card" content="summary_large_image">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:      #0d0d0f;
-    --surface: #141417;
-    --border:  #232328;
-    --accent:  #e8d5b0;
-    --accent2: #c8a96e;
-    --text:    #d4d0c8;
-    --muted:   #7a7870;
-    --dim:     #4a4844;
-    --white:   #f0ece4;
-    --mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
-    --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
-    --max:     900px;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.65;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h2 { font-family: var(--serif); font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; color: var(--white); letter-spacing: -0.02em; line-height: 1.2; }
-  h3 { font-family: var(--sans); font-size: 0.95rem; font-weight: 600; color: var(--white); }
-
-  .label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); }
-
-  a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
-  a:hover { color: var(--white); }
-  p { color: var(--text); }
-
-  /* ─── Layout ───────────────────────────────────────────────── */
-  .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
-  section { padding: 4rem 0; border-top: 1px solid var(--border); }
-  section:first-of-type { border-top: none; }
-
-  /* ─── Nav ──────────────────────────────────────────────────── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(13,13,15,0.88);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  nav .inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
-
-  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); letter-spacing: 0.05em; }
-  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
-  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
-
-  .nav-links { display: flex; gap: 1.8rem; list-style: none; }
-  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; text-decoration: none; transition: color 0.15s; }
-  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-
-  /* ─── Page header ──────────────────────────────────────────── */
-  .page-top { padding: 7rem 0 3rem; }
-
-  .page-title { font-family: var(--serif); font-size: clamp(2rem, 5vw, 3rem); font-weight: 700; color: var(--white); letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 0.75rem; }
-  .page-sub { font-size: 1rem; color: var(--muted); max-width: 560px; line-height: 1.65; }
-
-  /* ─── Section header ───────────────────────────────────────── */
-  .section-header { margin-bottom: 2rem; }
-  .section-header .label { margin-bottom: 0.5rem; }
-  .section-sub { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; max-width: 640px; line-height: 1.6; }
-
-  /* ─── Project grid ─────────────────────────────────────────── */
-  .projects-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .ventures-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
-
-  .project-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 1.5rem;
-    display: flex; flex-direction: column; gap: 0.75rem;
-    transition: border-color 0.2s, transform 0.2s;
-    text-decoration: none;
-  }
-
-  .project-card:hover { border-color: var(--accent2); transform: translateY(-2px); }
-
-  .project-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-  .project-icon { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
-  .project-link-icon { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); transition: color 0.15s, transform 0.2s; display: inline-block; }
-  .project-card:hover .project-link-icon { color: var(--accent2); transform: translate(3px, -3px); }
-
-  .project-card h3 { font-size: 0.95rem; color: var(--white); }
-  .project-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.55; flex: 1; }
-
-  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: auto; }
-  .tag { font-family: var(--mono); font-size: 0.7rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; }
-
-  .metric-badge { font-family: var(--mono); font-size: 0.7rem; color: var(--accent); background: rgba(200,169,110,0.08); border: 1px solid rgba(200,169,110,0.2); border-radius: 3px; padding: 0.2rem 0.5rem; white-space: nowrap; }
-  .project-metric-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-
-  /* ─── Footer ───────────────────────────────────────────────── */
-  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
-  .footer-inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .footer-copy { font-size: 0.78rem; color: var(--dim); font-family: var(--mono); }
-
-  /* ─── Mobile ───────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .nav-links { gap: 1.2rem; }
-    .projects-grid, .ventures-grid { grid-template-columns: 1fr; }
-    section { padding: 3rem 0; }
-  }
-
-  @media (max-width: 480px) {
-    .page-top { padding: 5.5rem 0 2rem; }
-    .container { padding: 0 1rem; }
-    .nav-links { gap: 0.85rem; }
-    .nav-links a { font-size: 0.7rem; }
-  }
-</style>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/site.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121a1e">
+  <title>Projects — Piotr Zawieja</title>
+  <meta name="description" content="Open-source analytics engineering projects and practical AI agents built with dbt, DuckDB, Python, and Snowflake.">
+  <link rel="canonical" href="https://goldlayer.dev/projects/">
+  <meta property="og:title" content="Projects — Piotr Zawieja">
+  <meta property="og:description" content="Open-source analytics engineering projects and practical AI agents built with dbt, DuckDB, Python, and Snowflake.">
+  <meta property="og:url" content="https://goldlayer.dev/projects/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://goldlayer.dev/og-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/" class="active">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<div class="page-top">
-  <div class="container">
-    <p class="label">// projects</p>
-    <h1 class="page-title">Built things</h1>
-    <p class="page-sub">Open-source analytics engineering work and shipped products. All open-source projects use dbt + DuckDB and are designed to mirror production patterns.</p>
-  </div>
-</div>
-
-<!-- ─── Open source ─────────────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// open source</p>
-      <h2>Analytics engineering portfolio</h2>
-      <p class="section-sub">Production-pattern dbt projects. Each demonstrates a pattern from real revenue and GTM analytics work.</p>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/">Writing</a>
+        <a href="/projects/" aria-current="page">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
+  </header>
 
-    <div class="projects-grid">
+  <main class="container">
+    <header class="page-intro">
+      <p class="eyebrow">Projects · Open source</p>
+      <h1>Build things that <em>earn trust.</em></h1>
+      <p>Analytics engineering projects and practical AI demos. Each repository is public, documented, and built to show the decisions behind the result.</p>
+    </header>
 
-      <a href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">$</div>
-          <span class="project-link-icon">↗</span>
+    <section class="section project-feature-section">
+      <a class="project-feature" href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener noreferrer">
+        <div>
+          <p class="kicker">Featured · Revenue Intelligence Agent</p>
+          <h2>Let AI answer questions. Keep the metrics governed.</h2>
+          <p>A Customer Success demo using curated dbt metrics and parameterised templates instead of free-form SQL generation. The project explores how to make an analytics agent useful while keeping its access bounded and inspectable.</p>
+          <div class="tags">
+            <span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Python</span><span class="tag">Streamlit</span>
+          </div>
         </div>
-        <h3>GTM Revenue Analytics Platform</h3>
-        <p>
-          End-to-end SaaS revenue modeling — MRR waterfall, NRR cohort analysis, ARR bridge, churn by tenure. All five revenue motions defined, tested, and enforced in a single dbt intermediate model. Streamlit dashboard included.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">5 revenue motions · 1 source of truth</span>
-          <span class="metric-badge">CI-tested contracts</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Streamlit</span>
-          <span class="tag">SaaS metrics</span>
-          <span class="tag">CI/CD</span>
+        <div class="project-result">
+          <strong>Governed by design</strong>
+          <span>Curated metrics · parameterised templates · no free-form SQL</span>
         </div>
       </a>
+    </section>
 
-      <a href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">⚙</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Revenue Intelligence Agent</h3>
-        <p>
-          Governance-first AI demo for Customer Success teams. LLM queries are restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Mirrors how I'd build this in production.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Zero free-form SQL</span>
-          <span class="metric-badge">Intent → pre-approved template</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Python</span>
-          <span class="tag">Streamlit</span>
-          <span class="tag">AI guardrails</span>
-        </div>
-      </a>
+    <section class="section">
+      <div class="section-heading">
+        <div><p class="section-label">Analytics engineering portfolio</p><h2>Five public projects. Real patterns.</h2></div>
+        <p>Models, tests, and workflows that make analytics easier to trust and operate.</p>
+      </div>
+      <div class="projects-grid">
+        <a class="project-card" href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener noreferrer">
+          <div class="project-card-top"><span class="project-number">01 · Revenue analytics</span><span class="repo-link">GitHub ↗</span></div>
+          <h3>GTM Revenue Analytics Platform</h3>
+          <p>End-to-end SaaS revenue modeling: MRR waterfall, NRR cohort analysis, ARR bridge, and churn by tenure. Revenue motions are defined and tested in a shared dbt model, with a Streamlit dashboard.</p>
+          <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Streamlit</span><span class="tag">CI/CD</span></div>
+        </a>
+        <a class="project-card" href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener noreferrer">
+          <div class="project-card-top"><span class="project-number">02 · Experimentation</span><span class="repo-link">GitHub ↗</span></div>
+          <h3>Experimentation Analytics Platform</h3>
+          <p>A/B testing pipeline that keeps assignment and exposure distinct, monitors exposure quality, and gates statistical output on integrity checks.</p>
+          <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Statistics</span><span class="tag">Data quality</span></div>
+        </a>
+        <a class="project-card" href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener noreferrer">
+          <div class="project-card-top"><span class="project-number">03 · Anomaly detection</span><span class="repo-link">GitHub ↗</span></div>
+          <h3>Air Traffic Pulse</h3>
+          <p>Live anomaly detection on ADS-B aircraft data over four European cities. It demonstrates an observe → baseline → compare → flag → explain workflow.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">DuckDB</span><span class="tag">dbt</span><span class="tag">Monitoring</span></div>
+        </a>
+        <a class="project-card" href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener noreferrer">
+          <div class="project-card-top"><span class="project-number">04 · Event analytics</span><span class="repo-link">GitHub ↗</span></div>
+          <h3>Event Analytics Platform</h3>
+          <p>A behavioral event pipeline from raw stream to governed self-service layer. Staging, intermediate, and mart layers isolate raw schemas from BI consumers.</p>
+          <div class="tags"><span class="tag">Python</span><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Funnel analytics</span></div>
+        </a>
+      </div>
+    </section>
 
-      <a href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">⚗</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Experimentation Analytics Platform</h3>
-        <p>
-          Production-grade A/B testing pipeline. Assignment and exposure tracked as separate events, daily exposure quality monitoring, explicit ITT vs exposure-based cohort selection. Statistical output only after integrity checks pass.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">ITT + exposure cohorts</span>
-          <span class="metric-badge">Integrity-gated output</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Spark-compatible</span>
-          <span class="tag">Statistics</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">✈</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Air Traffic Pulse</h3>
-        <p>
-          Live anomaly detection on ADS-B aircraft data over 4 European cities. Demonstrates the same observe → baseline → compare → flag → explain pattern used in production revenue monitoring systems.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Live ADS-B · 4 European cities</span>
-          <span class="metric-badge">Observe → baseline → flag</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">Python</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">dbt</span>
-          <span class="tag">Anomaly detection</span>
-        </div>
-      </a>
-
-      <a href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener" class="project-card">
-        <div class="project-card-top">
-          <div class="project-icon">◈</div>
-          <span class="project-link-icon">↗</span>
-        </div>
-        <h3>Event Analytics Platform</h3>
-        <p>
-          Behavioural event pipeline from raw stream to governed self-service layer. Clean staging → intermediate → mart separation prevents raw event schemas from bleeding into BI tools.
-        </p>
-        <div class="project-metric-row">
-          <span class="metric-badge">Raw stream → governed marts</span>
-          <span class="metric-badge">Schema isolation enforced</span>
-        </div>
-        <div class="project-tags">
-          <span class="tag">Python</span>
-          <span class="tag">dbt</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">Funnel analytics</span>
-        </div>
-      </a>
-
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="footer-inner">
-    <span class="footer-copy">© 2026 Piotr Zawieja · <a href="/writing/feed.xml" style="color:inherit">RSS</a></span>
-  </div>
-</footer>
-
+    <footer class="site-footer">
+      <span>© 2026 Piotr Zawieja</span>
+      <div class="footer-links">
+        <a href="/writing/">Writing</a>
+        <a href="/about/">About</a>
+        <a href="/writing/feed.xml">RSS</a>
+        <a href="https://github.com/PZawieja">GitHub</a>
+        <a href="https://linkedin.com/in/piotr-zawieja">LinkedIn</a>
+      </div>
+    </footer>
+  </main>
 </body>
 </html>

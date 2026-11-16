@@ -9,7 +9,7 @@
 <meta property="og:description" content="A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.">
 <meta property="og:url" content="https://goldlayer.dev/writing/revenue-intelligence-agent-ai-cs-copilot.html">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/revenue-intelligence-agent-ai-cs-copilot/dashboard.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
 <style>
@@ -495,41 +495,56 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">23 Jun 2026 · 11 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h1>
-    <p class="article-lede">A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
   </header>
 
-  <div class="article-body">
-    <p>A CSM opens their laptop on Monday morning to 40 accounts, a renewal due in five days they didn't see coming, and a Slack message from an AE asking "is Acme still healthy?" They don't know. Nobody does, until someone digs through a CRM, a usage dashboard, and a support tool that don't talk to each other.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>23 Jun 2026 · 11 min read</span>
+        </div>
+        <h1 class="article-title">Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h1>
+        <p class="article-deck">A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-it-actually-does">What it actually does</a></li>
+<li><a href="#how-its-built">How it's built</a></li>
+<li><a href="#walking-through-it">Walking through it</a></li>
+<li><a href="#where-it-broke">Where it broke</a></li>
+<li><a href="#why-this-matters-for-cs-teams">Why this matters for CS teams</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>A CSM opens their laptop on Monday morning to 40 accounts, a renewal due in five days they didn't see coming, and a Slack message from an AE asking "is Acme still healthy?" They don't know. Nobody does, until someone digs through a CRM, a usage dashboard, and a support tool that don't talk to each other.</p>
 <p>That's the job most Customer Success dashboards actually do — they show you a wall of numbers and leave the prioritization to you. I built <a href="https://github.com/PZawieja/revenue-intelligence-agent">Revenue Intelligence Agent</a> to fix that: it reads the whole portfolio every morning and tells you what to do about it, in order, before you ask.</p>
 <p>This post is a demo, a tour of how it works, and an honest account of where it broke during development.</p>
 <hr />
-<h2>What it actually does</h2>
+<h2 id="what-it-actually-does">What it actually does</h2>
 <p>Revenue Intelligence Agent is a CS co-pilot for B2B SaaS portfolios. It sits on top of your customer, subscription, usage, billing, and support data, and does three things most tools split across three different products:</p>
 <ul>
 <li>Flags churn risk and usage anomalies before a human would notice them</li>
@@ -544,7 +559,7 @@
 
 <p>That top section — three cards labeled Critical, Warning, Opportunity — is the <strong>Daily Briefing</strong>. It's the first thing you see, and it's the whole point: instead of a dashboard you have to interrogate, you get a memo. "3 renewals expiring within 14 days." "Acme GmbH active users fell 60% from baseline." "Budapest Data Kft scores 0.81 for expansion." Each card has a button that fires the relevant query directly — no typing required to go deeper.</p>
 <hr />
-<h2>How it's built</h2>
+<h2 id="how-its-built">How it's built</h2>
 <p>The architecture is intentionally boring where it can be and careful where it has to be:</p>
 <pre><code>Browser SPA (Portfolio / Accounts / Intelligence)
         │
@@ -597,7 +612,7 @@ ai/           ai_* views — only what's in dim_ai_allowed_assets is queryable
 </code></pre>
 <p>Four signals, fixed weights, no black box: usage drop matters most (0.35), then support load and unpaid invoices tied (0.25 each), then renewal urgency as a smaller multiplier (0.15) since it's a timing signal, not a health signal on its own. You can read this query in thirty seconds and know exactly why an account is red. That's the bar — if a CSM can't explain a score to a VP, the score is a liability, not a feature.</p>
 <hr />
-<h2>Walking through it</h2>
+<h2 id="walking-through-it">Walking through it</h2>
 <p>Click into <strong>Accounts</strong> and pick a critical row — Cologne Digital GmbH, €65k ARR, health score 0.11, renews in 25 days:</p>
 <figure>
 <img src="../assets/posts/revenue-intelligence-agent-ai-cs-copilot/accounts.png" alt="Account drilldown panel showing usage trend, risk signals, and expansion score for a critical account">
@@ -613,14 +628,14 @@ ai/           ai_* views — only what's in dim_ai_allowed_assets is queryable
 
 <p>Asking "show expansion shortlist" returns ten ranked candidates with ARR, score, and a suggested angle — "upgrade plan / add module" — sorted by expansion potential. That score is gated by health on purpose: an account with usage growth but a critical health score doesn't make the shortlist, because pitching expansion to an account that's about to churn is how you lose the renewal <em>and</em> burn the relationship. After any response, three buttons appear — email draft, Slack alert, CRM note — and one click turns the answer into something you can actually paste into a tool you already use, instead of a paragraph you have to rewrite by hand for the third time today.</p>
 <hr />
-<h2>Where it broke</h2>
+<h2 id="where-it-broke">Where it broke</h2>
 <p>The honest version of "what was hard," in build order:</p>
 <p><strong>The first UI was Streamlit. It had to go.</strong> Streamlit is fast to prototype with and bad at being a real product — no real routing, awkward state management once you have three views that need to share context (an account clicked in Accounts has to land pre-loaded in Intelligence). I rewrote the whole frontend as a vanilla JS SPA over a FastAPI backend. More code, but it's <em>my</em> code, not a framework's opinion about how state should work.</p>
 <p><strong>The dashboard sometimes loaded empty — for no reason I could reproduce on purpose.</strong> The charts were trying to draw themselves before the data had actually arrived. It's the same failure mode as a downstream dbt model running before its upstream source has finished loading: everything looks fine in isolation, and it only breaks on the timing you didn't test. My first fix was to make the page wait a little longer before drawing — which helped, but "wait a little longer" is never a real fix, just a smaller window for the same race. The actual fix was flipping who's in charge: instead of the page guessing when the data is ready and going to fetch it, the part of the code that <em>has</em> the data announces "I'm done" the moment it finishes, and everything else reacts to that. Same principle as triggering a pipeline off a completion event instead of polling a table until the row count looks right.</p>
 <p><strong>The bigger trap wasn't a bug at all — it was a label.</strong> Early on, the health donut had three bands: Healthy, At Risk, Critical. There was also a KPI card titled "At-Risk Accounts" that only counted the Critical ones. So "at risk" meant two different things depending on which corner of the screen you were looking at, and a CSM scanning the page in five seconds couldn't tell if 12 accounts were in trouble or 23. I renamed the bands to Healthy / Warning / Critical and changed the KPI card to show the full breakdown — "12 critical · 11 warning · 27 healthy" — instead of one ambiguous number. It's the same mistake as two teams calling something "active customer" with two different definitions: the data underneath was correct, the labels were lying. A confusing column name does more damage to trust than a wrong row ever will.</p>
 <p><strong>Getting the guardrails right took more passes than the chat feature itself.</strong> It's easy to build an agent that answers questions well. It's harder to build one a RevOps lead will actually deploy, because the real question isn't "does it answer correctly," it's "can I prove to my CISO it can't insert, can't see PII, and can't wander off the allowlist." The keyword block list, the allowlist check against <code>dim_ai_allowed_assets</code>, and the PII column-name scan all came after the chat already worked — because a working demo and a defensible one aren't the same project.</p>
 <hr />
-<h2>Why this matters for CS teams</h2>
+<h2 id="why-this-matters-for-cs-teams">Why this matters for CS teams</h2>
 <p>Most CS tooling answers "what happened." This answers "what do I do, today, in what order" — and that's the actual job description of a CSM managing a 40-to-200-account book. A renewal slipping from 90 days out to 14 isn't useful information on day 76; it's useful on day 1, paired with the usage drop that predicted it. The Daily Briefing exists because the value of a churn signal decays daily, and most teams find out about risk in a QBR prep meeting instead of the morning it started.</p>
 <p>It also changes who can act on the data. A CSM doesn't need to know SQL, doesn't need to ping an analyst, doesn't need to wait for a dashboard refresh. They ask a question, get an answer with the evidence attached, and have a drafted email in the time it used to take to open a CRM tab.</p>
 <hr />
@@ -637,63 +652,86 @@ ai/           ai_* views — only what's in dim_ai_allowed_assets is queryable
 </div>
 
 <p>What would your CS team actually do differently if they saw this list every morning instead of once a quarter?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

@@ -9,7 +9,7 @@
 <meta property="og:description" content="{{ description }}">
 <meta property="og:url" content="https://goldlayer.dev/writing/{{ slug }}.html">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta property="og:image" content="{{ og_image }}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
 <style>
@@ -495,81 +495,120 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      {% for tag in tags %}<span class="meta-tag">{{ tag }}</span>
-      {% endfor %}<span class="meta-date">{{ date_formatted }} · {{ read_time }} min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">{{ title }}</h1>
-    <p class="article-lede">{{ description }}</p>
   </header>
 
-  <div class="article-body">
-    {{ content | safe }}
-  </div>
+  <main>
+    <article class="container article-layout" data-category="{{ tags[0] if tags else '' }}">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          {% for tag in tags %}
+          <span class="category-tag{% if not loop.first %} secondary{% endif %}">{{ "Data quality" if tag == "data-quality" else tag }}</span>
+          {% endfor %}
+          <span>{{ date_formatted }} · {{ read_time }} min read</span>
+        </div>
+        <h1 class="article-title">{{ title }}</h1>
+        <p class="article-deck">{{ description }}</p>
+      </header>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+      {% if toc %}
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        {{ toc | safe }}
+      </details>
+      {% endif %}
 
-  {% if related_posts %}
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      {% for rel in related_posts %}
-      <a href="{{ rel.slug }}.html" class="related-card">
-        <span class="related-tag">{{ rel.tags[0] }}</span>
-        <p class="related-title">{{ rel.title }}</p>
-        <span class="related-date">{{ rel.date_formatted }} · {{ rel.read_time }} min</span>
-      </a>
-      {% endfor %}
+      <div class="article-body">
+        {{ content | safe }}
+
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        {% if related_posts %}
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            {% for rel in related_posts %}
+            <a href="{{ rel.slug }}.html" class="related-card" data-category="{{ rel.tags[0] if rel.tags else '' }}">
+              <span>{{ "Data quality" if rel.tags[0] == "data-quality" else rel.tags[0] }} · {{ rel.date_formatted }}</span>
+              <h3>{{ rel.title }}</h3>
+              <span>{{ rel.read_time }} min read →</span>
+            </a>
+            {% endfor %}
+          </div>
+        </section>
+        {% endif %}
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  {% endif %}
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

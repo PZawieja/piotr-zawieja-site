@@ -9,7 +9,7 @@
 <meta property="og:description" content="Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.">
 <meta property="og:url" content="https://goldlayer.dev/writing/ai-triage-data-monitoring-alerts.html">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/ai-triage-data-monitoring-alerts/triage-filter.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
 <style>
@@ -495,47 +495,64 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">data-quality</span>
-      <span class="meta-date">28 Jun 2026 · 10 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">40 data alerts at 6am. AI triaged them in 90 seconds.</h1>
-    <p class="article-lede">Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</p>
   </header>
 
-  <div class="article-body">
-    <p>It's 6:14am. Your phone lit up at 5:50 with a Slack notification. You open the data observability channel and there are 40 alerts waiting — a cascade of red from the nightly run. Revenue metrics, session counts, a handful of dbt test failures, some row count anomalies, a schema change warning.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>28 Jun 2026 · 10 min read</span>
+        </div>
+        <h1 class="article-title">40 data alerts at 6am. AI triaged them in 90 seconds.</h1>
+        <p class="article-deck">Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#why-alert-triage-breaks-at-scale">Why alert triage breaks at scale</a></li>
+<li><a href="#what-triage-actually-means">What triage actually means</a></li>
+<li><a href="#the-context-ai-needs">The context AI needs</a></li>
+<li><a href="#the-triage-script">The triage script</a></li>
+<li><a href="#what-to-do-with-the-output">What to do with the output</a></li>
+<li><a href="#where-this-breaks-down">Where this breaks down</a></li>
+<li><a href="#the-payoff">The payoff</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>It's 6:14am. Your phone lit up at 5:50 with a Slack notification. You open the data observability channel and there are 40 alerts waiting — a cascade of red from the nightly run. Revenue metrics, session counts, a handful of dbt test failures, some row count anomalies, a schema change warning.</p>
 <p>One of these is the reason your CFO will send a confused message at 9am. The other 39 are noise.</p>
 <p>The problem isn't that monitoring produced 40 alerts. The problem is that you have to read all 40 to find the one that matters — and you have to do it before standup.</p>
 <hr />
-<h2>Why alert triage breaks at scale</h2>
+<h2 id="why-alert-triage-breaks-at-scale">Why alert triage breaks at scale</h2>
 <p>Most data teams reach a predictable failure mode with observability tooling. You set up monitoring because you want to catch issues early. The tool works — it catches a lot. But "a lot" turns out to mean dozens of alerts a day across your pipeline, and suddenly you have a new problem: alert fatigue.</p>
 <p>Think of it like a car alarm going off in the street. The first time, people look. By the third time, everyone assumes it's a false positive and ignores it. Alert fatigue in data monitoring follows the same pattern — teams start muting channels, setting higher thresholds, or just not looking until something breaks in production.</p>
 <p>The fix isn't fewer alerts. You still want the car alarm to go off — you just want someone to tell you instantly whether it's a cat sitting on the bonnet or an actual break-in.</p>
 <p>That's the triage problem. And it's exactly what AI is well-suited for.</p>
 <hr />
-<h2>What triage actually means</h2>
+<h2 id="what-triage-actually-means">What triage actually means</h2>
 <p>Triage is not anomaly detection. Your monitoring tool already does detection. Triage is classification: given a set of alerts that have already fired, which ones need human attention right now, which can wait, and which can be auto-resolved?</p>
 <p>The classification dimensions that matter:</p>
 <div class="ts-block">
@@ -564,7 +581,7 @@
 </figure>
 
 <hr />
-<h2>The context AI needs</h2>
+<h2 id="the-context-ai-needs">The context AI needs</h2>
 <p>Sending raw alert notifications to an LLM is like asking a doctor to diagnose from symptoms alone, with no patient history and no list of current medications. The symptom is "row count dropped." What the doctor actually needs: what this patient's baseline looks like, what changed recently, and whether the upstream organ is also failing.</p>
 <p>The mistake is feeding raw alert notifications to an LLM and asking it to triage. Alert notifications contain very little information — usually just a model name, a metric, and a threshold breach. You need to enrich each alert before the LLM can reason about it.</p>
 <p>For each alert, you need:</p>
@@ -589,7 +606,7 @@
 </div>
 
 <hr />
-<h2>The triage script</h2>
+<h2 id="the-triage-script">The triage script</h2>
 <p>The classification rules in the prompt work like a rubric posted on the wall of a call centre: the clearer the rules, the more consistent the output — regardless of which LLM version is on shift.</p>
 <p>Here's the structure that works in practice. The key design decisions: batch all alerts into one prompt (not one prompt per alert — that's slow and expensive), use structured JSON output, and set a conservative threshold for "auto-resolve."</p>
 <pre><code class="language-python">import anthropic
@@ -639,7 +656,7 @@ Return a JSON array with one object per alert:
 </code></pre>
 <p>The <code>reasoning</code> field is important — it gives the on-call engineer a one-sentence explanation they can scan, rather than asking them to re-derive the classification themselves. "Upstream stg_stripe_events failed; this is a cascade" is more useful than just "auto_acknowledge."</p>
 <hr />
-<h2>What to do with the output</h2>
+<h2 id="what-to-do-with-the-output">What to do with the output</h2>
 <p>Think of it like an emergency room: the receptionist doesn't treat patients, but they do decide who goes to the waiting room, who goes straight to triage, and who gets a doctor immediately. The triage output plays the same role — it routes, it doesn't fix.</p>
 <p>The triage output is most useful when it routes to different channels automatically. Don't dump all results back into the same Slack channel you already muted.</p>
 <pre><code class="language-python">def route_triage_results(results: list[dict]):
@@ -661,7 +678,7 @@ Return a JSON array with one object per alert:
 </div>
 
 <hr />
-<h2>Where this breaks down</h2>
+<h2 id="where-this-breaks-down">Where this breaks down</h2>
 <p>This approach works well for volume triage — reducing 40 alerts to 3 that need attention. It's much weaker on two things.</p>
 <p><strong>Novel failure modes.</strong> AI classifies based on patterns it can reason about from the metadata you provide. A completely new type of failure — a source system changing its timezone, a reporting calendar shift, a one-off data migration — won't have historical false positive rate data and won't be upstream-caused in the obvious sense. These tend to get classified as "fix_today" rather than "page_oncall," which means the 6am page doesn't fire even though it should.</p>
 <p><strong>Correlated failures that aren't lineage-linked.</strong> If two models fail at the same time for the same business reason (say, a payment provider incident that affects both your revenue and your churn models through separate lineage paths), the triage script sees two independent alerts. It won't always connect them without explicit cross-alert reasoning.</p>
@@ -671,7 +688,7 @@ Triage buys you time and focus. It doesn't replace the domain knowledge that tel
 
 <p>For both of these edge cases, the fix is human review of the "auto_acknowledge" log at least once a week. Treat it the same way you treat a spam folder — mostly right, but worth a periodic scan.</p>
 <hr />
-<h2>The payoff</h2>
+<h2 id="the-payoff">The payoff</h2>
 <p>On a mature pipeline with well-tuned monitoring, roughly 60–70% of overnight alerts are upstream-caused cascades or known-noisy checks. Auto-acknowledging those — with a clear reasoning field and an audit trail — means your on-call engineer wakes up to three actionable items instead of forty.</p>
 <p>The remaining 30–40% still need human eyes. But you can give those humans the triage output alongside the alert: here's the severity, here's the blast radius, here's why we think this is real. That's a much better starting point than raw alert text at 6am.</p>
 <p>The 90 seconds in the title is real — that's roughly the latency for a single Claude API call with 40 enriched alerts. The enrichment (parsing manifest.json, computing historical rates, resolving upstream failures) takes another minute or two in the script. The total time from "nightly run complete" to "Slack has three prioritized, reasoned alerts" is under five minutes.</p>
@@ -687,63 +704,86 @@ Triage buys you time and focus. It doesn't replace the domain knowledge that tel
 <li><strong>Novel failures and cross-lineage correlations are the weak spots</strong> — AI triage is strong on pattern-matching and weak on genuinely new failure modes; human review of the suppressed log catches what the classifier misses.</li>
 </ul>
 </div>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

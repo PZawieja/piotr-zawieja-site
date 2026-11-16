@@ -495,53 +495,71 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">Snowflake</span>
-      <span class="meta-date">16 Jun 2026 · 10 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Snowflake clustering keys: what they are, when they help, and when to skip them</h1>
-    <p class="article-lede">Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
   </header>
 
-  <div class="article-body">
-    <p>Your Snowflake UI recommended adding a clustering key to a large events table. You did. One dashboard query went from 45 seconds to 12. Then your credit bill came in and compute costs were up 18% for the month.</p>
+  <main>
+    <article class="container article-layout" data-category="Snowflake">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">Snowflake</span>
+          <span>16 Jun 2026 · 10 min read</span>
+        </div>
+        <h1 class="article-title">Snowflake clustering keys: what they are, when they help, and when to skip them</h1>
+        <p class="article-deck">Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#how-snowflake-stores-data">How Snowflake stores data</a></li>
+<li><a href="#what-a-clustering-key-changes">What a clustering key changes</a></li>
+<li><a href="#measuring-clustering-health-before-deciding">Measuring clustering health before deciding</a></li>
+<li><a href="#when-clustering-earns-its-cost">When clustering earns its cost</a></li>
+<li><a href="#when-to-skip-it">When to skip it</a></li>
+<li><a href="#the-cost-model-for-automatic-clustering">The cost model for Automatic Clustering</a></li>
+<li><a href="#using-clustering-keys-with-dbt">Using clustering keys with dbt</a></li>
+<li><a href="#the-decision-checklist">The decision checklist</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Your Snowflake UI recommended adding a clustering key to a large events table. You did. One dashboard query went from 45 seconds to 12. Then your credit bill came in and compute costs were up 18% for the month.</p>
 <p>Was it worth it? The answer requires understanding what clustering keys actually do — and what they keep doing, every time you load new data. Snowflake had, technically, done exactly what you asked. That's almost worse.</p>
 <hr />
-<h2>How Snowflake stores data</h2>
+<h2 id="how-snowflake-stores-data">How Snowflake stores data</h2>
 <p>Snowflake stores table data in <strong>micro-partitions</strong>: immutable, compressed files of roughly 50–500 MB of uncompressed data each. Every time you load data, Snowflake writes new micro-partitions in the order the rows arrive.</p>
 <p>Alongside each micro-partition, Snowflake stores metadata: for every column, the minimum and maximum value in that partition. This is what makes pruning possible. When a query runs <code>WHERE event_date = '2026-05-01'</code>, Snowflake checks the metadata for all micro-partitions and skips any partition whose <code>event_date</code> range doesn't include that date — without reading the partition itself.</p>
 <p>This metadata-driven pruning is the core of Snowflake's performance model. Clustering keys only matter insofar as they improve it.</p>
 <p>In plain English: imagine a supermarket where the stock boy shelves whatever arrives wherever there's free space — milk next to motor oil, bread next to batteries. You can still find what you need, you just have to check every aisle. A clustering key is reorganizing the store by category, so dairy is always together — once you know to look in the dairy aisle, you skip the rest of the store entirely. That's pruning. But somebody has to keep re-shelving the store every time a delivery truck arrives, and nobody enjoys doing that at 2am — least of all your credit bill.</p>
 <p><strong>Natural clustering</strong> is what you get for free. When you bulk-load an events table one day at a time, data for each day lands in a small number of micro-partitions with a narrow date range. Queries filtering on that date will prune well without any explicit clustering. When you load from a CDC feed or backfill historical data, rows for many different dates get mixed into the same micro-partitions, pruning degrades, and queries slow down.</p>
 <hr />
-<h2>What a clustering key changes</h2>
+<h2 id="what-a-clustering-key-changes">What a clustering key changes</h2>
 <p>A clustering key tells Snowflake to keep rows with similar values for the key column(s) co-located in the same micro-partitions. Snowflake's <strong>Automatic Clustering</strong> service — separate from your query warehouses — does this work in the background, rearranging data after loads to maintain good clustering depth.</p>
 <pre><code class="language-sql">ALTER TABLE events CLUSTER BY (event_date);
 </code></pre>
 <p>After this, Snowflake continuously monitors the table. When new data loads and degrades the clustering, the service re-sorts affected data into new micro-partitions. A query filtering on <code>event_date</code> now finds far fewer overlapping partitions to read.</p>
 <p>The cost: the clustering service runs on serverless compute and charges credits whenever it reclusters. Those credits are charged to your account separately from your query warehouses. On a high-write table, this is not a one-time cost — it is ongoing.</p>
 <hr />
-<h2>Measuring clustering health before deciding</h2>
+<h2 id="measuring-clustering-health-before-deciding">Measuring clustering health before deciding</h2>
 <p>Never add a clustering key without first measuring whether clustering is actually the problem. The function to use:</p>
 <pre><code class="language-sql">SELECT SYSTEM$CLUSTERING_INFORMATION('events', '(event_date)');
 </code></pre>
@@ -561,13 +579,13 @@ SELECT
 </code></pre>
 <p>If <code>average_depth</code> is already close to 1, your data is naturally well-clustered on that column. Adding an explicit clustering key will achieve nothing except an ongoing credit cost.</p>
 <hr />
-<h2>When clustering earns its cost</h2>
+<h2 id="when-clustering-earns-its-cost">When clustering earns its cost</h2>
 <p><strong>Table is large and data arrives out of natural order.</strong> The threshold where clustering becomes meaningful is roughly 500 GB of uncompressed data (Snowflake's own documentation suggests 1 TB, but degraded clustering on a 500 GB table can be measurable). Below that, full table scans are fast enough that pruning improvement doesn't matter.</p>
 <p>For tables over 1 TB where <code>SYSTEM$CLUSTERING_INFORMATION</code> shows <code>average_depth</code> above 10, explicit clustering will meaningfully reduce bytes scanned on filtered queries.</p>
 <p><strong>Queries consistently filter on the same column.</strong> A clustering key is a bet: you pay to co-locate data by one dimension so that queries filtering on that dimension scan less. If 80% of your queries filter on <code>event_date</code>, clustering on <code>event_date</code> is a good bet. If queries filter on <code>event_date</code>, <code>customer_id</code>, <code>product_id</code>, and <code>region</code> roughly equally, no single clustering key satisfies them all — you are paying credits to help one query pattern while doing nothing for the others.</p>
 <p><strong>Recency queries on an append-only table with backfill.</strong> The hardest case for natural clustering. You have a 2 TB events table where you frequently backfill late-arriving events from 30 days ago. Every backfill load scatters old-date rows across new micro-partitions. <code>SYSTEM$CLUSTERING_INFORMATION</code> will show high overlap on <code>event_date</code>. This is exactly where explicit clustering pays off.</p>
 <hr />
-<h2>When to skip it</h2>
+<h2 id="when-to-skip-it">When to skip it</h2>
 <p><strong>The table is under 500 GB.</strong> At this size, Snowflake's full scan is fast enough that pruning improvement rarely justifies the continuous reclustering cost. Use a larger warehouse instead — it is cheaper per query and has no ongoing overhead.</p>
 <p><strong>Write rates are high.</strong> If the table receives continuous small loads — streaming inserts, Fivetran syncs every 5 minutes, Kafka connectors — the clustering service will trigger frequently. On a 1 TB table with hourly loads, this can cost more credits than the query savings recover. Use <code>SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS</code> to check before committing. The function requires a clustering key to already be defined, so the practical workflow is: add the key, suspend reclustering immediately, estimate, then decide.</p>
 <pre><code class="language-sql">ALTER TABLE events CLUSTER BY (event_date);
@@ -608,7 +626,7 @@ SELECT SYSTEM$ESTIMATE_AUTOMATIC_CLUSTERING_CREDITS('events');
 </div>
 
 <hr />
-<h2>The cost model for Automatic Clustering</h2>
+<h2 id="the-cost-model-for-automatic-clustering">The cost model for Automatic Clustering</h2>
 <p>Once you add a clustering key, Snowflake runs Automatic Clustering continuously. The cost is:</p>
 <ol>
 <li><strong>Initial reclustering</strong>: when you first add the key, Snowflake rearranges the entire table. For a 1 TB table this can be significant — run it during low-traffic hours and watch the credit meter.</li>
@@ -623,7 +641,7 @@ ALTER TABLE events RESUME RECLUSTER;
 </code></pre>
 <p>During <code>SUSPEND RECLUSTER</code>, new data loads without triggering the clustering service. Clustering depth will degrade. Resume when the load is complete and clustering will catch up.</p>
 <hr />
-<h2>Using clustering keys with dbt</h2>
+<h2 id="using-clustering-keys-with-dbt">Using clustering keys with dbt</h2>
 <p>dbt exposes Snowflake clustering through the <code>cluster_by</code> config on <code>table</code> and <code>incremental</code> materializations:</p>
 <pre><code class="language-sql">{{ config(
     materialized='incremental',
@@ -646,7 +664,7 @@ FROM {{ source('events', 'raw_events') }}
 <p>One caution: <code>cluster_by</code> on an <code>incremental</code> model doesn't undo poor natural clustering that accumulated before you added it. If you add clustering to an existing large incremental model, verify with <code>SYSTEM$CLUSTERING_INFORMATION</code> that depth actually improves — the initial recluster of a large table can take time.</p>
 <p>For <code>table</code> materializations, dbt rebuilds the table from scratch on every run. The rebuild produces naturally ordered micro-partitions from the query result, so clustering is implicitly reset each run. Adding <code>cluster_by</code> on a <code>table</code> materialization rarely has measurable impact unless the query itself produces non-ordered output for the key column.</p>
 <hr />
-<h2>The decision checklist</h2>
+<h2 id="the-decision-checklist">The decision checklist</h2>
 <p>Before adding a clustering key to any table:</p>
 <ol>
 <li>Run <code>SYSTEM$CLUSTERING_INFORMATION</code> — if <code>average_depth</code> &lt; 5, stop here.</li>
@@ -670,57 +688,81 @@ FROM {{ source('events', 'raw_events') }}
 </div>
 
 <p>How many clustering keys in your Snowflake account were added speculatively and never had their credit cost checked?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="snowflake-variant-flatten.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">You've been flattening Snowflake JSON wrong</p>
-        <span class="related-date">27 Jun 2026 · 9 min</span>
-      </a>
-      
-      <a href="snowflake-cortex-analyst-in-practice.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</p>
-        <span class="related-date">12 Jun 2026 · 8 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="snowflake-variant-flatten.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 27 Jun 2026</span>
+              <h3>You've been flattening Snowflake JSON wrong</h3>
+              <span>9 min read →</span>
+            </a>
+            <a href="snowflake-cortex-analyst-in-practice.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 12 Jun 2026</span>
+              <h3>Snowflake Cortex Analyst in practice: what the demo doesn't show you</h3>
+              <span>8 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

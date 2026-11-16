@@ -495,41 +495,54 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">Snowflake</span>
-      <span class="meta-tag">AI</span>
-      <span class="meta-date">12 Jun 2026 · 8 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</h1>
-    <p class="article-lede">Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</p>
   </header>
 
-  <div class="article-body">
-    <p>The Snowflake Cortex Analyst demo is a good demo. Curated schema, hand-picked questions, a semantic model that has been tuned to answer exactly the things the presenter is about to ask. The SQL it generates is clean. The answers are right. The audience nods.</p>
+  <main>
+    <article class="container article-layout" data-category="Snowflake">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">Snowflake</span>
+          <span class="category-tag secondary">AI</span>
+          <span>12 Jun 2026 · 8 min read</span>
+        </div>
+        <h1 class="article-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</h1>
+        <p class="article-deck">Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-cortex-analyst-actually-is">What Cortex Analyst actually is</a></li>
+<li><a href="#why-the-demo-looks-easy">Why the demo looks easy</a></li>
+<li><a href="#what-actually-works">What actually works</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>The Snowflake Cortex Analyst demo is a good demo. Curated schema, hand-picked questions, a semantic model that has been tuned to answer exactly the things the presenter is about to ask. The SQL it generates is clean. The answers are right. The audience nods.</p>
 <p>Week two looks different. You point Cortex Analyst at your actual warehouse — the one with three overlapping definitions of "active customer," mart models whose column descriptions were last updated when the model was first built, and a pipeline that lands data at 6 AM but is sometimes an hour late. Suddenly the generated SQL is plausible-looking but wrong, or right on a metric nobody uses, or right but returning yesterday's numbers.</p>
 <p>This post is about the gap between the demo and production. Not to say Cortex Analyst is bad — it is genuinely useful when set up correctly — but to lay out the problems you will hit and the practical steps that make it reliable.</p>
 <p>It helps to think of Cortex Analyst as a GPS app. Demoed on a closed test track, with perfect weather and no traffic, it always finds the fastest route — there's only one route to find. Point that same GPS at your actual city, with a bridge closed for repairs since 6 AM and a one-way street the map provider hasn't updated in months, and it will confidently route you the wrong way down that street. It isn't lying to you. It's reporting, with total confidence, from a model of the world that is stale and incomplete in ways it has no way of knowing about.</p>
-<h2>What Cortex Analyst actually is</h2>
+<h2 id="what-cortex-analyst-actually-is">What Cortex Analyst actually is</h2>
 <p>Cortex Analyst takes a natural language question and returns SQL, using a semantic model YAML you define and store in Snowflake. The semantic model describes your tables, columns, metrics, and relationships. Cortex reads it, interprets the question against it, and generates a query. You approve or run the query; Cortex does not execute anything directly unless you wire it up to do so.</p>
 <p>The semantic model is the entire ballgame. Here is a minimal example for a subscriptions table:</p>
 <pre><code class="language-yaml">name: subscription_metrics
@@ -567,7 +580,7 @@ tables:
         default_aggregation: sum
 </code></pre>
 <p>That YAML is what Cortex reads when you ask "what was MRR last month." The description fields are not decoration — they are instructions.</p>
-<h2>Why the demo looks easy</h2>
+<h2 id="why-the-demo-looks-easy">Why the demo looks easy</h2>
 <p><strong>Problem 1: Missing or vague dbt documentation.</strong> Cortex Analyst reads your column descriptions to understand what each field means. If your schema.yml says <code>description: "the plan"</code> instead of something specific, Cortex guesses. It will usually guess something reasonable. It will sometimes guess wrong. In a demo, the semantic model has been written carefully. In production, you have 40 models, some documented in 2022, some not at all.</p>
 <p><strong>Problem 2: Metric ambiguity.</strong> "Active customers" probably exists in more than one mart. You might have it in <code>fct_subscriptions</code>, <code>fct_accounts</code>, and <code>dim_customers</code>, and each version filters slightly differently — one uses subscription status, one uses last login date, one counts billing accounts. Cortex Analyst picks one based on what your semantic model exposes. It does not tell the user which definition it used. The user sees a number and assumes it is the right one.</p>
 <p><strong>Problem 3: Multi-join queries with window functions.</strong> This is where generated SQL goes quietly wrong. Ask Cortex something like "show me MRR growth rate for customers who churned in Q1 and then reactivated," and you will get SQL that compiles and runs. It might even look right at a glance. Here is an example of the shape of query that tends to produce plausible-but-incorrect results:</p>
@@ -602,7 +615,7 @@ WHERE prev_mrr IS NOT NULL
 </code></pre>
 <p>The window function runs over all rows after churn, including rows where the subscription is still dormant. The growth rate calculation is technically executing; the denominator just includes the wrong baseline. Nobody notices until someone compares the output to a manually built cohort.</p>
 <p><strong>Problem 4: Data freshness.</strong> Cortex Analyst has no awareness of your pipeline schedule. If your marts refresh at 6 AM and it is 10 PM, a question about "yesterday's revenue" returns data that closed 40 hours ago. Cortex will not say "this data is stale" — same as the GPS, it just keeps routing you with a perfectly straight face. It returns numbers with no timestamp context, and the user assumes they are current.</p>
-<h2>What actually works</h2>
+<h2 id="what-actually-works">What actually works</h2>
 <p><strong>Start with your mart layer, not raw or intermediate models.</strong> Your marts are governed, tested, and documented. They are also the layer where your business definitions are already encoded. Pointing Cortex at raw Salesforce tables or intermediate staging models is a fast path to wrong answers.</p>
 <p><strong>Write semantic model descriptions as if you are writing instructions for a new analyst.</strong> The descriptions Cortex reads need to be unambiguous. Vague column names with vague descriptions produce vague SQL. The more precise your language, the more constrained the interpretation.</p>
 <p>Here is the difference in practice:</p>
@@ -678,57 +691,81 @@ st.caption(f&quot;Data current through: {latest}. Pipeline runs daily at 06:00 U
 </div>
 
 <p>What is the first question you would give Cortex Analyst access to answer — and what is the one you would never let it near?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="snowflake-variant-flatten.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">You've been flattening Snowflake JSON wrong</p>
-        <span class="related-date">27 Jun 2026 · 9 min</span>
-      </a>
-      
-      <a href="snowflake-clustering-keys-guide.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">Snowflake clustering keys: what they are, when they help, and when to skip them</p>
-        <span class="related-date">16 Jun 2026 · 10 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="snowflake-variant-flatten.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 27 Jun 2026</span>
+              <h3>You've been flattening Snowflake JSON wrong</h3>
+              <span>9 min read →</span>
+            </a>
+            <a href="snowflake-clustering-keys-guide.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 16 Jun 2026</span>
+              <h3>Snowflake clustering keys: what they are, when they help, and when to skip them</h3>
+              <span>10 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

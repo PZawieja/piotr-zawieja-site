@@ -495,41 +495,57 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">14 Jun 2026 · 10 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Dimensional modeling in dbt: the patterns that don't fit the textbook</h1>
-    <p class="article-lede">Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</p>
   </header>
 
-  <div class="article-body">
-    <p>The textbook version of dimensional modeling is clean. Fact tables at the center, dimension tables surrounding them, foreign keys connecting them, surrogate keys disambiguating natural keys from different source systems. Every row in <code>fct_orders</code> points to a row in <code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>. Star schema. Done.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>14 Jun 2026 · 10 min read</span>
+        </div>
+        <h1 class="article-title">Dimensional modeling in dbt: the patterns that don't fit the textbook</h1>
+        <p class="article-deck">Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#scd-type-2-use-dbt-snapshots-not-incremental-models">SCD Type 2: use dbt snapshots, not incremental models</a></li>
+<li><a href="#querying-snapshots-correctly">Querying snapshots correctly</a></li>
+<li><a href="#degenerate-dimensions">Degenerate dimensions</a></li>
+<li><a href="#role-playing-dimensions">Role-playing dimensions</a></li>
+<li><a href="#bridge-tables">Bridge tables</a></li>
+<li><a href="#when-to-skip-dimensional-modeling">When to skip dimensional modeling</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>The textbook version of dimensional modeling is clean. Fact tables at the center, dimension tables surrounding them, foreign keys connecting them, surrogate keys disambiguating natural keys from different source systems. Every row in <code>fct_orders</code> points to a row in <code>dim_customer</code>, <code>dim_product</code>, <code>dim_date</code>. Star schema. Done.</p>
 <p>Reality, as usual, skipped the memo.</p>
 <p>Reality is messier. Customers change their email address. Products move between categories. The same date dimension needs to be referenced three times on the same fact table for order date, ship date, and return date. Orders can have multiple promotional codes.</p>
 <p>dbt gives you the primitives to handle all of this, but the documentation mostly covers the clean cases. This post covers the patterns that show up in real projects — where the textbook diagram and the actual data don't quite match.</p>
 <hr />
-<h2>SCD Type 2: use dbt snapshots, not incremental models</h2>
+<h2 id="scd-type-2-use-dbt-snapshots-not-incremental-models">SCD Type 2: use dbt snapshots, not incremental models</h2>
 <p>Slowly changing dimensions are the most common place teams reach for an incremental model and get it wrong. The instinct is understandable — incremental models process new and changed data, which sounds exactly right. But a merge incremental model will simply overwrite the old value with the new one. You lose history.</p>
 <p>Type 2 slowly changing dimensions require a different approach: when a dimension attribute changes, close the existing record and open a new one. The dimension table carries all versions of the record, each with a validity window. This is what <code>dbt snapshot</code> is built for.</p>
 <pre><code class="language-sql">-- snapshots/snap_customers.sql
@@ -567,7 +583,7 @@ FROM {{ source('app', 'customers') }}
 </code></pre>
 <p><code>check</code> compares the listed columns directly rather than relying on an <code>updated_at</code> column. Slower on large tables — it hashes the column values — but necessary when the source doesn't provide a reliable updated timestamp.</p>
 <hr />
-<h2>Querying snapshots correctly</h2>
+<h2 id="querying-snapshots-correctly">Querying snapshots correctly</h2>
 <p>The snapshot creates a history table. Most downstream consumers want either current state or point-in-time state, and the query patterns are different.</p>
 <p><strong>Current state</strong> — all records where the validity window is still open:</p>
 <pre><code class="language-sql">-- models/marts/dim_customers.sql
@@ -596,7 +612,7 @@ LEFT JOIN {{ ref('snap_customers') }} c
 </code></pre>
 <p>This join pattern — matching on the entity key and filtering where the fact timestamp falls within the validity window — is the fundamental one for any historical analysis that needs to know what a dimension looked like at the time of a fact event. Customer plan at the time of purchase. Product price at the time of the transaction. Account tier at the time of a support ticket.</p>
 <hr />
-<h2>Degenerate dimensions</h2>
+<h2 id="degenerate-dimensions">Degenerate dimensions</h2>
 <p>A degenerate dimension is a dimension attribute that lives on the fact table rather than in a separate dimension table. The most common example is <code>order_id</code> on a line item fact.</p>
 <p>The line item fact is at the product-per-order grain:</p>
 <pre><code class="language-sql">-- models/marts/fct_order_lines.sql
@@ -614,7 +630,7 @@ FROM {{ ref('stg_order_lines') }}
 <p><code>order_id</code> is a degenerate dimension. There is no separate <code>dim_orders</code> table — the order itself has no attributes beyond those that already belong to the line items or to the customer. The order identifier lives directly on the fact row. It's the data-warehouse equivalent of a receipt with no header — just line items stapled together with a shared number at the top.</p>
 <p>When should you promote a degenerate dimension to a full dimension table? When the "header" entity starts acquiring attributes that don't belong on the line. If orders have shipping addresses, discount codes, channel sources, and fulfillment statuses — those are order-level attributes that warrant a <code>dim_orders</code> table. If an order is nothing more than a grouping key for line items, keep it degenerate.</p>
 <hr />
-<h2>Role-playing dimensions</h2>
+<h2 id="role-playing-dimensions">Role-playing dimensions</h2>
 <p><code>dim_date</code> typically appears once in a star schema diagram. In practice it appears three or four times on the same fact table.</p>
 <p>In plain English: this is the same situation as an actor playing three characters in the same film — same person, same résumé, but the credits list them three times under three different names because the story needs three different roles filled. <code>dim_date</code> is the actor. Order Date, Ship Date, and Return Date are the roles. The table doesn't change; what changes is which role it's playing at that point in the query — same employee, three name badges.</p>
 <pre><code class="language-sql">-- models/marts/fct_orders.sql
@@ -653,7 +669,7 @@ models:
 </code></pre>
 <p>The <code>relationships</code> test on <code>ship_date_key</code> does not include <code>not_null</code> — unshipped orders legitimately have a null ship date. This is correct behavior, not a data quality issue.</p>
 <hr />
-<h2>Bridge tables</h2>
+<h2 id="bridge-tables">Bridge tables</h2>
 <p>A fact row relates to exactly one customer, one product, one date — that's the standard case. Bridge tables handle the exception: when a fact or dimension relates to multiple members of another dimension.</p>
 <p>Common examples:<br />
 - A customer with multiple tags or segments<br />
@@ -726,7 +742,7 @@ INNER JOIN {{ ref('brd_customer_tags') }} t
 </div>
 
 <hr />
-<h2>When to skip dimensional modeling</h2>
+<h2 id="when-to-skip-dimensional-modeling">When to skip dimensional modeling</h2>
 <p>Dimensional modeling is the right default for analytical data products with multiple downstream consumers and evolving query patterns. It is not the right default for everything.</p>
 <p>A single-purpose dashboard with three metrics and one analyst querying it may not need a <code>dim_customer</code> and a <code>fct_orders</code> with a surrogate key and a bridge table for tags. A wide mart — one row per customer, all the attributes you care about as columns — is simpler, faster to build, and easier to debug.</p>
 <p>The test is not "is this theoretically the right model?" It is "does the complexity of this model serve the people using it?" A properly normalized star schema that nobody on the team can interpret adds as much risk as a wide flat table that grows unmanageable. Start simple; add structure when the complexity is justified by actual query patterns, not anticipated ones.</p>
@@ -744,63 +760,86 @@ INNER JOIN {{ ref('brd_customer_tags') }} t
 
 <hr />
 <p>What dimensional pattern have you found hardest to implement cleanly in dbt?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

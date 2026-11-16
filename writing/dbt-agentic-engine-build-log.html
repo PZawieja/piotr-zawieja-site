@@ -495,41 +495,58 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">26 Jun 2026 · 11 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Building an analytics agent on a real dbt project: what actually broke</h1>
-    <p class="article-lede">A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</p>
   </header>
 
-  <div class="article-body">
-    <p>Most analytics agent demos work like this: the model receives a question, generates SQL, runs it, returns an answer. If the question is simple enough, that works fine. If the question is "why did this customer's logo count drop in July" — which requires checking the logo mart, the MRR mart, and the contract events table and cross-referencing them — a single SQL generation step doesn't get there.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span class="category-tag secondary">dbt</span>
+          <span>26 Jun 2026 · 11 min read</span>
+        </div>
+        <h1 class="article-title">Building an analytics agent on a real dbt project: what actually broke</h1>
+        <p class="article-deck">A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#four-tools-not-forty">Four tools, not forty</a></li>
+<li><a href="#select-only-enforcement-at-the-connection-not-the-prompt">SELECT-only enforcement at the connection, not the prompt</a></li>
+<li><a href="#the-tool-call-budget">The tool-call budget</a></li>
+<li><a href="#the-structured-trace">The structured trace</a></li>
+<li><a href="#what-actually-broke">What actually broke</a></li>
+<li><a href="#model-stochasticity-the-agent-sometimes-guesses-wrong">Model stochasticity: the agent sometimes guesses wrong</a></li>
+<li><a href="#the-data-design">The data design</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Most analytics agent demos work like this: the model receives a question, generates SQL, runs it, returns an answer. If the question is simple enough, that works fine. If the question is "why did this customer's logo count drop in July" — which requires checking the logo mart, the MRR mart, and the contract events table and cross-referencing them — a single SQL generation step doesn't get there.</p>
 <p><a href="https://github.com/PZawieja/dbt-agentic-engine">dbt-agentic-engine</a> is a four-tool agent that chains multiple tool calls to investigate analytics questions against a real dbt project. The distinguishing feature isn't the chat interface — it's the structured execution trace it logs per question, which is what makes the follow-on project (<a href="https://goldlayer.dev/writing/analytics-agent-eval-harness.html">an eval harness that scores and cost-tracks live runs</a>) possible at all.</p>
 <p>This post is a build log: the design decisions, what broke (several things), and what the manual sanity check at the end actually showed.</p>
 <hr />
-<h2>Four tools, not forty</h2>
+<h2 id="four-tools-not-forty">Four tools, not forty</h2>
 <p>The agent has exactly four tools:</p>
 <table>
 <thead>
@@ -560,7 +577,7 @@
 <p>The question I kept coming back to when designing the toolbelt was: what is the smallest set of tools that lets the model investigate a question it couldn't answer with one query? <code>list_models</code> tells it what data exists. <code>get_model_columns</code> tells it how to query a model without guessing. <code>run_query</code> lets it actually look at data. <code>get_test_results</code> lets it answer questions about data quality.</p>
 <p>Four tools cover lookup questions (one call, already in the schema), investigation questions (cross-mart, 3–5 calls), and unanswerable questions (1–2 verification calls before a correct decline). A fifth tool for schema exploration or a sixth for dbt lineage would add surface area without changing what the agent can actually answer. Keep the toolbelt narrow until a real question breaks it.</p>
 <hr />
-<h2>SELECT-only enforcement at the connection, not the prompt</h2>
+<h2 id="select-only-enforcement-at-the-connection-not-the-prompt">SELECT-only enforcement at the connection, not the prompt</h2>
 <p>The spec requirement is: run_query must be enforced SELECT-only at the connection level, not by instructing the model or checking the SQL text.</p>
 <p>Why not a string check? Because a string check on SQL is always leaky. <code>SELECT * FROM t; INSERT INTO ...</code> passes a "starts with SELECT" test. A model creative enough to try a SQL injection path would also be creative enough to get past a keyword check. And more practically: "trust me, I told it not to" is not something you can explain to a security review.</p>
 <p>The implementation is two lines:</p>
@@ -569,7 +586,7 @@
 <p>DuckDB raises a <code>duckdb.Error</code> on any CREATE/INSERT/UPDATE/DELETE/DROP statement before executing it, at the engine level. Not a string check — the engine itself refuses. If the agent sends a non-SELECT statement, <code>run_query</code> returns an error dict and the model learns from that in the next step.</p>
 <p>One thing that isn't covered: a SELECT that pulls PII. There's no PII column scan here. The warehouse is seeded data with fictional companies, so this wasn't a live risk for this project. A real deployment would need that layer — <a href="https://goldlayer.dev/writing/revenue-intelligence-agent-ai-cs-copilot.html">Revenue Intelligence Agent</a> implemented one, this project didn't.</p>
 <hr />
-<h2>The tool-call budget</h2>
+<h2 id="the-tool-call-budget">The tool-call budget</h2>
 <p>Every question gets a hard cap of 6 tool calls. If the agent hits the cap before finding an answer, it returns a partial-findings response that says so explicitly:</p>
 <pre><code class="language-python">if tool_calls_made &gt;= max_tool_calls:
     return _result(
@@ -582,7 +599,7 @@
 <p>Six is conservative. Investigation questions that need to check three marts and cross-reference a contract events table use 3–5 calls cleanly. Six leaves room for one recovery call if the model guesses a column name wrong and needs to use <code>get_model_columns</code> to correct course. In practice, complex investigation questions sometimes still hit the cap — because the model sometimes guesses <em>two</em> column names wrong before checking the schema. More on that below.</p>
 <p>The cap is a named constant: <code>MAX_TOOL_CALLS = 6</code>. It's not buried in the while loop. If the right number turns out to be 8 after the eval harness runs, that's one line to change.</p>
 <hr />
-<h2>The structured trace</h2>
+<h2 id="the-structured-trace">The structured trace</h2>
 <p>Every tool call is logged to <code>traces/trace_log.jsonl</code> — one JSON record per line, appended by <code>trace_log.write_trace_record()</code>. The summary record at the end of each question adds the totals: run_id, final_answer, tool_calls_made, total_usage, started_at, completed_at.</p>
 <p>This is the format of a tool_call record:</p>
 <pre><code class="language-text">{
@@ -602,19 +619,19 @@
 <p>The trace is a first-class deliverable, not a debug artifact. It's what lets the eval harness compute per-tool latency sums, verify whether the agent hit the cap, and feed cost calculations from actual token counts rather than estimates. A system that logs answers but not traces has no way to explain why an answer was wrong or expensive.</p>
 <p>JSON Lines over a flat file was a deliberate choice over a DuckDB table. The agent enforces no write access to the project's own warehouse — <code>read_only=True</code> on the connection. Introducing a separate writable connection just for trace logging would be a second code path to maintain for no real benefit. The flat file appends atomically, diffs cleanly when a sample trace is committed, and is queryable directly: <code>jq</code> for ad-hoc filtering, or DuckDB's <code>read_json_auto('traces/trace_log.jsonl')</code> for anything heavier.</p>
 <hr />
-<h2>What actually broke</h2>
+<h2 id="what-actually-broke">What actually broke</h2>
 <p>The decisions log is the honest account. These are the failures that only showed up under the conditions that actually matter.</p>
 <p><strong><code>json.dumps</code> crashed on the first live API call.</strong> DuckDB returns native <code>datetime.date</code> and <code>decimal.Decimal</code> objects from its cursor. Those aren't JSON-serializable. The tool-level unit tests never caught this because they printed results rather than round-tripping them through the agent loop's <code>json.dumps</code>. The fix was to stringify non-JSON-native types at the source in <code>tools.py</code> — not a <code>default=str</code> patch at each call site — so every consumer (the agent loop, the trace log) gets safe values automatically. The lesson: printing a result and serializing it through the actual consumer are different tests.</p>
 <p><strong>Bare table names failed silently.</strong> DuckDB requires schema-qualified names (<code>main_marts.fct_mrr_monthly</code>) by default. Without a <code>search_path</code>, any <code>run_query</code> call using a bare model name returned a "table not found" error. The agent would then waste a tool call on <code>list_models</code>, confirm the model exists, and try the same query again with the same error — burning budget for no progress. Fixed by running <code>SET search_path = 'main_marts,main_intermediate,main_staging,main_raw'</code> once when the connection opens. Caught by actually calling <code>run_query</code> with realistic SQL during testing, not by inspecting the code.</p>
 <p><strong>A pre-commit hook silently rewrote all commas.</strong> The project enforces leading commas in SQL — a non-negotiable style rule, consistent with the portfolio's SQL conventions. A local pre-commit hook ran <code>sqlfluff fix</code> on staged <code>.sql</code> files before commit. Without a <code>.sqlfluff</code> config in the repo, sqlfluff's default <code>LT04</code> policy is <em>trailing</em> commas. The very first dbt commit silently rewrote every model to trailing commas on the way in. Caught immediately after committing by reading the diff the hook produced. Fixed by adding <code>.sqlfluff</code> at the repo root with <code>line_position = leading</code> under <code>[sqlfluff:layout:type:comma]</code>, then running a corrective commit. The lesson: a pre-commit hook that auto-fixes is a second author with its own opinions. Check its diff after every commit until a config file pins its behavior.</p>
 <p><strong>CLAUDE.md was committed and pushed to a public repo.</strong> CLAUDE.md contains private project instructions that aren't meant for public consumption. It was committed in the very first commit before the gitignore entry was added. Caught on reviewing what gets pushed in a later phase. Fixed with <code>git filter-repo</code> to strip the file from every commit in history, then a force push. <code>git filter-repo</code> requires a clean working tree — it silently discarded uncommitted changes to <code>agent_loop.py</code> in the process. Recovered from a backup taken immediately before running the rewrite. The practical rule: take a full repo backup before any history rewrite, not just a copy of the file being removed, and expect the clean-working-tree precondition to cost you anything uncommitted. Also: always verify which of a template/real-file pair actually received the secret before trusting "it's gitignored."</p>
 <hr />
-<h2>Model stochasticity: the agent sometimes guesses wrong</h2>
+<h2 id="model-stochasticity-the-agent-sometimes-guesses-wrong">Model stochasticity: the agent sometimes guesses wrong</h2>
 <p>The system prompt includes an explicit instruction: check column names with <code>get_model_columns</code> before writing SQL, unless you already confirmed them in this conversation. Adding that instruction reduced column-name guessing measurably. It didn't eliminate it.</p>
 <p>Across live runs of the same investigation question, the agent ranged from a clean 3-call resolution (check schema, run query on mart A, run query on mart B, done) to exhausting the 6-call budget on Binder Errors from guessed column names before landing on a correct or partial answer. The same question, the same prompt, the same model, different outcomes. That's real stochasticity — it's not a bug in the loop that more prompt engineering will reliably fix.</p>
 <p>This is the reason the eval harness exists as a separate project. A manual sanity check can't tell you what fraction of runs hit the cap vs. complete cleanly, or what a systematic prompt change does to that distribution across 15 questions. The <a href="https://goldlayer.dev/writing/analytics-agent-eval-harness.html">eval harness</a> can.</p>
 <hr />
-<h2>The data design</h2>
+<h2 id="the-data-design">The data design</h2>
 <p>The warehouse is a fictional B2B SaaS subscription dataset, built entirely from seeded CSVs. The data was designed to carry five specific events that investigation-tier questions are built around:</p>
 <ul>
 <li>A plan upgrade (MRR increase, same customer, same subscription)</li>
@@ -649,63 +666,86 @@ marts/           dim_customers, fct_mrr_monthly, fct_mrr_bridge_monthly,
 </div>
 
 <p>What's the hardest analytics question your team regularly fails to answer without an analyst in the room — and which of those requires cross-referencing more than one source to explain?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

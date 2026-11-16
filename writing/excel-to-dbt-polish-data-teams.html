@@ -495,39 +495,60 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">5 Jun 2026 · 9 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">From Excel to dbt: a realistic transition guide for Polish data teams</h1>
-    <p class="article-lede">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
   </header>
 
-  <div class="article-body">
-    <p>Most Polish data teams I talk to are two to three years into a dbt migration. The ones that are struggling share a common pattern: they installed dbt, learned the syntax, and skipped the one step that makes it actually work. The step is not technical.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>5 Jun 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">From Excel to dbt: a realistic transition guide for Polish data teams</h1>
+        <p class="article-deck">A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-pattern">The pattern</a></li>
+<li><a href="#what-the-polish-market-context-means">What the Polish market context means</a></li>
+<li><a href="#a-realistic-five-stage-transition">A realistic five-stage transition</a><ul>
+<li><a href="#stage-1-document-your-excel-formulas-as-sql-before-touching-dbt">Stage 1: Document your Excel formulas as SQL before touching dbt</a></li>
+<li><a href="#stage-2-build-a-staging-layer-that-mirrors-your-sources-exactly">Stage 2: Build a staging layer that mirrors your sources exactly</a></li>
+<li><a href="#stage-3-build-marts-that-match-your-current-excel-outputs-first">Stage 3: Build marts that match your current Excel outputs first</a></li>
+<li><a href="#stage-4-add-tests-that-catch-what-excel-caught-through-human-eyes">Stage 4: Add tests that catch what Excel caught through human eyes</a></li>
+<li><a href="#stage-5-retire-the-excel-but-not-before">Stage 5: Retire the Excel — but not before</a></li>
+</ul>
+</li>
+<li><a href="#the-one-thing-that-makes-it-stick">The one thing that makes it stick</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Most Polish data teams I talk to are two to three years into a dbt migration. The ones that are struggling share a common pattern: they installed dbt, learned the syntax, and skipped the one step that makes it actually work. The step is not technical.</p>
 <p>This guide is for teams in Warsaw, Kraków, and the wider Polish market who are somewhere in that transition — or about to start it. The technical parts are real. The process parts are the ones that actually determine whether the migration sticks.</p>
 <hr />
-<h2>The pattern</h2>
+<h2 id="the-pattern">The pattern</h2>
 <p>Nearly every migration I have seen follows the same arc.</p>
 <p><strong>Stage 0</strong> looks like this: Excel and Google Sheets everywhere, shared by email or stored in a folder nobody fully controls. VLOOKUP chains three sheets deep. A "definitive" MRR calculation that lives in one person's laptop. Finance runs their own version. Customer Success runs theirs. They do not agree, and everyone has learned to live with that. It's less a data architecture than a peace treaty nobody signed.</p>
 <p>In plain English, this is the same disagreement VAR brought to football. The replay is not the problem — everyone can see the same frozen frame of the offside line. The argument is about which moment and which body part the rule actually means, and two broadcasters can draw the line slightly differently from identical footage. Finance and Customer Success aren't disagreeing because one of their spreadsheets has a typo. They're disagreeing because nobody ever agreed on what "active customer" means, so the same underlying data produces two confident, contradictory rulings.</p>
@@ -535,13 +556,13 @@
 <p>Month six through twelve: the project has forty models, Finance is still using the spreadsheet from 2022, and nobody can agree on what "active customer" means. The dbt project is technically correct. It is also not trusted.</p>
 <p>The thing they skipped was agreeing on definitions before building models. That is not a dbt problem. That is a data governance problem, and dbt cannot solve it on your behalf.</p>
 <hr />
-<h2>What the Polish market context means</h2>
+<h2 id="what-the-polish-market-context-means">What the Polish market context means</h2>
 <p>Warsaw and Kraków data teams are often smaller than their Western European equivalents. A team of one to three analytics engineers doing everything — ingestion, transformation, dashboards, stakeholder management — is common. That structure produces strong generalists, but it leaves less time for the coordination work that makes a data platform trustworthy.</p>
 <p>dbt skill is in high demand in Poland and supply is growing fast. What is genuinely thin is supply of people who can <em>govern</em> a dbt project — not just build models, but establish a shared metric layer, write documentation that non-technical stakeholders can read, and retire the spreadsheets in a way that earns trust rather than forcing compliance.</p>
 <p>That governance gap is where projects break down, and it is also where the opportunity is for engineers who can close it. This is not a criticism of Polish teams specifically — it is the same pattern that played out in the UK and Germany three to four years earlier. The market catches up, and the engineers who built those skills early are now well-compensated senior practitioners.</p>
 <hr />
-<h2>A realistic five-stage transition</h2>
-<h3>Stage 1: Document your Excel formulas as SQL before touching dbt</h3>
+<h2 id="a-realistic-five-stage-transition">A realistic five-stage transition</h2>
+<h3 id="stage-1-document-your-excel-formulas-as-sql-before-touching-dbt">Stage 1: Document your Excel formulas as SQL before touching dbt</h3>
 <p>Before you write a single <code>{{ ref() }}</code>, open every significant Excel file and translate its logic into SQL. Not into dbt — just SQL. This forces you to find all the hidden assumptions.</p>
 <pre><code class="language-sql">-- Excel formula: =IF(AND(B2=&quot;active&quot;, C2&gt;0), &quot;paying&quot;, IF(B2=&quot;trial&quot;, &quot;trial&quot;, &quot;churned&quot;))
 -- Equivalent SQL:
@@ -555,7 +576,7 @@ SELECT
 FROM raw.customers
 </code></pre>
 <p>You will find edge cases in this step. Deal with them now, in a document, before they become bugs in production.</p>
-<h3>Stage 2: Build a staging layer that mirrors your sources exactly</h3>
+<h3 id="stage-2-build-a-staging-layer-that-mirrors-your-sources-exactly">Stage 2: Build a staging layer that mirrors your sources exactly</h3>
 <p>No business logic in staging. Rename columns to a consistent convention, cast types, and stop there. The discipline pays off later.</p>
 <pre><code class="language-sql">-- models/staging/stg_customers.sql
 SELECT
@@ -568,7 +589,7 @@ SELECT
 FROM {{ source('crm', 'customers') }}
 </code></pre>
 <p>A staging layer that contains derived logic is a staging layer you will regret in six months.</p>
-<h3>Stage 3: Build marts that match your current Excel outputs first</h3>
+<h3 id="stage-3-build-marts-that-match-your-current-excel-outputs-first">Stage 3: Build marts that match your current Excel outputs first</h3>
 <p>Not better — identical. The goal at this stage is to produce a number your Finance team can look at alongside their spreadsheet and say "these match." Think of it the way a movie remake earns the right to change the ending: not by being objectively better on day one, but by first proving it understood the original. Resist the urge to fix things you notice along the way. Log them. Fix them in Stage 4 or later, with sign-off — fixing them now is how a trust-building project quietly turns into an eight-month rebuild nobody asked for.</p>
 <pre><code class="language-yaml"># models/marts/schema.yml
 version: 2
@@ -589,7 +610,7 @@ models:
           - not_null
 </code></pre>
 <p>Write the description and the verification note. When Finance asks "where did this number come from," you want a written answer ready.</p>
-<h3>Stage 4: Add tests that catch what Excel caught through human eyes</h3>
+<h3 id="stage-4-add-tests-that-catch-what-excel-caught-through-human-eyes">Stage 4: Add tests that catch what Excel caught through human eyes</h3>
 <p>Excel had a human reviewing it every month. dbt needs explicit tests to replace that review.</p>
 <pre><code class="language-yaml"># models/marts/schema.yml (extended)
       - name: subscription_status
@@ -604,7 +625,7 @@ models:
               inclusive: true
 </code></pre>
 <p>The <code>accepted_range</code> test on MRR is particularly useful. It catches the category of error where a unit conversion goes wrong and a customer suddenly has 100x their actual revenue.</p>
-<h3>Stage 5: Retire the Excel — but not before</h3>
+<h3 id="stage-5-retire-the-excel-but-not-before">Stage 5: Retire the Excel — but not before</h3>
 <p>Run both the dbt output and the Excel in parallel for a minimum of three consecutive billing cycles. When they agree for three cycles, you have earned the right to ask the business to switch. Not before.</p>
 <pre><code class="language-python"># scripts/validate_mrr_parity.py
 import pandas as pd
@@ -653,7 +674,7 @@ def check_parity(dbt_df: pd.DataFrame, excel_df: pd.DataFrame, tolerance: float 
 </div>
 
 <hr />
-<h2>The one thing that makes it stick</h2>
+<h2 id="the-one-thing-that-makes-it-stick">The one thing that makes it stick</h2>
 <p>The transition fails when dbt is treated as a technical upgrade and succeeds when it is treated as a trust-building project.</p>
 <p>Business stakeholders do not care about DAGs, lineage graphs, or the elegance of your staging layer — reasonably so, since nobody has ever closed a deal by admiring a DAG. They care about whether the numbers they present to their manager on Friday morning are correct. That concern is legitimate. Their previous system — the spreadsheet — had a human checking it. Your new system needs to earn the same confidence through consistency and transparency, not through a one-time demo.</p>
 <p>Write the documentation before anyone asks for it. Define "active customer" in your schema.yml before Finance asks why dbt's count differs from theirs. Set up the parity tests before the first month-end. Make the process visible.</p>
@@ -672,63 +693,86 @@ def check_parity(dbt_df: pd.DataFrame, excel_df: pd.DataFrame, tolerance: float 
 
 <hr />
 <p>What was the hardest part of your own Excel-to-dbt migration — the technical side, or getting the business to trust the new numbers?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

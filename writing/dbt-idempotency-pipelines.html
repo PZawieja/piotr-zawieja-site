@@ -495,41 +495,67 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-date">16 Jun 2026 · 9 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Idempotency in dbt: the one pipeline property worth obsessing over</h1>
-    <p class="article-lede">Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</p>
   </header>
 
-  <div class="article-body">
-    <p>You re-ran the pipeline last night because a source table was late. This morning, Finance is asking why revenue is 12% higher than yesterday's close. Your incremental model ran twice on the same data. The numbers are wrong. The pipeline passed all tests.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>16 Jun 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">Idempotency in dbt: the one pipeline property worth obsessing over</h1>
+        <p class="article-deck">Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#why-dbt-makes-this-easy-to-get-wrong">Why dbt makes this easy to get wrong</a></li>
+<li><a href="#four-patterns-that-break-idempotency">Four patterns that break idempotency</a><ul>
+<li><a href="#watermark-based-filtering-without-deduplication">Watermark-based filtering without deduplication</a></li>
+<li><a href="#append-only-incrementals-with-no-unique_key">Append-only incrementals with no unique_key</a></li>
+<li><a href="#non-deterministic-column-values">Non-deterministic column values</a></li>
+<li><a href="#row-order-dependencies">Row-order dependencies</a></li>
+</ul>
+</li>
+<li><a href="#the-patterns-that-restore-idempotency">The patterns that restore idempotency</a><ul>
+<li><a href="#unique_key-with-merge-strategy">unique_key with merge strategy</a></li>
+<li><a href="#surrogate-keys-for-composite-natural-keys">Surrogate keys for composite natural keys</a></li>
+<li><a href="#partition-replacement-for-large-fact-tables">Partition replacement for large fact tables</a></li>
+<li><a href="#wrapping-all-incremental-filters-in-is_incremental">Wrapping all incremental filters in is_incremental()</a></li>
+</ul>
+</li>
+<li><a href="#how-to-test-idempotency">How to test idempotency</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>You re-ran the pipeline last night because a source table was late. This morning, Finance is asking why revenue is 12% higher than yesterday's close. Your incremental model ran twice on the same data. The numbers are wrong. The pipeline passed all tests.</p>
 <p>This is an idempotency failure. It is the most common silent bug in dbt projects, and it is almost never caught by dbt tests because tests run on the current state, not across multiple runs.</p>
 <p>Idempotency means: running the same pipeline multiple times with the same inputs produces the same output as running it once. An idempotent model can be re-run after a failure, a backfill, or an accidental double-trigger, and the result is always correct. A non-idempotent model can't make that promise.</p>
 <p>In plain English: think of paying for parking through an app. You tap "pay," the screen freezes, and you're not sure it went through — so you tap it again. A well-built app recognizes it's the same parking session and charges you once. A badly-built one sees two button presses and charges you twice, because as far as it's concerned, you asked twice. Your incremental dbt model is that app. Re-running it — on purpose or by accident — should never be the thing that charges revenue twice.</p>
 <hr />
-<h2>Why dbt makes this easy to get wrong</h2>
+<h2 id="why-dbt-makes-this-easy-to-get-wrong">Why dbt makes this easy to get wrong</h2>
 <p>dbt has two common materialization modes: <code>table</code> and <code>incremental</code>. Tables are always idempotent — they rebuild from scratch on every run. Incremental models are not idempotent by default, and that is where most problems live.</p>
 <p>The core issue: incremental models accumulate rows. Without an explicit deduplication strategy, running the same source data twice appends it twice.</p>
 <pre><code class="language-sql">{{ config(materialized='incremental') }}
@@ -546,11 +572,11 @@ FROM {{ source('ecommerce', 'orders') }}
 </code></pre>
 <p>This model has three idempotency problems. The <code>WHERE</code> clause uses <code>MAX(order_date)</code> from the target table — if a run fails midway, or if source data lands late for a date already past the watermark, re-running will either duplicate rows or silently drop late-arriving records. A forced re-run after a bug fix repulls everything and appends it all again.</p>
 <hr />
-<h2>Four patterns that break idempotency</h2>
-<h3>Watermark-based filtering without deduplication</h3>
+<h2 id="four-patterns-that-break-idempotency">Four patterns that break idempotency</h2>
+<h3 id="watermark-based-filtering-without-deduplication">Watermark-based filtering without deduplication</h3>
 <p>The most common pattern. The model filters new rows using the maximum timestamp or date from the target table. This works only if every source row arrives exactly once, the source never updates existing rows, and runs never overlap.</p>
 <p>In practice, none of those hold consistently. Source tables get corrected. Pipelines get retriggered. Late data arrives. The watermark approach gives you the appearance of an incremental strategy without the safety.</p>
-<h3>Append-only incrementals with no unique_key</h3>
+<h3 id="append-only-incrementals-with-no-unique_key">Append-only incrementals with no unique_key</h3>
 <p>dbt's <code>unique_key</code> config triggers a merge or upsert instead of a plain append. Without it, every incremental run adds rows unconditionally.</p>
 <pre><code class="language-sql">-- Appends unconditionally — running twice doubles the rows
 {{ config(materialized='incremental') }}
@@ -562,7 +588,7 @@ FROM {{ source('ecommerce', 'orders') }}
 ) }}
 </code></pre>
 <p>The difference is one config line. Most projects start without <code>unique_key</code> and add it only after the first incident — read: after Finance calls.</p>
-<h3>Non-deterministic column values</h3>
+<h3 id="non-deterministic-column-values">Non-deterministic column values</h3>
 <p>Columns whose values change between runs break idempotency even when the source data is identical.</p>
 <pre><code class="language-sql">SELECT
     order_id,
@@ -573,7 +599,7 @@ FROM {{ source('ecommerce', 'orders') }}
 <p><code>loaded_at</code> populated with <code>CURRENT_TIMESTAMP()</code> is a common offender. So is <code>SYSDATE()</code> or <code>NOW()</code>. If your merge key doesn't include this column, duplicate rows accumulate. If it does, rows that haven't changed get updated unnecessarily, complicating change detection downstream.</p>
 <p>Same parking analogy, different failure mode: imagine the app re-stamps your ticket with the current time every time it merely re-checks whether you've paid — not just when you actually pay. Same car, same spot, but the receipt now claims you arrived three different times. That's <code>CURRENT_TIMESTAMP()</code> in a merge key: a clock that lies about how long something has been waiting.</p>
 <p>Fix: use a deterministic timestamp from the source data itself — <code>updated_at</code>, <code>created_at</code>, or <code>_fivetran_synced</code> — never from the pipeline execution clock.</p>
-<h3>Row-order dependencies</h3>
+<h3 id="row-order-dependencies">Row-order dependencies</h3>
 <p>Models using <code>ROW_NUMBER()</code> or <code>RANK()</code> without a fully deterministic <code>ORDER BY</code> can produce different results across runs if the warehouse doesn't guarantee source ordering.</p>
 <pre><code class="language-sql">-- Non-deterministic when created_at has ties
 SELECT
@@ -586,8 +612,8 @@ FROM orders
 </code></pre>
 <p>When <code>created_at</code> has ties, which row gets rank 1 is arbitrary and may differ between runs on Snowflake virtual warehouses with different node counts. Always add a tiebreaker — a source-provided ID or surrogate key — to make the ordering deterministic.</p>
 <hr />
-<h2>The patterns that restore idempotency</h2>
-<h3>unique_key with merge strategy</h3>
+<h2 id="the-patterns-that-restore-idempotency">The patterns that restore idempotency</h2>
+<h3 id="unique_key-with-merge-strategy">unique_key with merge strategy</h3>
 <p>Set <code>unique_key</code> on every incremental model. This is the single highest-leverage change in a dbt project for idempotency.</p>
 <pre><code class="language-sql">{{ config(
     materialized='incremental',
@@ -608,7 +634,7 @@ FROM {{ source('ecommerce', 'orders') }}
 </code></pre>
 <p>With <code>unique_key</code>, if a row with the same <code>order_id</code> already exists in the target, it gets updated rather than duplicated. Re-running is safe regardless of how many times the pipeline triggers.</p>
 <p><code>incremental_strategy='merge'</code> is supported on Snowflake, BigQuery, and Databricks. On Postgres and Redshift, dbt uses delete+insert instead, which is equally safe from an idempotency standpoint.</p>
-<h3>Surrogate keys for composite natural keys</h3>
+<h3 id="surrogate-keys-for-composite-natural-keys">Surrogate keys for composite natural keys</h3>
 <p>When the natural key is composite, define a surrogate key in staging rather than passing a multi-column tuple as <code>unique_key</code>. The <code>generate_surrogate_key()</code> macro from <code>dbt-utils</code> handles this cleanly:</p>
 <pre><code class="language-sql">-- models/staging/stg_order_lines.sql
 SELECT
@@ -633,7 +659,7 @@ FROM {{ ref('stg_order_lines') }}
 {% endif %}
 </code></pre>
 <p>One deterministic column, safe to merge on, easy to test with a <code>unique</code> test on the staging model.</p>
-<h3>Partition replacement for large fact tables</h3>
+<h3 id="partition-replacement-for-large-fact-tables">Partition replacement for large fact tables</h3>
 <p>For large event or transaction tables where a full merge is expensive, partition replacement gives you idempotency at partition granularity. The entire partition is replaced atomically on each run.</p>
 <p>On BigQuery:</p>
 <pre><code class="language-sql">{{ config(
@@ -657,7 +683,7 @@ FROM {{ source('analytics', 'events') }}
 </code></pre>
 <p>Re-running this always produces the same partition contents for the last 3 days. Late-arriving records and source corrections are handled automatically. The tradeoff: you reprocess 3 days of data on every run, which is more than a pure incremental but far less than a full refresh.</p>
 <p>On Snowflake, <code>incremental_strategy='delete+insert'</code> with a <code>unique_key</code> achieves the same effect — it deletes matching rows in the target partition and reinserts the current version.</p>
-<h3>Wrapping all incremental filters in is_incremental()</h3>
+<h3 id="wrapping-all-incremental-filters-in-is_incremental">Wrapping all incremental filters in is_incremental()</h3>
 <p><code>is_incremental()</code> evaluates to <code>false</code> on a <code>--full-refresh</code> run. This is your escape hatch when you need to rebuild from scratch after a bug fix or data correction.</p>
 <p>The rule: every filter that scopes data to the current increment must live inside <code>{% if is_incremental() %}</code>. A filter outside this block runs even on full refresh, silently truncating history.</p>
 <pre><code class="language-sql">-- Wrong: the hard-coded date cutoff applies even on full-refresh
@@ -706,7 +732,7 @@ FROM {{ source('ecommerce', 'orders') }}
 </div>
 
 <hr />
-<h2>How to test idempotency</h2>
+<h2 id="how-to-test-idempotency">How to test idempotency</h2>
 <p>dbt's built-in tests — <code>unique</code>, <code>not_null</code>, <code>relationships</code> — run on the current state of a model. They verify the state is correct after one run. They don't verify that a second run leaves the state unchanged.</p>
 <p>The manual test is simple:</p>
 <ol>
@@ -739,63 +765,86 @@ HAVING n &gt; 1
 </div>
 
 <p>How many of your incremental models could you re-run right now without checking the row counts afterward?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

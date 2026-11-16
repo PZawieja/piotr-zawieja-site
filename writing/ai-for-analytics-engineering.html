@@ -495,45 +495,71 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-date">14 Jun 2026 · 9 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">AI for analytics engineering: where it actually helps and where it doesn't</h1>
-    <p class="article-lede">Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</p>
   </header>
 
-  <div class="article-body">
-    <p>The pitch for AI in data work has been consistent for two years: write SQL faster, generate documentation automatically, let analysts ask questions in plain English. Some of that has landed. A lot of it hasn't, or has landed in a much narrower way than advertised.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span>14 Jun 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">AI for analytics engineering: where it actually helps and where it doesn't</h1>
+        <p class="article-deck">Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#where-ai-consistently-helps">Where AI consistently helps</a><ul>
+<li><a href="#boilerplate-that-follows-a-pattern">Boilerplate that follows a pattern</a></li>
+<li><a href="#sql-review-for-structural-errors">SQL review for structural errors</a></li>
+<li><a href="#documentation-generation-from-existing-code">Documentation generation from existing code</a></li>
+<li><a href="#explaining-unfamiliar-sql-patterns">Explaining unfamiliar SQL patterns</a></li>
+</ul>
+</li>
+<li><a href="#where-ai-predictably-fails">Where AI predictably fails</a><ul>
+<li><a href="#metric-definitions-and-business-logic">Metric definitions and business logic</a></li>
+<li><a href="#grain-decisions">Grain decisions</a></li>
+<li><a href="#debugging-wrong-numbers-in-production">Debugging wrong numbers in production</a></li>
+<li><a href="#code-that-touches-undocumented-business-rules">Code that touches undocumented business rules</a></li>
+</ul>
+</li>
+<li><a href="#the-workflow-that-actually-works">The workflow that actually works</a></li>
+<li><a href="#the-tools-worth-using-today">The tools worth using today</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>The pitch for AI in data work has been consistent for two years: write SQL faster, generate documentation automatically, let analysts ask questions in plain English. Some of that has landed. A lot of it hasn't, or has landed in a much narrower way than advertised.</p>
 <p>This is a practical map based on actual daily use — not what AI tools claim to do, but what they reliably do well, where they fail predictably, and how to structure your workflow around the gap between the two.</p>
 <p>A useful comparison: a good AI assistant is a lot like a valet. Hand it your car with a clear instruction — "park it in spot 14" — and it'll do that faster and more reliably than you would. Ask it instead "where should I park so my whole day goes smoothly," and it'll still give you a confident answer. It just has no idea you're meeting a client at 2 and leaving early for a school pickup at 4. The first task is mechanical execution. The second requires context only you have. AI in analytics engineering breaks down along exactly that line.</p>
 <hr />
-<h2>Where AI consistently helps</h2>
-<h3>Boilerplate that follows a pattern</h3>
+<h2 id="where-ai-consistently-helps">Where AI consistently helps</h2>
+<h3 id="boilerplate-that-follows-a-pattern">Boilerplate that follows a pattern</h3>
 <p>The clearest win is generating code that follows a repeatable structure you already understand. staging models, schema YAML, source definitions, generic test blocks — all of these have a learnable shape that AI replicates accurately once you give it a good example.</p>
 <p>In practice this looks like: paste one well-written staging model into the context, describe the new source table's columns, get a draft that respects your naming conventions, column ordering, and casting patterns. You spend ten minutes editing instead of thirty minutes writing from scratch.</p>
 <p>The same applies to schema YAML. Generating <code>not_null</code> and <code>unique</code> tests on every primary key, <code>accepted_values</code> on status columns, <code>relationships</code> tests on foreign keys — this is mechanical work that AI handles well. You still review and adjust, but the first draft is 80% right.</p>
-<h3>SQL review for structural errors</h3>
+<h3 id="sql-review-for-structural-errors">SQL review for structural errors</h3>
 <p>AI is a reliable second reviewer for the category of SQL bugs that are structural rather than semantic — the errors a careful human reviewer would catch if they were fresh, but regularly misses on the third PR of the afternoon.</p>
 <p>The patterns it catches consistently:</p>
 <ul>
@@ -544,29 +570,29 @@
 <li><code>DISTINCT</code> used as a band-aid over an unfixed deduplication problem upstream</li>
 </ul>
 <p>The workflow that works: paste the SQL, ask specifically for join grain issues, fanout risks, and filter logic errors. The more targeted the prompt, the more useful the output. "Review this SQL" produces generic feedback. "Check this model for join fanout and incremental filter issues" produces actionable findings.</p>
-<h3>Documentation generation from existing code</h3>
+<h3 id="documentation-generation-from-existing-code">Documentation generation from existing code</h3>
 <p>Given a well-written SQL model, AI produces accurate column descriptions at a speed no human will match. The descriptions won't be perfect — they can't know that <code>customer_segment</code> maps to a specific tier structure your sales team defined in 2023 — but they are correct about what the SQL does, and they are a much better starting point than an empty YAML file that never gets filled in.</p>
 <p>The honest constraint: documentation AI generates is about code behavior, not business meaning. "Monthly recurring revenue in USD, summed from active subscriptions" is accurate. "The MRR figure used in board reporting, which excludes trial subscriptions per finance team agreement" requires a human who knows the business context. AI gives you the first kind. You provide the second.</p>
-<h3>Explaining unfamiliar SQL patterns</h3>
+<h3 id="explaining-unfamiliar-sql-patterns">Explaining unfamiliar SQL patterns</h3>
 <p>When you inherit a codebase with patterns you haven't used — recursive CTEs, complex window function chains, dynamic SQL generation in Jinja — AI explains them accurately and quickly. This is one of the most underrated uses: not writing new code, but understanding existing code well enough to modify it safely.</p>
 <hr />
-<h2>Where AI predictably fails</h2>
-<h3>Metric definitions and business logic</h3>
+<h2 id="where-ai-predictably-fails">Where AI predictably fails</h2>
+<h3 id="metric-definitions-and-business-logic">Metric definitions and business logic</h3>
 <p>This is the most important failure mode to understand, because it is also the place where the hype is loudest.</p>
 <p>AI does not know what your business means by "active customer." It does not know whether your MRR calculation should include trial subscriptions, whether a paused subscription counts as churned for cohort analysis, or which product lines are excluded from the revenue metric your CFO uses. It has no access to the Slack thread where your data team and finance agreed on that definition last quarter — and even if it did, that thread has 340 replies and ends in a thumbs-up emoji, not a written decision.</p>
 <p>When you ask AI to write a revenue model, it will produce plausible SQL. The SQL will run without error. The numbers will look reasonable. They will also be wrong in ways that take weeks to surface, because the model made reasonable-seeming assumptions about your business that happen to be incorrect for your specific context.</p>
 <p>The correct use of AI in metric work is narrow: once you have defined the metric precisely and written the SQL yourself, AI can review the implementation for structural errors. It cannot define the metric for you.</p>
-<h3>Grain decisions</h3>
+<h3 id="grain-decisions">Grain decisions</h3>
 <p>The hardest decisions in data modeling are grain decisions: should this fact table be at the order grain or the order-line grain? Should this model be a wide mart or a normalized dimension? Should subscription events be tracked as a slowly changing dimension or a point-in-time snapshot?</p>
 <p>AI produces confident-sounding answers to these questions. Those answers are not grounded in knowledge of your query patterns, your BI tool's behavior, your team's SQL proficiency, or the downstream consumers who will actually use the model. Grain decisions require that context. AI does not have it.</p>
-<h3>Debugging wrong numbers in production</h3>
+<h3 id="debugging-wrong-numbers-in-production">Debugging wrong numbers in production</h3>
 <p>"My revenue figure is 12% higher than last month with no change in the business" is exactly the kind of problem that looks like it should be solvable with AI assistance — the data equivalent of "have you tried turning it off and on again." Sometimes that fixes the printer. Mostly it buys you ten minutes. In practice, diagnosing it requires understanding the data model, knowing what changed in upstream sources, understanding the business context, and being able to run exploratory queries against the actual data.</p>
 <p>AI can suggest a debugging checklist — check for new rows in source tables, look for filter drift, audit the incremental lookback window. That checklist is useful. But the actual debugging work requires a human who can run queries, read the results, and connect technical findings to business events. AI can assist at the margins; it cannot replace the investigative work.</p>
-<h3>Code that touches undocumented business rules</h3>
+<h3 id="code-that-touches-undocumented-business-rules">Code that touches undocumented business rules</h3>
 <p>Every mature analytics project has undocumented business rules encoded in SQL: the <code>WHERE customer_type != 'internal'</code> filter that excludes test accounts, the <code>CASE WHEN</code> that maps legacy product codes to current product names, the date offset that aligns your fiscal calendar. These rules exist because someone made a decision that was never written down.</p>
 <p>AI does not know these rules exist. When you ask it to generate or refactor code in an area that depends on them, it will produce technically correct SQL that silently violates the business logic. The result looks clean and runs cleanly. The numbers are wrong.</p>
 <hr />
-<h2>The workflow that actually works</h2>
+<h2 id="the-workflow-that-actually-works">The workflow that actually works</h2>
 <p>The pattern that produces the best results is treating AI as a skilled technical collaborator who is new to your business — someone who writes clean code and catches structural errors but needs explicit briefing on anything domain-specific.</p>
 <p><strong>What to give AI:</strong><br />
 - A concrete, specific task ("generate the schema YAML for this model", "review this JOIN for fanout risk")<br />
@@ -578,7 +604,7 @@
 - Final review before anything ships — AI review is a first pass, not a sign-off</p>
 <p><strong>The right mental model:</strong> AI is good at the 40% of analytics engineering work that is mechanical — generating boilerplate, checking structure, explaining code, drafting documentation. The other 60% — the business logic, the grain decisions, the debugging, the stakeholder alignment — requires the judgment that comes from knowing your data, your business, and your consumers. That part doesn't get shorter with AI; it gets more visible, because the mechanical work stops consuming your time.</p>
 <hr />
-<h2>The tools worth using today</h2>
+<h2 id="the-tools-worth-using-today">The tools worth using today</h2>
 <p><strong>Claude Code / Cursor</strong> for SQL review and boilerplate generation in your editor. The in-editor context window matters — being able to reference multiple files in the same project produces better output than copy-pasting into a chat interface.</p>
 <p><strong>codegen</strong> (dbt package) for source YAML and base model generation — not AI, but it solves the same boilerplate problem for the specific case of onboarding new sources.</p>
 <p><strong>Snowflake Cortex Analyst / BigQuery Gemini</strong> for natural language querying against a governed semantic layer. The qualifier "governed semantic layer" is load-bearing — these tools work when the metric definitions are already encoded in a semantic model, and fail when pointed at raw tables.</p>
@@ -622,63 +648,86 @@
 
 <hr />
 <p>What's the most useful thing AI has done in your analytics workflow — and where has it burned you?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

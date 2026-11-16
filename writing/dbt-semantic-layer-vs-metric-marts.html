@@ -495,40 +495,58 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">dbt</span>
-      <span class="meta-tag">AI</span>
-      <span class="meta-date">12 Jun 2026 · 7 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">dbt Semantic Layer vs. homegrown metric marts: when to use which</h1>
-    <p class="article-lede">A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</p>
   </header>
 
-  <div class="article-body">
-    <p>MetricFlow is production-ready. The dbt Semantic Layer has been generally available for a while now, and most analytics teams have at least one Slack thread about it (yours is probably still unresolved). What's still missing for a lot of teams is a clear mental model for when to migrate and when a good old mart table is still the right call.</p>
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span class="category-tag secondary">AI</span>
+          <span>12 Jun 2026 · 7 min read</span>
+        </div>
+        <h1 class="article-title">dbt Semantic Layer vs. homegrown metric marts: when to use which</h1>
+        <p class="article-deck">A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-metric-marts-are">What metric marts are</a></li>
+<li><a href="#what-the-dbt-semantic-layer-is">What the dbt Semantic Layer is</a></li>
+<li><a href="#the-key-difference">The key difference</a></li>
+<li><a href="#when-to-use-metric-marts">When to use metric marts</a></li>
+<li><a href="#when-to-use-the-semantic-layer">When to use the Semantic Layer</a></li>
+<li><a href="#the-ai-querying-angle">The AI querying angle</a></li>
+<li><a href="#migrating-incrementally">Migrating incrementally</a></li>
+<li><a href="#choosing-in-practice">Choosing in practice</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>MetricFlow is production-ready. The dbt Semantic Layer has been generally available for a while now, and most analytics teams have at least one Slack thread about it (yours is probably still unresolved). What's still missing for a lot of teams is a clear mental model for when to migrate and when a good old mart table is still the right call.</p>
 <p>This post is that decision framework. Both approaches are valid. Both solve real problems. The question is which one fits your current situation — not which one is theoretically superior.</p>
 <hr />
-<h2>What metric marts are</h2>
+<h2 id="what-metric-marts-are">What metric marts are</h2>
 <p>A metric mart is a pre-aggregated table: <code>fct_mrr</code>, <code>fct_arr</code>, <code>fct_churn_cohorts</code>. You compute the metric in a dbt model using SQL, materialise it as a table or incremental model, and downstream consumers — BI tools, Python notebooks, Airflow pipelines — query it directly.</p>
 <p>The definition of the metric lives in the SQL. The result lives in the warehouse.</p>
 <pre><code class="language-sql">-- models/marts/finance/fct_mrr.sql
@@ -562,7 +580,7 @@ inner join subscriptions sub
 </code></pre>
 <p>The appeal is real: this is just SQL. Anyone on the team can open it, read it, run it, and debug it. Query time is fast because the aggregation already happened at materialisation. And your BI tool does not need to know anything about MetricFlow or semantic models — it just selects from a table.</p>
 <hr />
-<h2>What the dbt Semantic Layer is</h2>
+<h2 id="what-the-dbt-semantic-layer-is">What the dbt Semantic Layer is</h2>
 <p>The dbt Semantic Layer moves the metric definition out of SQL and into YAML. You declare a <code>semantic_model</code> on top of a grain-level model, define measures and dimensions, then define metrics that reference those measures. At query time, MetricFlow translates a metric query into SQL and runs it against the warehouse.</p>
 <p>The definition lives in YAML. The result is computed on demand.</p>
 <pre><code class="language-yaml"># models/marts/finance/_semantic_models.yml
@@ -598,24 +616,24 @@ metrics:
 </code></pre>
 <p>Once that definition is in place, the same <code>mrr</code> metric is queryable from the dbt Cloud IDE, from Tableau via the semantic layer connector, from a Python script using the MetricFlow SDK, and — and this is the part that matters — from an LLM-backed querying layer like Cortex Analyst.</p>
 <hr />
-<h2>The key difference</h2>
+<h2 id="the-key-difference">The key difference</h2>
 <p>This sounds like a technical implementation detail, but it is actually a fundamental shift in where truth lives. Think of a cinema's lobby showtimes board versus its booking app. The chalkboard is painted once a day — accurate at 9am, wrong the moment a 7pm screening sells out and gets a second showing added. Someone has to notice and repaint it. The booking app has no board at all; it asks the box office system fresh, every single time, so it's never stale but it also never stops asking. A metric mart is the chalkboard. The Semantic Layer is the app that always calls the box office.</p>
 <p>With a metric mart, truth is encoded in SQL and manifested as rows in a table. If your definition of MRR changes, you update the SQL, run the model, and the table changes. Every consumer gets the updated number automatically — but they were also all querying a single materialised artifact that you controlled.</p>
 <p>With the Semantic Layer, truth is encoded in YAML and executed at query time. If your definition of MRR changes, you update the YAML. Every consumer — regardless of which tool they're using — immediately gets the new definition applied to their next query. No table refresh required. But also no pre-computed result. The warehouse does the work every time someone asks.</p>
 <hr />
-<h2>When to use metric marts</h2>
+<h2 id="when-to-use-metric-marts">When to use metric marts</h2>
 <p>Metric marts are the right call when your situation looks like this:</p>
 <p><strong>Small team, single BI tool, stable definitions.</strong> If you have one Tableau server and five dashboards, and MRR has not changed definition in two years, a mart table works perfectly. The complexity of MetricFlow is not justified.</p>
 <p><strong>Sub-second query requirements.</strong> Metric marts on large datasets with proper clustering will outperform query-time aggregation. If you have a dashboard that loads in 400ms and your stakeholders have noticed, do not swap it for a semantic query.</p>
 <p><strong>Downstream consumers that cannot query MetricFlow.</strong> Legacy pipelines, external vendors, read replicas with restricted access — if your consumer cannot speak MetricFlow, the Semantic Layer cannot help them.</p>
 <hr />
-<h2>When to use the Semantic Layer</h2>
+<h2 id="when-to-use-the-semantic-layer">When to use the Semantic Layer</h2>
 <p>The Semantic Layer starts to pay off when your situation looks like this:</p>
 <p><strong>Multiple consumers using different tools.</strong> When Tableau, a Python model-scoring script, and a product analytics notebook all need the same MRR figure, keeping three separate implementations consistent is a maintenance tax. One YAML definition pays that tax once.</p>
 <p><strong>Metric definitions change often.</strong> If your revenue team redefines "active subscription" twice a quarter, updating three mart tables plus their downstream tests is painful. A single semantic model change propagates everywhere.</p>
 <p><strong>You are building an AI querying layer.</strong> This is the case where the Semantic Layer goes from "nice to have" to "architectural requirement."</p>
 <hr />
-<h2>The AI querying angle</h2>
+<h2 id="the-ai-querying-angle">The AI querying angle</h2>
 <p>An LLM that can write SQL against your raw mart tables will eventually write wrong SQL. It will join the wrong grain, miss a filter, double-count on a fan-out. The hallucination risk is high because the LLM is operating on schema metadata alone — it has no understanding of what the measures actually represent.</p>
 <p>A semantic model is a structured interface. The LLM reasons about metric names, dimensions, and time grains — all of which have explicit definitions. MetricFlow then translates that intent into SQL. The LLM never writes SQL directly.</p>
 <pre><code class="language-python"># Querying the Semantic Layer via MetricFlow SDK (simplified)
@@ -633,7 +651,7 @@ df = result.result_df
 </code></pre>
 <p>This is the architecture behind Cortex Analyst and similar governed natural-language query products. The LLM gets a governed interface. It can ask "MRR by segment for Q1" and get a correct answer because MetricFlow enforces the definition. Contrast that with an LLM generating ad-hoc SQL against <code>fct_mrr</code> — the surface area for silent errors is much larger.</p>
 <hr />
-<h2>Migrating incrementally</h2>
+<h2 id="migrating-incrementally">Migrating incrementally</h2>
 <p>You do not need to port your entire mart layer to the Semantic Layer at once. Start with one metric that has multiple consumers or that changes definition frequently. Validate that MetricFlow produces the same results as your mart table. Then expand.</p>
 <p>Keep both approaches in production simultaneously during the transition. There is no reason to delete <code>fct_mrr</code> the day you add a semantic model for MRR — sunk cost is a cognitive bias, and a deprecated mart sitting unused for two extra weeks is not the hill to die on. Retire the mart table when you are confident every consumer has migrated.</p>
 <pre><code class="language-yaml"># dbt_project.yml — run semantic models alongside marts with no conflict
@@ -648,7 +666,7 @@ models:
 </code></pre>
 <p>The two approaches are not mutually exclusive during migration. That flexibility is worth using.</p>
 <hr />
-<h2>Choosing in practice</h2>
+<h2 id="choosing-in-practice">Choosing in practice</h2>
 <div class="decision-tree">
 <p class="decision-tree-title">Mart or Semantic Layer?</p>
 <div class="decision-step">
@@ -687,63 +705,86 @@ models:
 
 <hr />
 <p>Has your team adopted the Semantic Layer? What was the metric that finally made you switch — or what's blocking you from moving?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

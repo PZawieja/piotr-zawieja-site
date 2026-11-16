@@ -1,489 +1,136 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Piotr Zawieja — Analytics Engineer</title>
-<meta name="description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
-<meta property="og:title" content="Piotr Zawieja — Analytics Engineer">
-<meta property="og:description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
-<meta property="og:url" content="https://goldlayer.dev/">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="goldlayer.dev">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Piotr Zawieja — Analytics Engineer">
-<meta name="twitter:description" content="Analytics engineering with AI — dbt, Snowflake, DuckDB. Writing on how AI reshapes the data stack, with the rigour it deserves.">
-<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:      #0d0d0f;
-    --surface: #141417;
-    --border:  #232328;
-    --accent:  #e8d5b0;
-    --accent2: #c8a96e;
-    --text:    #d4d0c8;
-    --muted:   #7a7870;
-    --dim:     #4a4844;
-    --white:   #f0ece4;
-    --green:   #6db87a;
-    --mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
-    --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
-    --max:     900px;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.65;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1, h2, h3 { font-family: var(--serif); font-weight: 700; color: var(--white); letter-spacing: -0.02em; }
-  h1 { font-size: clamp(2.4rem, 6vw, 3.8rem); line-height: 1.1; }
-  h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.2; }
-  h3 { font-size: 1rem; font-weight: 600; letter-spacing: 0; font-family: var(--sans); }
-
-  .label { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2); }
-
-  a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
-  a:hover { color: var(--white); }
-  p { color: var(--text); }
-  strong { color: var(--white); font-weight: 600; }
-
-  /* ─── Layout ───────────────────────────────────────────────── */
-  .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
-  section { padding: 5rem 0; border-top: 1px solid var(--border); }
-  section:first-of-type { border-top: none; }
-
-  /* ─── Navigation ───────────────────────────────────────────── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(13,13,15,0.88);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  nav .inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; height: 52px; display: flex; align-items: center; justify-content: space-between; }
-
-  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); letter-spacing: 0.05em; }
-  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
-  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
-
-  .nav-links { display: flex; gap: 1.8rem; list-style: none; }
-  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; transition: color 0.15s; }
-  .nav-links a:hover { color: var(--accent); }
-
-  /* ─── Hero ─────────────────────────────────────────────────── */
-  #hero {
-    padding-top: 8rem;
-    padding-bottom: 5rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  #hero::before {
-    content: '';
-    position: absolute;
-    top: -200px; right: -200px;
-    width: 600px; height: 600px;
-    background: radial-gradient(circle, rgba(200,169,110,0.06) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .hero-inner { display: grid; grid-template-columns: 1.5fr 1fr; gap: 3rem; align-items: center; }
-  .hero-text { min-width: 0; }
-  .hero-photo-wrap { display: flex; justify-content: center; min-width: 0; }
-
-  .hero-photo-frame {
-    width: 100%; max-width: 240px;
-    aspect-ratio: 1 / 1; border-radius: 16px;
-    overflow: hidden; border: 1px solid rgba(200,169,110,0.3);
-    box-shadow: 0 30px 80px -20px rgba(200,169,110,0.2);
-  }
-
-  .hero-photo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(0.1) contrast(1.05); }
-
-  .hero-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
-  .hero-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s ease infinite; flex-shrink: 0; }
-
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-
-  .hero-status { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
-
-  .hero-title { margin-bottom: 1rem; }
-  .hero-title .line-muted { font-family: var(--serif); font-size: clamp(2.4rem, 6vw, 3.8rem); font-weight: 400; color: var(--muted); letter-spacing: -0.02em; line-height: 1.1; display: block; }
-
-  .hero-niche {
-    font-family: var(--serif); font-size: clamp(1.05rem, 2.2vw, 1.25rem);
-    color: var(--white); line-height: 1.5; margin-bottom: 1rem;
-    max-width: 520px; font-weight: 700;
-  }
-
-  .hero-sub { font-size: 1rem; color: var(--muted); max-width: 520px; margin-bottom: 2rem; line-height: 1.7; }
-
-  .hero-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
-
-  .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.3rem; border-radius: 4px; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.04em; transition: all 0.15s; cursor: pointer; border: 1px solid transparent; }
-
-  .btn-primary { background: var(--accent2); color: #0d0d0f; border-color: var(--accent2); font-weight: 700; }
-  .btn-primary:hover { background: var(--accent); border-color: var(--accent); color: #0d0d0f; }
-
-  .btn-ghost { background: transparent; color: var(--muted); border-color: var(--border); }
-  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent); }
-
-  /* ─── Writing section ──────────────────────────────────────── */
-  .section-header { margin-bottom: 2.5rem; }
-  .section-header .label { margin-bottom: 0.5rem; }
-
-  /* Featured article cards */
-  .featured-articles-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 1rem;
-  }
-
-  .featured-article {
-    display: block;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.4rem;
-    text-decoration: none;
-    transition: border-color 0.15s, transform 0.15s;
-  }
-
-  .featured-article:hover { border-color: var(--accent2); transform: translateY(-2px); }
-  .featured-article:hover .featured-article-title { color: var(--accent); }
-
-  /* Tag accent on left edge */
-  .featured-article[data-tag="AI"]          { border-left: 3px solid #6db87a; }
-  .featured-article[data-tag="dbt"]         { border-left: 3px solid #c8a96e; }
-  .featured-article[data-tag="Snowflake"]   { border-left: 3px solid #8ecff0; }
-  .featured-article[data-tag="data-quality"]{ border-left: 3px solid #c87a9a; }
-
-  .featured-article-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
-
-  .writing-tag {
-    font-family: var(--mono); font-size: 0.62rem;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    padding: 0.15rem 0.45rem; border-radius: 3px;
-  }
-
-  .tag-ai      { color: #6db87a; background: rgba(109,184,122,0.08); border: 1px solid rgba(109,184,122,0.22); }
-  .tag-dbt     { color: #c8a96e; background: rgba(200,169,110,0.08); border: 1px solid rgba(200,169,110,0.22); }
-  .tag-snowflake { color: #8ecff0; background: rgba(142,207,240,0.08); border: 1px solid rgba(142,207,240,0.22); }
-  .tag-dataquality { color: #c87a9a; background: rgba(200,122,154,0.08); border: 1px solid rgba(200,122,154,0.22); }
-
-  .featured-article-date { font-family: var(--mono); font-size: 0.68rem; color: var(--dim); margin-left: auto; }
-
-  .featured-article-title {
-    font-family: var(--sans); font-size: 0.95rem; font-weight: 600;
-    color: var(--white); line-height: 1.35; margin-bottom: 0.5rem;
-    transition: color 0.15s;
-  }
-
-  .featured-article-lede { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
-
-  .writing-view-all { margin-top: 1.25rem; }
-  .writing-view-all a { font-family: var(--mono); font-size: 0.78rem; color: var(--accent2); transition: color 0.15s; }
-  .writing-view-all a:hover { color: var(--accent); }
-
-  /* ─── Topic pillars ────────────────────────────────────────── */
-  .pillars { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 2rem; }
-
-  .pillar {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 1.25rem 1.4rem;
-    display: flex; flex-direction: column; gap: 0.4rem;
-  }
-
-  .pillar-icon { font-size: 1.1rem; margin-bottom: 0.2rem; }
-  .pillar h3 { font-size: 0.9rem; color: var(--white); font-weight: 600; }
-  .pillar p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
-
-  /* ─── Featured project ─────────────────────────────────────── */
-  .featured-project {
-    display: flex; flex-direction: column; gap: 0.75rem;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 1.75rem;
-    text-decoration: none;
-    transition: border-color 0.2s;
-    max-width: 620px;
-  }
-
-  .featured-project:hover { border-color: var(--accent2); }
-  .featured-project:hover .project-title { color: var(--accent); }
-
-  .project-title { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; color: var(--white); transition: color 0.15s; }
-  .project-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
-  .project-link-indicator { font-family: var(--mono); font-size: 0.75rem; color: var(--dim); margin-top: 0.25rem; }
-  .featured-project:hover .project-link-indicator { color: var(--accent2); }
-
-  .project-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.25rem; }
-  .tag { font-family: var(--mono); font-size: 0.7rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; }
-
-  /* ─── Bio section ──────────────────────────────────────────── */
-  .bio-block {
-    display: grid; grid-template-columns: 1fr auto; gap: 2.5rem; align-items: start;
-  }
-
-  .bio-text p { color: var(--text); font-size: 0.95rem; line-height: 1.75; }
-  .bio-text p + p { margin-top: 0.9rem; }
-
-  .bio-links { display: flex; flex-direction: column; gap: 0.6rem; min-width: 160px; }
-
-  .bio-link {
-    display: flex; align-items: center; gap: 0.6rem;
-    padding: 0.65rem 0.9rem; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 6px;
-    color: var(--muted); font-size: 0.85rem; text-decoration: none;
-    transition: all 0.15s; white-space: nowrap;
-  }
-
-  .bio-link:hover { border-color: var(--accent2); color: var(--white); }
-
-  /* ─── Footer ───────────────────────────────────────────────── */
-  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
-
-  .footer-inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .footer-copy { font-size: 0.78rem; color: var(--dim); font-family: var(--mono); }
-
-  /* ─── Mobile ───────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .nav-links { gap: 1.2rem; }
-    .hero-inner { grid-template-columns: 1fr; }
-    .hero-photo-wrap { margin-top: 1.5rem; }
-    .hero-photo-frame { max-width: 160px; }
-    .hero-actions { flex-direction: column; }
-    .btn { justify-content: center; }
-    .featured-articles-grid { grid-template-columns: 1fr; }
-    .pillars { grid-template-columns: 1fr; }
-    .bio-block { grid-template-columns: 1fr; }
-    .bio-links { flex-direction: row; flex-wrap: wrap; min-width: unset; }
-    section { padding: 3.5rem 0; }
-    #hero { padding-top: 6rem; padding-bottom: 3.5rem; }
-  }
-
-  @media (max-width: 600px) {
-    .featured-articles-grid { gap: 0.75rem; }
-    .pillars { gap: 0.75rem; }
-    .footer-inner { flex-direction: column; text-align: center; }
-  }
-
-  @media (max-width: 480px) {
-    .container { padding: 0 1rem; }
-    .nav-links { gap: 0.85rem; }
-    .nav-links a { font-size: 0.7rem; }
-    h1 { font-size: clamp(1.9rem, 9vw, 2.5rem); }
-    .hero-sub { font-size: 0.93rem; }
-    #hero { padding-top: 5rem; }
-  }
-</style>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/site.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121a1e">
+  <title>Piotr Zawieja — Analytics Engineer</title>
+  <meta name="description" content="Analytics engineering, semantic layers, and practical AI agents—with context, evaluation, accuracy, and cost in mind.">
+  <link rel="canonical" href="https://goldlayer.dev/">
+  <meta property="og:title" content="Piotr Zawieja — Analytics Engineer">
+  <meta property="og:description" content="Analytics engineering, semantic layers, and practical AI agents—with context, evaluation, accuracy, and cost in mind.">
+  <meta property="og:url" content="https://goldlayer.dev/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://goldlayer.dev/og-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/site-fern.css">
 </head>
 <body>
-
-<!-- ─── Navigation ──────────────────────────────────────────── -->
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<!-- ─── Hero ─────────────────────────────────────────────────── -->
-<section id="hero">
-  <div class="container">
-    <div class="hero-inner">
-      <div class="hero-text">
-        <div class="hero-meta">
-          <span class="hero-dot"></span>
-          <span class="hero-status">Analytics engineering · 8+ years in B2B SaaS</span>
-        </div>
-
-        <h1 class="hero-title">
-          Make data useful.
-          <span class="line-muted">Make it trusted.</span>
-        </h1>
-
-        <p class="hero-sub">
-          I build dependable analytics foundations — and explore how AI can make them more useful without compromising trust.
-        </p>
-
-        <div class="hero-actions">
-          <a href="/writing/" class="btn btn-primary">Read the field notes →</a>
-          <a href="/projects/" class="btn btn-ghost">Explore my work</a>
-        </div>
-      </div>
-
-      <div class="hero-photo-wrap">
-        <div class="hero-photo-frame">
-          <img src="assets/piotr-zawieja.jpg" alt="Piotr Zawieja seated by a window" loading="eager">
-        </div>
-        <div class="hero-note">
-          <div class="hero-note-label">A principle I work by</div>
-          <div class="hero-note-title">A metric is only useful when people trust it.</div>
-          <div class="hero-note-foot">Model → test → trust</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<div class="container">
-  <div class="proof-strip">
-    <div class="proof-intro">The work sits where trustworthy data meets practical AI.</div>
-    <div class="proof-item"><strong>8+ years</strong><span>B2B SaaS analytics</span></div>
-    <div class="proof-item"><strong>dbt · Snowflake</strong><span>Production data stacks</span></div>
-    <div class="proof-item"><strong>Governed AI</strong><span>Useful, auditable systems</span></div>
-  </div>
-</div>
-
-<!-- ─── Featured writing ─────────────────────────────────────── -->
-<section id="writing">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">Field notes · latest writing</p>
-      <h2>Ideas tested in real systems.</h2>
-    </div>
-
-<!-- WRITING_START -->
-    <div class="featured-articles-grid">
-      <a href="writing/semantic-layer-agent-harden.html" class="article-feature">
-        <div class="kicker">AI · dbt · Field notes</div>
-        <div>
-          <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
-          <p>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
-        </div>
-        <div class="article-meta"><span>12 min read</span><span>30 Jun 2026 ↗</span></div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
       </a>
-      <div class="article-list">
-        <a class="article-row" href="writing/semantic-layer-agent-build.html">
-          <div class="meta">AI · dbt · 11 min</div>
-          <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
-        </a>
-        <a class="article-row" href="writing/agents-on-semantic-layer-101.html">
-          <div class="meta">AI · dbt · 15 min</div>
-          <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
-        </a>
-      </div>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-      <p class="writing-view-all"><a href="writing/">View all articles →</a></p>
-    <!-- WRITING_END -->
+  </header>
 
-    <div class="pillars">
-      <div class="pillar">
-        <div class="pillar-icon">⚙</div>
-        <h3>AI in analytics engineering</h3>
-        <p>Agents, evals, governed SQL generation — what production-ready actually means when you put an LLM near your data.</p>
+  <main class="container">
+    <section class="home-hero">
+      <div>
+        <p class="eyebrow">Analytics engineering · Semantic layers · AI agents</p>
+        <h1>Make data useful.<br><em>Make it trusted.</em></h1>
+        <p class="hero-copy">I build dependable analytics foundations and focus on AI agents grounded in semantic layers—with clear context, rigorous evaluation, and cost in mind.</p>
+        <div class="actions">
+          <a class="button" href="/writing/">Read the field notes <span aria-hidden="true">→</span></a>
+          <a class="button secondary" href="/projects/">Explore my work</a>
+        </div>
       </div>
-      <div class="pillar">
-        <div class="pillar-icon">$</div>
-        <h3>dbt &amp; Snowflake</h3>
-        <p>Practical patterns for revenue metrics, incremental models, data contracts, and trust at scale.</p>
+      <aside class="principle-card" aria-label="A principle I work by">
+        <p class="kicker">A principle I work by</p>
+        <blockquote>A metric is only useful when its definition and context are clear.</blockquote>
+        <p class="principle-flow">Define <b>→</b> test <b>→</b> trust</p>
+      </aside>
+    </section>
+
+    <section class="proof-strip" aria-label="Experience and focus">
+      <p class="proof-intro">The work sits where trustworthy data meets practical AI.</p>
+      <div class="proof-item"><strong>8+ years</strong><span>B2B SaaS analytics</span></div>
+      <div class="proof-item"><strong>dbt · Snowflake</strong><span>Production data stacks</span></div>
+      <div class="proof-item"><strong>Semantic-layer AI</strong><span>Context · evaluation · cost</span></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">Field notes · latest writing</p>
+          <h2>Ideas tested in real systems.</h2>
+        </div>
+        <a class="section-link" href="/writing/">All field notes →</a>
       </div>
-      <div class="pillar">
-        <div class="pillar-icon">◈</div>
-        <h3>Data quality &amp; governance</h3>
-        <p>When and how to test, how to own a metric layer, and how to make self-serve data actually work.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Featured project ──────────────────────────────────────── -->
-<section id="projects">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// open source</p>
-      <h2>Featured project</h2>
-    </div>
-
-    <a href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener" class="featured-project">
-      <p class="project-title">Revenue Intelligence Agent</p>
-      <p class="project-desc">
-        Governance-first AI demo for Customer Success teams. LLM queries restricted to a curated dbt allowlist — parameterised templates only, no free-form SQL generation. Built to mirror how I'd deploy this in production: zero hallucination risk on metric queries, full audit trail.
-      </p>
-      <div class="project-tags">
-        <span class="tag">dbt</span>
-        <span class="tag">DuckDB</span>
-        <span class="tag">Python</span>
-        <span class="tag">Streamlit</span>
-        <span class="tag">AI guardrails</span>
-      </div>
-      <p class="project-link-indicator">↗ github.com/PZawieja/revenue-intelligence-agent</p>
-    </a>
-
-    <p style="margin-top:1.25rem">
-      <a href="/projects/" style="font-family:var(--mono);font-size:0.78rem;color:var(--accent2)">All projects →</a>
-    </p>
-  </div>
-</section>
-
-<!-- ─── About ─────────────────────────────────────────────────── -->
-<section id="about">
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// about</p>
-      <h2>Who I am</h2>
-    </div>
-
-    <div class="bio-block">
-      <div class="bio-text">
-        <p>
-          Analytics Engineer with 8+ years in B2B SaaS revenue data. I build the warehouse layer that ends the "whose numbers are right?" argument — clean definitions, tested pipelines, one version of MRR, churn, and pipeline that everyone can rely on.
-        </p>
-        <p>
-          My current focus is <strong>AI as a governed layer</strong> on top of warehouse assets. Not replacing analytical rigour, but amplifying it with auditable, production-ready LLM tooling. That's also the gap I write into: there isn't enough specific, technical content on how AI changes the analytics engineering job. I'm trying to fix that.
-        </p>
-        <p>
-          <a href="/about/">Full background, stack, and impact →</a>
-        </p>
-      </div>
-
-      <div class="bio-links">
-        <a href="https://linkedin.com/in/piotr-zawieja" class="bio-link" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.55;flex-shrink:0"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-          LinkedIn
+      <!-- WRITING_START -->
+      <div class="home-writing">
+        <a class="home-feature" href="/writing/semantic-layer-agent-harden.html" data-category="AI">
+          <div>
+            <p class="kicker">Latest field note · AI · dbt</p>
+            <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+            <p>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
+          </div>
+          <div class="home-feature-meta"><span>12 min read</span><span>30 Jun 2026 · Read article →</span></div>
+      </a>
+        <div class="home-note-list" aria-label="More recent articles">
+          <a class="home-note" href="/writing/semantic-layer-agent-build.html">
+            <p class="kicker">AI · dbt · 11 min</p>
+            <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
         </a>
-        <a href="https://github.com/PZawieja" class="bio-link" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.55;flex-shrink:0"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
+          <a class="home-note" href="/writing/agents-on-semantic-layer-101.html">
+            <p class="kicker">AI · dbt · 15 min</p>
+            <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That&#x27;s the problem.</h3>
         </a>
-        <a href="mailto:piotr.zawieja.pl@gmail.com" class="bio-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.55;flex-shrink:0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-          Email
-        </a>
+        </div>
       </div>
-    </div>
-  </div>
-</section>
+      <!-- WRITING_END -->
+    </section>
 
-<!-- ─── Footer ─────────────────────────────────────────────────── -->
-<footer>
-  <div class="footer-inner">
-    <span class="footer-copy">© 2026 Piotr Zawieja · Built with HTML &amp; CSS, deployed on GitHub Pages · <a href="/writing/feed.xml" style="color:inherit">RSS</a></span>
-  </div>
-</footer>
+    <section class="section">
+      <div class="section-heading">
+        <div>
+          <p class="section-label">Open source · selected work</p>
+          <h2>Trustworthy by design. Useful in practice.</h2>
+        </div>
+        <a class="section-link" href="/projects/">Browse all projects →</a>
+      </div>
+      <a class="home-project" href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener noreferrer">
+        <div>
+          <p class="kicker">Featured project · Revenue Intelligence Agent</p>
+          <h3>Let AI answer questions. Keep the metrics governed.</h3>
+          <p>A Customer Success demo using curated dbt metrics and parameterised templates instead of free-form SQL generation.</p>
+        </div>
+        <span class="section-link">View on GitHub ↗</span>
+      </a>
+    </section>
 
+    <section class="about-teaser">
+      <div>
+        <p class="section-label">A little about me</p>
+        <h2>Good data work is invisible when it works—and expensive when it doesn’t.</h2>
+        <p>I build dependable analytics foundations and explore how semantic layers can give AI agents useful context without losing analytical rigour.</p>
+      </div>
+      <a class="button secondary" href="/about/">More about me</a>
+    </section>
+
+    <footer class="site-footer">
+      <span>© 2026 Piotr Zawieja</span>
+      <div class="footer-links">
+        <a href="/writing/">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+        <a href="/writing/feed.xml">RSS</a>
+        <a href="https://github.com/PZawieja">GitHub</a>
+        <a href="https://linkedin.com/in/piotr-zawieja">LinkedIn</a>
+        <a href="mailto:piotr.zawieja.pl@gmail.com">Email</a>
+      </div>
+    </footer>
+  </main>
 </body>
 </html>

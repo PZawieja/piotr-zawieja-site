@@ -9,7 +9,7 @@
 <meta property="og:description" content="SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.">
 <meta property="og:url" content="https://goldlayer.dev/writing/ai-analytics-not-sql-generation.html">
 <meta property="og:type" content="article">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/ai-analytics-not-sql-generation/postmortem.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
 <style>
@@ -495,41 +495,57 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">AI</span>
-      <span class="meta-date">28 Jun 2026 · 11 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">Six analytics jobs I've handed to AI — none of them are writing SQL</h1>
-    <p class="article-lede">SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</p>
   </header>
 
-  <div class="article-body">
-    <p>Every conference talk about AI in analytics ends the same way: a demo of SQL generation. Prompt in, query out, gasps from the audience.</p>
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span>28 Jun 2026 · 11 min read</span>
+        </div>
+        <h1 class="article-title">Six analytics jobs I've handed to AI — none of them are writing SQL</h1>
+        <p class="article-deck">SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#1-writing-the-first-draft-of-a-data-incident-postmortem">1. Writing the first draft of a data incident postmortem</a></li>
+<li><a href="#2-turning-we-need-customer-health-into-a-metric-specification">2. Turning "we need customer health" into a metric specification</a></li>
+<li><a href="#3-finding-the-gaps-in-your-data-model">3. Finding the gaps in your data model</a></li>
+<li><a href="#4-generating-edge-case-seed-data">4. Generating edge-case seed data</a></li>
+<li><a href="#5-writing-schemayml-descriptions-that-are-actually-useful">5. Writing schema.yml descriptions that are actually useful</a></li>
+<li><a href="#6-plain-english-impact-analysis-before-a-breaking-change">6. Plain-English impact analysis before a breaking change</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Every conference talk about AI in analytics ends the same way: a demo of SQL generation. Prompt in, query out, gasps from the audience.</p>
 <p>It's fine. But it's not where I've saved the most time.</p>
 <p>After eighteen months of putting AI into my analytics engineering workflow, the tasks that actually moved the needle have nothing to do with writing SQL. The highest-ROI uses are all in the parts of the job that aren't code — the translation layer between business questions and data models, the explanations nobody has time to write, the gaps that only become visible when you step back from the query editor.</p>
 <p>Here are six.</p>
 <hr />
-<h2>1. Writing the first draft of a data incident postmortem</h2>
+<h2 id="1-writing-the-first-draft-of-a-data-incident-postmortem">1. Writing the first draft of a data incident postmortem</h2>
 <p>You wake up to a Slack message: "Revenue is down 40% in the dashboard." By the time you've dug through the lineage, checked the git log, and confirmed it's a pipeline failure in the currency conversion step — not an actual revenue drop — you're out of time and out of mental energy to write an explanation for the VP of Finance.</p>
 <p>This is the job I now hand to AI immediately.</p>
 <p>Think of it like having a translator in the room. You understand what happened technically; AI translates that into language the stakeholder can actually use.</p>
@@ -561,7 +577,7 @@ Write a plain-English explanation (3-4 paragraphs) that:
 </figure>
 
 <hr />
-<h2>2. Turning "we need customer health" into a metric specification</h2>
+<h2 id="2-turning-we-need-customer-health-into-a-metric-specification">2. Turning "we need customer health" into a metric specification</h2>
 <p>The most expensive moment in analytics work isn't writing the model — it's writing the <em>wrong</em> model. This happens when a vague stakeholder request gets encoded directly into a dbt project without anyone pressure-testing what they actually meant.</p>
 <p>"We need a customer health score" can mean seventeen different things. I now run every ambiguous business request through an AI-assisted translation step before opening my text editor.</p>
 <p>This is like having an experienced BA on call: someone who asks the dumb questions before the project is already half-built.</p>
@@ -582,7 +598,7 @@ The most expensive model to build is the one that answers the wrong question. AI
 </div>
 
 <hr />
-<h2>3. Finding the gaps in your data model</h2>
+<h2 id="3-finding-the-gaps-in-your-data-model">3. Finding the gaps in your data model</h2>
 <p>Here's a trick I use before any major project handoff: describe your existing dimensional model to an LLM and ask what it can't answer.</p>
 <p>It's the same function as a good code reviewer who asks "what about this edge case?" — except applied to your data model design, and available at 11pm when your actual colleagues are not.</p>
 <pre><code>Here is the data model for our revenue analytics area:
@@ -603,7 +619,7 @@ List at least ten, ordered by how likely a stakeholder is to ask them.
 </div>
 
 <hr />
-<h2>4. Generating edge-case seed data</h2>
+<h2 id="4-generating-edge-case-seed-data">4. Generating edge-case seed data</h2>
 <p>dbt seeds are great for unit-testing model logic. The problem is that test data you write manually tends to test the happy path. You add a null, maybe a duplicate, then you stop.</p>
 <p>AI generates the edge cases you wouldn't think of — the same way a QA engineer who has seen production break thinks differently from the developer who wrote the code.</p>
 <p>The prompt:</p>
@@ -635,7 +651,7 @@ Generate a CSV seed file with 20 rows that thoroughly tests this logic. Include:
 </figure>
 
 <hr />
-<h2>5. Writing schema.yml descriptions that are actually useful</h2>
+<h2 id="5-writing-schemayml-descriptions-that-are-actually-useful">5. Writing schema.yml descriptions that are actually useful</h2>
 <p>Every dbt project has the same problem: the models have descriptions, and they all say "this model contains order data." Nobody wrote real descriptions because writing twenty-word descriptions for every column in forty models is tedious beyond reason.</p>
 <p>AI is good at this, but only if you give it enough context. The mistake is pasting column names and asking for definitions. The trick is pasting the SQL — and asking for descriptions derived from the actual logic.</p>
 <p>Think of it like asking someone to explain what the model <em>does</em>, not just what it <em>is called</em>.</p>
@@ -660,7 +676,7 @@ Write a schema.yml block for this model. For each column:
 </div>
 
 <hr />
-<h2>6. Plain-English impact analysis before a breaking change</h2>
+<h2 id="6-plain-english-impact-analysis-before-a-breaking-change">6. Plain-English impact analysis before a breaking change</h2>
 <p>Before you change the grain of a fact table or rename a key column, you want to know what breaks downstream. <code>dbt ls --select &lt;model&gt;+</code> gives you a list of model names. Understanding <em>what</em> each downstream model does with your column is a different question.</p>
 <p>This is the difference between a search result and an explanation. AI can turn the first into the second.</p>
 <pre><code class="language-bash"># Get the downstream lineage
@@ -733,63 +749,86 @@ For each downstream model:
 <li><strong>Impact analysis is checklist generation, not verification</strong> — use AI to build the list of models to inspect; do the actual inspection yourself by reading the SQL.</li>
 </ul>
 </div>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="semantic-layer-agent-harden.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</p>
-        <span class="related-date">30 Jun 2026 · 12 min</span>
-      </a>
-      
-      <a href="semantic-layer-agent-build.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</p>
-        <span class="related-date">30 Jun 2026 · 11 min</span>
-      </a>
-      
-      <a href="agents-on-semantic-layer-101.html" class="related-card">
-        <span class="related-tag">AI</span>
-        <p class="related-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</p>
-        <span class="related-date">30 Jun 2026 · 15 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+            <a href="agents-on-semantic-layer-101.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+              <span>15 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

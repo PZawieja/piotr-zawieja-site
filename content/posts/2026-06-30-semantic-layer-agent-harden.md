@@ -10,6 +10,9 @@ tags:
 - dbt
 read_time: 12
 status: published
+feature_image: ../assets/posts/semantic-layer-agent-harden/test-results.png
+feature_image_alt: Five test questions comparing the naive agent with the hardened agent.
+feature_image_caption: A five-question comparison of the naive and hardened agents.
 ---
 
 <div class="callout callout-info">

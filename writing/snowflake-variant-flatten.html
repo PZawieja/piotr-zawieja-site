@@ -495,36 +495,56 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<article class="article-wrap">
-
-  <header>
-    <div class="article-meta">
-      <span class="meta-tag">Snowflake</span>
-      <span class="meta-date">27 Jun 2026 · 9 min read</span>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
     </div>
-    <h1 class="article-title">You've been flattening Snowflake JSON wrong</h1>
-    <p class="article-lede">LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.</p>
   </header>
 
-  <div class="article-body">
-    <p>A Salesforce webhook dumps events into Snowflake. They land in a VARIANT column called <code>payload</code>. Someone needs the account name out of it. Within ten minutes, this query exists in your codebase:</p>
+  <main>
+    <article class="container article-layout" data-category="Snowflake">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">Snowflake</span>
+          <span>27 Jun 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">You've been flattening Snowflake JSON wrong</h1>
+        <p class="article-deck">LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#what-variant-actually-is">What VARIANT actually is</a></li>
+<li><a href="#tool-1-dot-notation-for-scalar-fields">Tool 1: Dot-notation for scalar fields</a></li>
+<li><a href="#tool-2-lateral-flatten-for-arrays">Tool 2: LATERAL FLATTEN for arrays</a><ul>
+<li><a href="#the-cardinality-problem">The cardinality problem</a></li>
+<li><a href="#flatten-for-key-value-objects">FLATTEN for key-value objects</a></li>
+</ul>
+</li>
+<li><a href="#tool-3-parse-at-load-time">Tool 3: Parse at load time</a></li>
+<li><a href="#choosing-the-right-tool">Choosing the right tool</a></li>
+<li><a href="#side-by-side">Side by side</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>A Salesforce webhook dumps events into Snowflake. They land in a VARIANT column called <code>payload</code>. Someone needs the account name out of it. Within ten minutes, this query exists in your codebase:</p>
 <pre><code class="language-sql">SELECT
       f.value:account_name::STRING AS account_name
 FROM  raw.events,
@@ -533,7 +553,7 @@ LATERAL FLATTEN(INPUT =&gt; payload:records) f
 <p>It works in dev. On 10 million rows it takes four minutes. Six months later, half your warehouse credits come from JSON queries and nobody quite remembers why.</p>
 <p>The problem isn't VARIANT. It's using <code>LATERAL FLATTEN</code> as a reflex when dot-notation would be faster, or parsing at load time would be better still. There are three tools for Snowflake JSON and most teams only reach for one of them.</p>
 <hr />
-<h2>What VARIANT actually is</h2>
+<h2 id="what-variant-actually-is">What VARIANT actually is</h2>
 <p>Think of a regular Snowflake column like a spreadsheet: every cell in a column holds the same kind of data — all integers, all timestamps. Snowflake stores each column as a compressed columnar block and builds statistics on it (min/max, distinct count). That's what makes typed column filters fast.</p>
 <p>A VARIANT column is like a filing cabinet drawer where each slot holds whatever arrived. One row might have a flat JSON object with five keys. The next might have a nested object three levels deep. The one after might have an array of fifty items. No rules about shape.</p>
 <p>Snowflake stores VARIANT as a compressed internal binary format, and it handles deep nesting without issues. The flexibility is real. But Snowflake can't build the same statistics on VARIANT data that it builds on typed columns — it doesn't know at planning time how many distinct values <code>payload:account_id</code> contains. That's the cost, and it shows up in query profiles.</p>
@@ -543,7 +563,7 @@ LATERAL FLATTEN(INPUT =&gt; payload:records) f
 </div>
 
 <hr />
-<h2>Tool 1: Dot-notation for scalar fields</h2>
+<h2 id="tool-1-dot-notation-for-scalar-fields">Tool 1: Dot-notation for scalar fields</h2>
 <p>When you need a single value from a JSON object — not an array, just a field — dot-notation is the right tool. It's fast, it reads clearly, and it doesn't require any joins or unnesting.</p>
 <pre><code class="language-sql">SELECT
       payload:event_type::STRING          AS event_type
@@ -564,7 +584,7 @@ WHERE payload:event_type::STRING = 'payment_completed'
 
 <p>Dot-notation handles nested objects cleanly. What it can't handle is arrays — if <code>payload:line_items</code> is a JSON array, <code>payload:line_items::STRING</code> gives you the entire array serialised as a string, which isn't useful. That's where FLATTEN comes in.</p>
 <hr />
-<h2>Tool 2: LATERAL FLATTEN for arrays</h2>
+<h2 id="tool-2-lateral-flatten-for-arrays">Tool 2: LATERAL FLATTEN for arrays</h2>
 <p>LATERAL FLATTEN exists to explode arrays into rows. It is the right tool when you genuinely have an array to unnest. It is the wrong tool when you're using it to reach a scalar field.</p>
 <p>Here's the mental model: each row in your table is a bag of items. LATERAL FLATTEN reaches into each bag and pulls out every item as its own row. A bag with 3 items becomes 3 rows. A bag with 100 items becomes 100 rows.</p>
 <pre><code class="language-sql">-- One row per order before; one row per line item after
@@ -583,7 +603,7 @@ FROM  raw.orders o
 <p>If a row has an empty array or a NULL in the array field, LATERAL FLATTEN silently drops that row from your result. You lose orders with no line items, users with no events, accounts with no contacts — without any error. Add <code>OUTER => TRUE</code> to keep those rows with NULLs: <code>LATERAL FLATTEN(INPUT => o.payload:line_items, OUTER => TRUE) f</code></p>
 </div>
 
-<h3>The cardinality problem</h3>
+<h3 id="the-cardinality-problem">The cardinality problem</h3>
 <p>This is where teams get into trouble with FLATTEN. A query that looks like "one row per order" now returns "one row per line item across all orders." If you then aggregate without realising this, you multiply counts, sums, and averages silently.</p>
 <div class="pull-quote">
 LATERAL FLATTEN doesn't warn you that it multiplied your rows. The bug shows up in your aggregations two weeks later when the numbers don't match the source system.
@@ -598,7 +618,7 @@ LATERAL FLATTEN doesn't warn you that it multiplied your rows. The bug shows up 
 FROM  raw.orders
 </code></pre>
 <p>If <code>max_per_order</code> is 300 and you have 10 million orders, your flattened result set could be hundreds of millions of rows. Know this before you build a model on top of it.</p>
-<h3>FLATTEN for key-value objects</h3>
+<h3 id="flatten-for-key-value-objects">FLATTEN for key-value objects</h3>
 <p>FLATTEN also handles the case where you have a JSON object with unknown or variable keys and you need to pivot it long. Use <code>f.key</code> to get the field name and <code>f.value</code> to get the value:</p>
 <pre><code class="language-sql">-- Explode {&quot;clicks&quot;: 4, &quot;opens&quot;: 12, &quot;bounces&quot;: 0} into rows
 SELECT
@@ -610,7 +630,7 @@ FROM  raw.email_events
 </code></pre>
 <p>This is legitimate use of FLATTEN on an object (not an array). The same cardinality warning applies — each key-value pair becomes a row.</p>
 <hr />
-<h2>Tool 3: Parse at load time</h2>
+<h2 id="tool-3-parse-at-load-time">Tool 3: Parse at load time</h2>
 <p>When the JSON schema is stable and you query the same fields over and over, the best approach is to parse once in your staging model and never touch VARIANT again downstream.</p>
 <pre><code class="language-sql">-- models/staging/stg_webhook_events.sql
 SELECT
@@ -633,7 +653,7 @@ FROM  {{ source('webhook', 'raw_events') }}
 </div>
 
 <hr />
-<h2>Choosing the right tool</h2>
+<h2 id="choosing-the-right-tool">Choosing the right tool</h2>
 <div class="decision-tree">
 <p class="decision-tree-title">Which VARIANT access pattern to use</p>
 <div class="decision-step">
@@ -655,7 +675,7 @@ FROM  {{ source('webhook', 'raw_events') }}
 </div>
 
 <hr />
-<h2>Side by side</h2>
+<h2 id="side-by-side">Side by side</h2>
 <div class="tradeoff-grid">
 <div class="tradeoff-row header">
 <span class="tradeoff-cell">Approach</span>
@@ -698,57 +718,81 @@ FROM  {{ source('webhook', 'raw_events') }}
 </div>
 
 <p>Which JSON pattern has cost you the most — cardinality explosions from FLATTEN, type casting bugs on dirty payloads, or schema drift from the source system silently breaking your queries?</p>
-  </div>
 
-  <div class="rss-nudge">
-    New posts every week or two. <a href="/writing/feed.xml">Subscribe via RSS →</a>
-  </div>
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
 
-  
-  <div class="related-section">
-    <p class="related-label">// more like this</p>
-    <div class="related-grid">
-      
-      <a href="snowflake-clustering-keys-guide.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">Snowflake clustering keys: what they are, when they help, and when to skip them</p>
-        <span class="related-date">16 Jun 2026 · 10 min</span>
-      </a>
-      
-      <a href="snowflake-cortex-analyst-in-practice.html" class="related-card">
-        <span class="related-tag">Snowflake</span>
-        <p class="related-title">Snowflake Cortex Analyst in practice: what the demo doesn't show you</p>
-        <span class="related-date">12 Jun 2026 · 8 min</span>
-      </a>
-      
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="snowflake-clustering-keys-guide.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 16 Jun 2026</span>
+              <h3>Snowflake clustering keys: what they are, when they help, and when to skip them</h3>
+              <span>10 min read →</span>
+            </a>
+            <a href="snowflake-cortex-analyst-in-practice.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 12 Jun 2026</span>
+              <h3>Snowflake Cortex Analyst in practice: what the demo doesn't show you</h3>
+              <span>8 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
     </div>
-  </div>
-  
-
-  <footer class="article-footer">
-    <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. All code examples use synthetic data.</p>
-    <a href="/writing/" class="back-link">← all writing</a>
   </footer>
 
-</article>
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
 
-<div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
-<script>
-  (function () {
-    var overlay = document.getElementById('lightbox-overlay');
-    var overlayImg = document.getElementById('lightbox-img');
-    document.querySelectorAll('.article-body img').forEach(function (img) {
-      img.addEventListener('click', function () {
-        overlayImg.src = img.src;
-        overlayImg.alt = img.alt;
-        overlay.classList.add('active');
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
       });
-    });
-    overlay.addEventListener('click', function () {
-      overlay.classList.remove('active');
-    });
-  })();
-</script>
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>

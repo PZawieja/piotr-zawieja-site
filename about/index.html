@@ -1,497 +1,169 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About — Piotr Zawieja</title>
-<meta name="description" content="Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics. 8+ years in B2B SaaS.">
-<meta property="og:title" content="About — Piotr Zawieja">
-<meta property="og:description" content="Analytics Engineer specialising in revenue data, dbt, Snowflake, and AI-assisted analytics.">
-<meta property="og:url" content="https://goldlayer.dev/about/">
-<meta property="og:type" content="website">
-<meta property="og:image" content="https://goldlayer.dev/og-default.png">
-<meta name="twitter:card" content="summary_large_image">
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:      #0d0d0f;
-    --surface: #141417;
-    --border:  #232328;
-    --accent:  #e8d5b0;
-    --accent2: #c8a96e;
-    --text:    #d4d0c8;
-    --muted:   #7a7870;
-    --dim:     #4a4844;
-    --white:   #f0ece4;
-    --mono:    'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
-    --sans:    'Inter', system-ui, -apple-system, sans-serif;
-    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
-    --max:     900px;
-    --gap:     2rem;
-  }
-
-  html { scroll-behavior: smooth; }
-
-  body {
-    font-family: var(--sans);
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.65;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  h1, h2, h3 { font-family: var(--serif); font-weight: 700; color: var(--white); letter-spacing: -0.02em; }
-  h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); line-height: 1.2; }
-  h3 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0; font-family: var(--sans); }
-
-  .label {
-    font-family: var(--mono); font-size: 0.7rem;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent2);
-  }
-
-  a { color: var(--accent); text-decoration: none; transition: color 0.15s; }
-  a:hover { color: var(--white); }
-  p { color: var(--text); }
-  strong { color: var(--white); font-weight: 600; }
-
-  /* ─── Layout ───────────────────────────────────────────────── */
-  .container { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; }
-  section { padding: 4rem 0; border-top: 1px solid var(--border); }
-  section:first-of-type { border-top: none; }
-
-  /* ─── Nav ──────────────────────────────────────────────────── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(13,13,15,0.88);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-  }
-
-  nav .inner {
-    max-width: var(--max); margin: 0 auto; padding: 0 1.5rem;
-    height: 52px; display: flex; align-items: center; justify-content: space-between;
-  }
-
-  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); letter-spacing: 0.05em; }
-  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
-  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
-
-  .nav-links { display: flex; gap: 1.8rem; list-style: none; }
-  .nav-links a { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.06em; text-transform: lowercase; text-decoration: none; transition: color 0.15s; }
-  .nav-links a:hover, .nav-links a.active { color: var(--accent); }
-
-  /* ─── Page header ──────────────────────────────────────────── */
-  .page-top { padding: 7rem 0 3rem; }
-
-  .page-header { margin-bottom: 0; }
-  .page-header .label { margin-bottom: 0.5rem; }
-
-  .page-title {
-    font-family: var(--serif); font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 700; color: var(--white); letter-spacing: -0.02em; line-height: 1.1;
-    margin-bottom: 0.75rem;
-  }
-
-  .page-sub { font-size: 1rem; color: var(--muted); max-width: 560px; line-height: 1.65; }
-
-  /* ─── Section header ───────────────────────────────────────── */
-  .section-header { margin-bottom: 2rem; }
-  .section-header .label { margin-bottom: 0.5rem; }
-  .section-sub { font-size: 0.9rem; color: var(--muted); margin-top: 0.5rem; max-width: 640px; line-height: 1.6; }
-
-  /* ─── About ────────────────────────────────────────────────── */
-  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
-  .about-text p + p { margin-top: 1rem; }
-
-  .facts-list { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
-  .facts-list li { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.9rem; color: var(--text); }
-  .facts-list li::before { content: '→'; color: var(--accent2); font-family: var(--mono); font-size: 0.75rem; margin-top: 0.15rem; flex-shrink: 0; }
-
-  /* ─── Stack ────────────────────────────────────────────────── */
-  .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
-
-  .stack-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem 1.25rem; transition: border-color 0.15s; }
-  .stack-card:hover { border-color: var(--dim); }
-
-  .stack-card-label { font-family: var(--mono); font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent2); margin-bottom: 0.6rem; }
-  .stack-card-items { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-
-  .tag { font-family: var(--mono); font-size: 0.7rem; background: var(--bg); color: var(--muted); border: 1px solid var(--border); border-radius: 3px; padding: 0.15rem 0.5rem; }
-
-  /* ─── Achievements ─────────────────────────────────────────── */
-  .achievements-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-
-  .achievements-table thead th {
-    text-align: left; padding: 0.65rem 1rem;
-    border-bottom: 1px solid var(--border);
-    font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--accent2); font-weight: 400;
-  }
-
-  .achievements-table thead th:first-child { padding-left: 0; }
-
-  .achievements-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
-  .achievements-table tbody tr:last-child { border-bottom: none; }
-  .achievements-table tbody tr:hover { background: var(--surface); }
-
-  .achievements-table td { padding: 0.9rem 1rem; vertical-align: top; color: var(--text); line-height: 1.5; }
-  .achievements-table td:first-child { padding-left: 0; color: var(--muted); font-family: var(--mono); font-size: 0.75rem; white-space: nowrap; }
-
-  .metric { font-family: var(--mono); font-weight: 600; color: var(--accent); white-space: nowrap; display: block; margin-bottom: 0.15rem; font-size: 0.95rem; }
-  .metric-detail { color: var(--muted); font-size: 0.82rem; }
-
-  /* ─── Contrib cards ────────────────────────────────────────── */
-  .contrib-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
-  .contrib-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-  .contrib-num { font-family: var(--mono); font-size: 0.65rem; color: var(--dim); letter-spacing: 0.08em; }
-  .contrib-card h3 { font-size: 0.88rem; color: var(--white); }
-  .contrib-card p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
-
-  /* ─── Learning ─────────────────────────────────────────────── */
-  .learning-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-  .learning-item { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-  .learning-item h3 { font-size: 0.9rem; color: var(--white); }
-  .learning-item p { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
-
-  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 0.25rem; overflow: hidden; }
-  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; }
-
-  .rule { width: 40px; height: 1px; background: var(--accent2); margin: 1rem 0; }
-
-  /* ─── Contact ──────────────────────────────────────────────── */
-  .contact-inner { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); align-items: start; }
-  .contact-links { display: flex; flex-direction: column; gap: 0.75rem; }
-
-  .contact-link {
-    display: flex; align-items: center; gap: 0.75rem;
-    padding: 0.85rem 1rem; background: var(--surface);
-    border: 1px solid var(--border); border-radius: 6px;
-    color: var(--text); font-size: 0.88rem; transition: all 0.15s; text-decoration: none;
-  }
-
-  .contact-link:hover { border-color: var(--accent2); color: var(--white); }
-  .contact-link-label { font-family: var(--mono); font-size: 0.65rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; margin-left: auto; }
-
-  .contact-note { padding: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; color: var(--muted); line-height: 1.7; }
-  .contact-note strong { color: var(--white); display: block; margin-bottom: 0.5rem; font-size: 1rem; }
-
-  /* ─── Footer ───────────────────────────────────────────────── */
-  footer { border-top: 1px solid var(--border); padding: 2rem 0; }
-  .footer-inner { max-width: var(--max); margin: 0 auto; padding: 0 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-  .footer-copy { font-size: 0.78rem; color: var(--dim); font-family: var(--mono); }
-  .footer-polish { font-size: 0.82rem; color: var(--muted); text-align: right; }
-
-  /* ─── Mobile ───────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .nav-links { gap: 1.2rem; }
-    .nav-links a { font-size: 0.72rem; }
-    .about-grid { grid-template-columns: 1fr; }
-    .contact-inner { grid-template-columns: 1fr; }
-    .contrib-grid { grid-template-columns: 1fr 1fr; }
-    section { padding: 3rem 0; }
-  }
-
-  @media (max-width: 480px) {
-    .page-top { padding: 5.5rem 0 2rem; }
-    .stack-grid { grid-template-columns: 1fr 1fr; }
-    .learning-grid { grid-template-columns: 1fr; }
-    .contrib-grid { grid-template-columns: 1fr; }
-    .container { padding: 0 1rem; }
-    .contact-note { padding: 1rem; }
-    .nav-links { gap: 0.85rem; }
-    /* Achievements → stacked cards */
-    .achievements-table thead { display: none; }
-    .achievements-table, .achievements-table tbody, .achievements-table tr, .achievements-table td { display: block; width: 100%; }
-    .achievements-table tr { background: var(--surface); border: 1px solid var(--border) !important; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
-    .achievements-table tr:last-child { border-bottom: 1px solid var(--border) !important; }
-    .achievements-table td { padding: 0.2rem 0; border: none; }
-    .achievements-table td:first-child { display: block; font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent2); padding-left: 0; margin-bottom: 0.35rem; white-space: normal; }
-  }
-</style>
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/site.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#121a1e">
+  <title>About — Piotr Zawieja</title>
+  <meta name="description" content="Piotr Zawieja is an analytics engineer focused on trustworthy data products, semantic layers, and practical AI agents.">
+  <link rel="canonical" href="https://goldlayer.dev/about/">
+  <meta property="og:title" content="About — Piotr Zawieja">
+  <meta property="og:description" content="Analytics engineering, semantic layers, and practical AI agents—with context, evaluation, accuracy, and cost in mind.">
+  <meta property="og:url" content="https://goldlayer.dev/about/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://goldlayer.dev/og-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/site-fern.css">
 </head>
 <body>
-
-<nav>
-  <div class="inner">
-    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
-      <span class="nav-monogram">PZ</span>
-      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
-    </a></span>
-    <ul class="nav-links">
-      <li><a href="/writing/">writing</a></li>
-      <li><a href="/projects/">projects</a></li>
-      <li><a href="/about/" class="active">about</a></li>
-    </ul>
-  </div>
-</nav>
-
-<div class="page-top">
-  <div class="container">
-    <div class="page-header">
-      <p class="label">// about</p>
-      <h1 class="page-title">Piotr Zawieja</h1>
-      <p class="page-sub">Analytics engineer working at the intersection of data and AI — building, writing, and thinking about where this all goes next.</p>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/" aria-current="page">About</a>
+      </nav>
     </div>
-  </div>
-</div>
+  </header>
 
-<!-- ─── Background ──────────────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// background</p>
-      <h2>Revenue data, at scale</h2>
-    </div>
-
-    <div class="about-grid">
-      <div class="about-text">
-        <p>
-          I'm an Analytics Engineer with 8+ years building <strong>revenue and GTM data</strong> for B2B SaaS companies. My work sits at the intersection of data engineering, analytics, and business intelligence — building the warehouse layer that finance, CS, and product teams rely on daily.
-        </p>
-        <p>
-          I've led CRM unification projects, rebuilt revenue data pipelines from the ground up, and shipped machine learning models into production CS workflows. Most recently: post-merger integration at a ~200-person company with a dual-entity data stack — unifying two product lines into a single, trusted revenue view.
-        </p>
-        <p>
-          The data stack is becoming intelligent. My current focus is <strong>AI as a governed layer</strong> on top of warehouse assets — not replacing analytical rigour, but amplifying it. That's also what I write about: what it actually means to build AI into analytics engineering in a way that's auditable, maintainable, and worth the hype.
-        </p>
-      </div>
-
-      <ul class="facts-list">
-        <li>8+ years in B2B SaaS analytics, primarily subscription/revenue data</li>
-        <li>Fluent in English; native Polish</li>
-        <li>Comfortable as individual contributor or technical lead</li>
-        <li>Domain focus: GTM &amp; revenue analytics, customer retention, product usage, self-serve reporting</li>
-      </ul>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Stack ──────────────────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// technology</p>
-      <h2>Core stack</h2>
-    </div>
-
-    <div class="stack-grid">
-      <div class="stack-card">
-        <p class="stack-card-label">Warehouse</p>
-        <div class="stack-card-items">
-          <span class="tag">Snowflake</span>
-          <span class="tag">DuckDB</span>
-          <span class="tag">BigQuery</span>
-          <span class="tag">Postgres</span>
+  <main class="container">
+    <section class="about-hero">
+      <div>
+        <p class="eyebrow">About · Analytics engineering · B2B SaaS</p>
+        <h1>Trustworthy data.<br><em>Useful AI.</em></h1>
+        <p class="hero-copy">I’m Piotr, an analytics engineer building dependable data foundations and exploring AI agents grounded in semantic layers—with context, accuracy, evaluation, and cost treated as first-class design concerns.</p>
+        <div class="actions">
+          <a class="button" href="/writing/">Read my field notes <span aria-hidden="true">→</span></a>
+          <a class="button secondary" href="mailto:piotr.zawieja.pl@gmail.com">Get in touch</a>
         </div>
       </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Transformation</p>
-        <div class="stack-card-items">
-          <span class="tag">dbt Core</span>
-          <span class="tag">dbt Cloud</span>
-          <span class="tag">SQL</span>
+      <aside class="portrait-stage" aria-label="A principle I work by">
+        <div class="portrait-frame">
+          <img src="/assets/piotr-zawieja.jpg" alt="Portrait of Piotr Zawieja">
+        </div>
+        <div class="portrait-note">
+          <small>A principle I work by</small>
+          <strong>Make the metric trustworthy before making it conversational.</strong>
+          <span>Define → test → trust</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section about-story">
+      <div class="story-copy">
+        <p class="section-label">How I think about the work</p>
+        <h2>Start with a clear definition. Then make it useful.</h2>
+        <p>Good analytics starts before the dashboard. It starts with shared definitions, well-modelled data, checks that catch meaningful failures, and a clear path from a question to a trusted answer.</p>
+        <p>That foundation is also what makes AI useful in analytics. I’m especially interested in agents that work from governed semantic layers, carry the right context, ask when a question is ambiguous, and can be evaluated against known expectations.</p>
+        <p>My writing and open-source projects explore these ideas with synthetic examples and reusable engineering patterns.</p>
+      </div>
+      <div class="principles" aria-label="Working principles">
+        <div class="principle-row">
+          <span>01</span>
+          <div><strong>Define before you automate</strong><p>An agent can’t repair an unclear metric definition by sounding confident.</p></div>
+        </div>
+        <div class="principle-row">
+          <span>02</span>
+          <div><strong>Test what matters</strong><p>Prefer checks that protect business meaning, not just pipeline mechanics.</p></div>
+        </div>
+        <div class="principle-row">
+          <span>03</span>
+          <div><strong>Make the system inspectable</strong><p>Keep context, tools, evaluation, and operating cost visible to the team.</p></div>
         </div>
       </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Languages</p>
-        <div class="stack-card-items">
-          <span class="tag">Python</span>
-          <span class="tag">SQL (Snowflake / BigQuery)</span>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <div><p class="section-label">What I work on</p><h2>Reliable systems, from model to answer.</h2></div>
+        <p>Practical work across analytics engineering and governed AI.</p>
+      </div>
+      <div class="impact-grid">
+        <article class="impact-card">
+          <p class="kicker">01 · Foundations</p>
+          <h3>Metrics people can agree on</h3>
+          <p>Model shared definitions and trusted data products that work across reporting, teams, and tools.</p>
+          <span class="metric">dbt · Snowflake · data quality</span>
+        </article>
+        <article class="impact-card">
+          <p class="kicker">02 · Applications</p>
+          <h3>AI grounded in business meaning</h3>
+          <p>Explore agent patterns that use governed metrics and explicit context rather than inventing answers.</p>
+          <span class="metric">Semantic layers · context · tools</span>
+        </article>
+        <article class="impact-card">
+          <p class="kicker">03 · Reliability</p>
+          <h3>Evidence before confidence</h3>
+          <p>Use evaluation, deterministic checks, and cost awareness to understand whether an agent is helping.</p>
+          <span class="metric">Accuracy · judges · cost</span>
+        </article>
+      </div>
+    </section>
+
+    <section class="section about-tools">
+      <div>
+        <div class="section-heading">
+          <div><p class="section-label">Tools and topics</p><h2>The current toolkit.</h2></div>
+        </div>
+        <div class="tool-list">
+          <div class="tool-row">
+            <h3>Analytics engineering</h3>
+            <div class="tags"><span class="tag">dbt</span><span class="tag">Snowflake</span><span class="tag">DuckDB</span><span class="tag">SQL</span></div>
+          </div>
+          <div class="tool-row">
+            <h3>Agent foundations</h3>
+            <div class="tags"><span class="tag">Semantic layers</span><span class="tag">Tool design</span><span class="tag">Context</span><span class="tag">Memory</span></div>
+          </div>
+          <div class="tool-row">
+            <h3>Evaluation</h3>
+            <div class="tags"><span class="tag">Golden sets</span><span class="tag">Deterministic checks</span><span class="tag">LLM judges</span><span class="tag">Cost controls</span></div>
+          </div>
+          <div class="tool-row">
+            <h3>Engineering</h3>
+            <div class="tags"><span class="tag">Python</span><span class="tag">GitHub Actions</span><span class="tag">Streamlit</span></div>
+          </div>
         </div>
       </div>
-      <div class="stack-card">
-        <p class="stack-card-label">BI &amp; Viz</p>
-        <div class="stack-card-items">
-          <span class="tag">Tableau</span>
-          <span class="tag">Power BI</span>
-          <span class="tag">Streamlit</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Orchestration</p>
-        <div class="stack-card-items">
-          <span class="tag">Airflow</span>
-          <span class="tag">dbt Cloud jobs</span>
-          <span class="tag">GitHub Actions</span>
-        </div>
-      </div>
-      <div class="stack-card">
-        <p class="stack-card-label">Sources &amp; AI</p>
-        <div class="stack-card-items">
-          <span class="tag">Salesforce</span>
-          <span class="tag">Chargebee</span>
-          <span class="tag">Claude API</span>
-          <span class="tag">OpenAI</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+      <aside class="focus-panel">
+        <p class="kicker">Current focus</p>
+        <h3>Making analytics agents dependable.</h3>
+        <ul>
+          <li><strong>Semantic-layer design</strong><span>Give agents governed metrics and clear definitions.</span></li>
+          <li><strong>Context management</strong><span>Provide the right business context without unnecessary noise.</span></li>
+          <li><strong>Accuracy and evaluation</strong><span>Measure answers with repeatable checks and calibrated judges.</span></li>
+          <li><strong>Cost and operations</strong><span>Keep latency, token use, and failure modes visible.</span></li>
+        </ul>
+      </aside>
+    </section>
 
-<!-- ─── Achievements ───────────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// production impact</p>
-      <h2>Selected achievements</h2>
-    </div>
-
-    <table class="achievements-table">
-      <thead>
-        <tr>
-          <th>Domain</th>
-          <th>Impact</th>
-          <th>Context</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Revenue accuracy</td>
-          <td>
-            <span class="metric">12–15% customer overlap found</span>
-            <span class="metric-detail">8–10% revenue overstatement corrected</span>
-          </td>
-          <td>CRM data reconciliation across two product lines following a post-merger integration. Identified customer overlap and corrected revenue double-counting in subscription data.</td>
-        </tr>
-        <tr>
-          <td>Pipeline performance</td>
-          <td>
-            <span class="metric">78 min → 7 min</span>
-            <span class="metric-detail">91% reduction in CARR pipeline runtime</span>
-          </td>
-          <td>Full rebuild of a subscription revenue pipeline — incremental materialisation, query restructuring, and partitioning strategy. Daily refresh completed well within business hours.</td>
-        </tr>
-        <tr>
-          <td>Churn ML model</td>
-          <td>
-            <span class="metric">86% accuracy · AUC-ROC 0.91</span>
-            <span class="metric-detail">~5% churn reduction in target segment</span>
-          </td>
-          <td>XGBoost churn risk model built on warehouse-sourced features and deployed to production. Scored weekly per account; integrated into customer success tooling.</td>
-        </tr>
-        <tr>
-          <td>Data migration</td>
-          <td>
-            <span class="metric">100k+ records migrated</span>
-            <span class="metric-detail">Zero data loss, zero downtime</span>
-          </td>
-          <td>Subscription data migration during a billing platform consolidation. Full validation suite run against source and destination before cutover; zero rollbacks required.</td>
-        </tr>
-        <tr>
-          <td>Reporting efficiency</td>
-          <td>
-            <span class="metric">~40% reduction</span>
-            <span class="metric-detail">in manual reporting time</span>
-          </td>
-          <td>Standardised dbt models replacing ad-hoc analyst SQL across the reporting layer. Executive dashboards and recurring business reviews moved to self-serve certified extracts.</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="rule" style="margin-top:2.5rem"></div>
-
-    <div class="contrib-grid">
-      <div class="contrib-card">
-        <span class="contrib-num">01</span>
-        <h3>Revenue unification across a dual-entity stack</h3>
-        <p>Post-merger integration at a ~200-person company: unified CRM and billing data across two product lines, resolved 12–15% customer overlap, corrected 8–10% revenue overstatement. Finance and RevOps moved to a single definition of truth.</p>
+    <section class="contact-panel">
+      <div>
+        <p class="section-label">Say hello</p>
+        <h2>Have a thoughtful data or AI problem?</h2>
+        <p>I’m always glad to compare notes on analytics engineering, semantic layers, or building more dependable AI agents.</p>
       </div>
-      <div class="contrib-card">
-        <span class="contrib-num">02</span>
-        <h3>Governed AI on warehouse assets</h3>
-        <p>Built a parameterised query layer on top of certified dbt marts for Customer Success. LLM classifies intent and fills pre-reviewed templates — no free-form SQL generation. Routine questions answered automatically; analysts freed for complex work.</p>
-      </div>
-      <div class="contrib-card">
-        <span class="contrib-num">03</span>
-        <h3>Analytics as a product</h3>
-        <p>Introduced ownership models, documentation standards, and certified mart contracts across the analytics layer — reducing ad-hoc data requests by ~40% and enabling self-serve reporting for Finance, CS, and Product without analyst bottlenecks.</p>
-      </div>
-    </div>
-  </div>
-</section>
+      <a class="button" href="mailto:piotr.zawieja.pl@gmail.com">Email me <span aria-hidden="true">→</span></a>
+    </section>
 
-<!-- ─── Currently Learning ────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// current focus</p>
-      <h2>Currently learning</h2>
-    </div>
-
-    <div class="learning-grid">
-      <div class="learning-item">
-        <h3>LLM tool use &amp; agents</h3>
-        <p>Building governed AI layers on top of warehouse assets — intent routing, parameterised SQL templates, output validation.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+    <footer class="site-footer">
+      <span>© 2026 Piotr Zawieja</span>
+      <div class="footer-links">
+        <a href="/writing/">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/writing/feed.xml">RSS</a>
+        <a href="https://github.com/PZawieja">GitHub</a>
+        <a href="https://linkedin.com/in/piotr-zawieja">LinkedIn</a>
       </div>
-      <div class="learning-item">
-        <h3>dbt Mesh, contracts &amp; semantic layer</h3>
-        <p>Cross-project dependencies, model contracts, and the dbt semantic layer — unified metric definitions queryable across tools without duplicating logic.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Snowflake Cortex</h3>
-        <p>Native ML functions, Cortex Analyst, and document AI for embedding AI directly into the warehouse layer.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
-      </div>
-      <div class="learning-item">
-        <h3>Analytics engineering leadership</h3>
-        <p>Principal-level skills: team enablement, data contracts as organisational boundaries, and analytics-as-a-product thinking.</p>
-        <div class="progress-bar"><div class="progress-fill" style="width:65%"></div></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ─── Contact ────────────────────────────────────────────── -->
-<section>
-  <div class="container">
-    <div class="section-header">
-      <p class="label">// get in touch</p>
-      <h2>Let's talk</h2>
-    </div>
-
-    <div class="contact-inner">
-      <div class="contact-links">
-        <a href="https://linkedin.com/in/piotr-zawieja" class="contact-link" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.6"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-          LinkedIn
-          <span class="contact-link-label">preferred</span>
-        </a>
-        <a href="https://github.com/PZawieja" class="contact-link" target="_blank" rel="noopener">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.6"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
-          <span class="contact-link-label">portfolio</span>
-        </a>
-        <a href="mailto:piotr.zawieja.pl@gmail.com" class="contact-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="opacity:0.6"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>
-          piotr.zawieja.pl@gmail.com
-          <span class="contact-link-label">email</span>
-        </a>
-      </div>
-
-      <div class="contact-note">
-        <strong>Working on something interesting?</strong>
-        If you're thinking about the future of analytics engineering, experimenting with AI on your data stack, or just want to swap notes on what's working and what isn't — I'd like to hear from you.<br><br>
-        LinkedIn is the best starting point. I read everything, though I don't always respond quickly.
-      </div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <div class="footer-inner">
-    <span class="footer-copy">© 2026 Piotr Zawieja · <a href="/writing/feed.xml" style="color:inherit">RSS</a></span>
-    <span class="footer-polish">Budujemy przyszłość analityki danych.</span>
-  </div>
-</footer>
-
+    </footer>
+  </main>
 </body>
 </html>

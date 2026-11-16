@@ -13,6 +13,7 @@ import re
 import sys
 from collections import Counter
 from datetime import datetime, timezone
+from html import escape, unescape
 from pathlib import Path
 
 import frontmatter
@@ -36,6 +37,32 @@ MONTH_ABBR = {
 }
 
 MD_EXTENSIONS = ["extra", "fenced_code", "tables", "nl2br"]
+
+
+def _image_attributes(content_html: str) -> tuple[str | None, str | None]:
+    image = re.search(r"<img\b([^>]*)>", content_html, re.IGNORECASE | re.DOTALL)
+    if not image:
+        return None, None
+
+    attributes = image.group(1)
+
+    def get_attribute(name: str) -> str | None:
+        match = re.search(
+            rf"\b{name}\s*=\s*([\"'])(.*?)\1",
+            attributes,
+            re.IGNORECASE | re.DOTALL,
+        )
+        return unescape(match.group(2)) if match else None
+
+    return get_attribute("src"), get_attribute("alt")
+
+
+def _site_image_url(source: str | None) -> str | None:
+    if not source:
+        return None
+    if source.startswith(("https://", "http://", "/", "data:")):
+        return source
+    return "/" + source.removeprefix("../").removeprefix("./")
 
 
 def _dedent_html(text: str) -> str:
@@ -74,10 +101,10 @@ def parse_posts() -> list:
         published_at = _parse_published_at(post)
         date_formatted = f"{published_at.day} {MONTH_ABBR[published_at.month]} {published_at.year}"
 
-        content_html = markdown.markdown(
-            _dedent_html(post.content),
-            extensions=MD_EXTENSIONS,
-        )
+        md = markdown.Markdown(extensions=[*MD_EXTENSIONS, "toc"])
+        content_html = md.convert(_dedent_html(post.content))
+        first_image, first_image_alt = _image_attributes(content_html)
+        feature_image = _site_image_url(post.get("feature_image") or first_image)
 
         posts.append({
             "title": post["title"],
@@ -90,6 +117,15 @@ def parse_posts() -> list:
             "tags": post["tags"],
             "read_time": post["read_time"],
             "content": content_html,
+            "toc": md.toc,
+            "feature_image": feature_image,
+            "feature_image_alt": post.get("feature_image_alt") or first_image_alt or post["title"],
+            "feature_image_caption": post.get("feature_image_caption", ""),
+            "og_image": (
+                f"{SITE_URL}{feature_image}"
+                if feature_image and feature_image.startswith("/")
+                else feature_image or f"{SITE_URL}/og-default.png"
+            ),
             "url": f"{SITE_URL}/writing/{post['slug']}.html",
         })
 
@@ -134,56 +170,52 @@ def build_writing_index(posts: list, env: Environment) -> None:
 def update_index_html(posts: list) -> None:
     content = INDEX_HTML.read_text(encoding="utf-8")
 
-    if "<!-- WRITING_START -->" not in content:
-        print("ERROR: WRITING_START marker not found in index.html", file=sys.stderr)
+    marker = re.compile(r"<!-- WRITING_START -->.*?<!-- WRITING_END -->", re.DOTALL)
+    if not marker.search(content):
+        print("ERROR: writing section markers not found in index.html", file=sys.stderr)
         sys.exit(1)
 
     featured = posts[0]
+    primary_tag = escape(featured["tags"][0] if featured["tags"] else "Field note", quote=True)
+    featured_tags = " · ".join(escape(tag) for tag in featured["tags"][:2])
     featured_html = (
-        f'      <a href="writing/{featured["slug"]}.html" class="article-feature">\n'
-        f'        <div class="kicker">{" · ".join(featured["tags"][:2])} · Field notes</div>\n'
-        f'        <div>\n'
-        f'          <h3>{featured["title"]}</h3>\n'
-        f'          <p>{featured["description"]}</p>\n'
-        f'        </div>\n'
-        f'        <div class="article-meta"><span>{featured["read_time"]} min read</span>'
-        f'<span>{featured["date_formatted"]} ↗</span></div>\n'
+        f'        <a class="home-feature" href="/writing/{escape(featured["slug"], quote=True)}.html" data-category="{primary_tag}">\n'
+        f'          <div>\n'
+        f'            <p class="kicker">Latest field note · {featured_tags}</p>\n'
+        f'            <h3>{escape(featured["title"])}</h3>\n'
+        f'            <p>{escape(featured["description"])}</p>\n'
+        f'          </div>\n'
+        f'          <div class="home-feature-meta"><span>{escape(str(featured["read_time"]))} min read</span>'
+        f'<span>{escape(featured["date_formatted"])} · Read article →</span></div>\n'
         f'      </a>'
     )
 
     article_rows = []
     for post in posts[1:3]:
-        tags_label = " · ".join(post["tags"][:2])
+        tags_label = " · ".join(
+            "Data quality" if tag == "data-quality" else tag
+            for tag in post["tags"][:2]
+        )
         article_rows.append(
-            f'        <a class="article-row" href="writing/{post["slug"]}.html">\n'
-            f'          <div class="meta">{tags_label} · {post["read_time"]} min</div>\n'
-            f'          <h3>{post["title"]}</h3>\n'
+            f'          <a class="home-note" href="/writing/{escape(post["slug"], quote=True)}.html">\n'
+            f'            <p class="kicker">{escape(tags_label)} · {escape(str(post["read_time"]))} min</p>\n'
+            f'            <h3>{escape(post["title"])}</h3>\n'
             f'        </a>'
         )
 
     rows_html = "\n".join(article_rows)
-    view_all = (
-        '\n      <p class="writing-view-all">'
-        '<a href="writing/">View all articles →</a></p>'
-    ) if len(posts) > 3 else ""
-
     new_block = (
         f"<!-- WRITING_START -->\n"
-        f"    <div class=\"featured-articles-grid\">\n"
+        f"      <div class=\"home-writing\">\n"
         f"{featured_html}\n"
-        f"      <div class=\"article-list\">\n"
+        f"        <div class=\"home-note-list\" aria-label=\"More recent articles\">\n"
         f"{rows_html}\n"
+        f"        </div>\n"
         f"      </div>\n"
-        f"    </div>{view_all}\n"
-        f"    <!-- WRITING_END -->"
+        f"      <!-- WRITING_END -->"
     )
 
-    new_content = re.sub(
-        r"<!-- WRITING_START -->.*?<!-- WRITING_END -->",
-        new_block,
-        content,
-        flags=re.DOTALL,
-    )
+    new_content = marker.sub(new_block, content)
 
     if new_content == content:
         print("  ~ index.html writing section unchanged")
@@ -198,6 +230,8 @@ def main() -> None:
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATES_DIR)),
         autoescape=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
     )
 
     posts = parse_posts()
