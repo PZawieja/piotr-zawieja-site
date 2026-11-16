@@ -290,21 +290,17 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
 
 <!-- ─── Navigation ──────────────────────────────────────────── -->
 <nav>
   <div class="inner">
-    <span class="nav-brand"><a href="/">
-      <svg class="nav-logo" viewBox="0 0 32 32" role="img" aria-label="goldlayer.dev">
-        <rect width="32" height="32" rx="7" fill="#141417"/>
-        <rect x="5" y="8"  width="22" height="5" rx="2.5" fill="#c8a96e"/>
-        <rect x="5" y="15" width="15" height="5" rx="2.5" fill="#c8a96e" opacity="0.8"/>
-        <rect x="5" y="22" width="9"  height="5" rx="2.5" fill="#c8a96e" opacity="0.6"/>
-      </svg>
-      goldlayer.dev
+    <span class="nav-brand"><a href="/" aria-label="Piotr Zawieja home">
+      <span class="nav-monogram">PZ</span>
+      <span class="brand-label">Piotr Zawieja<span>/ notes on data</span></span>
     </a></span>
     <ul class="nav-links">
       <li><a href="/writing/">writing</a></li>
@@ -321,74 +317,75 @@
       <div class="hero-text">
         <div class="hero-meta">
           <span class="hero-dot"></span>
-          <span class="hero-status">Get in touch — <a href="https://linkedin.com/in/piotr-zawieja" target="_blank" rel="noopener" style="color:var(--accent2);text-decoration:none">LinkedIn</a> or <a href="mailto:p.r.zawieja@gmail.com" style="color:var(--accent2);text-decoration:none">email</a></span>
+          <span class="hero-status">Analytics engineering · 8+ years in B2B SaaS</span>
         </div>
 
         <h1 class="hero-title">
-          Piotr Zawieja
-          <span class="line-muted">Analytics Engineer</span>
+          Make data useful.
+          <span class="line-muted">Make it trusted.</span>
         </h1>
 
-        <p class="hero-niche">
-          The data stack is becoming intelligent.
-        </p>
-
         <p class="hero-sub">
-          I write about analytics engineering and how AI is changing the way it's built, maintained, and evolved. There's never been a more exciting—or chaotic—time to work in data. Let's build the future of it.
+          I build dependable analytics foundations — and explore how AI can make them more useful without compromising trust.
         </p>
 
         <div class="hero-actions">
-          <a href="/writing/" class="btn btn-primary">Read the writing →</a>
-          <a href="/projects/" class="btn btn-ghost">View projects</a>
-          <a href="https://linkedin.com/in/piotr-zawieja" class="btn btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="/writing/" class="btn btn-primary">Read the field notes →</a>
+          <a href="/projects/" class="btn btn-ghost">Explore my work</a>
         </div>
       </div>
 
       <div class="hero-photo-wrap">
         <div class="hero-photo-frame">
-          <img src="assets/piotr.jpg" alt="Piotr Zawieja" loading="eager">
+          <img src="assets/piotr-zawieja.jpg" alt="Piotr Zawieja seated by a window" loading="eager">
+        </div>
+        <div class="hero-note">
+          <div class="hero-note-label">A principle I work by</div>
+          <div class="hero-note-title">A metric is only useful when people trust it.</div>
+          <div class="hero-note-foot">Model → test → trust</div>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<div class="container">
+  <div class="proof-strip">
+    <div class="proof-intro">The work sits where trustworthy data meets practical AI.</div>
+    <div class="proof-item"><strong>8+ years</strong><span>B2B SaaS analytics</span></div>
+    <div class="proof-item"><strong>dbt · Snowflake</strong><span>Production data stacks</span></div>
+    <div class="proof-item"><strong>Governed AI</strong><span>Useful, auditable systems</span></div>
+  </div>
+</div>
+
 <!-- ─── Featured writing ─────────────────────────────────────── -->
 <section id="writing">
   <div class="container">
     <div class="section-header">
-      <p class="label">// latest writing</p>
-      <h2>Recent articles</h2>
+      <p class="label">Field notes · latest writing</p>
+      <h2>Ideas tested in real systems.</h2>
     </div>
 
 <!-- WRITING_START -->
     <div class="featured-articles-grid">
-
-      <a href="writing/semantic-layer-agent-harden.html" class="featured-article" data-tag="AI">
-        <div class="featured-article-meta">
-          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
-          <span class="featured-article-date">30 Jun 2026 · 12 min</span>
+      <a href="writing/semantic-layer-agent-harden.html" class="article-feature">
+        <div class="kicker">AI · dbt · Field notes</div>
+        <div>
+          <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+          <p>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
         </div>
-        <h3 class="featured-article-title">Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
-        <p class="featured-article-lede">Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
+        <div class="article-meta"><span>12 min read</span><span>30 Jun 2026 ↗</span></div>
       </a>
-      <a href="writing/semantic-layer-agent-build.html" class="featured-article" data-tag="AI">
-        <div class="featured-article-meta">
-          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
-          <span class="featured-article-date">30 Jun 2026 · 11 min</span>
-        </div>
-        <h3 class="featured-article-title">Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
-        <p class="featured-article-lede">Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.</p>
-      </a>
-      <a href="writing/agents-on-semantic-layer-101.html" class="featured-article" data-tag="AI">
-        <div class="featured-article-meta">
-          <span class="writing-tag tag-ai">AI</span><span class="writing-tag tag-dbt">dbt</span>
-          <span class="featured-article-date">30 Jun 2026 · 15 min</span>
-        </div>
-        <h3 class="featured-article-title">Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
-        <p class="featured-article-lede">Semantic layer agents fail silently. Here's what breaks, how to prevent hallucinations, and why your agent should ask before it answers.</p>
-      </a>
-
+      <div class="article-list">
+        <a class="article-row" href="writing/semantic-layer-agent-build.html">
+          <div class="meta">AI · dbt · 11 min</div>
+          <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+        </a>
+        <a class="article-row" href="writing/agents-on-semantic-layer-101.html">
+          <div class="meta">AI · dbt · 15 min</div>
+          <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
+        </a>
+      </div>
     </div>
       <p class="writing-view-all"><a href="writing/">View all articles →</a></p>
     <!-- WRITING_END -->

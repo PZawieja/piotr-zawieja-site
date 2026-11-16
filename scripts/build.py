@@ -138,25 +138,30 @@ def update_index_html(posts: list) -> None:
         print("ERROR: WRITING_START marker not found in index.html", file=sys.stderr)
         sys.exit(1)
 
-    items = []
-    for post in posts[:3]:
-        primary_tag = post["tags"][0] if post["tags"] else ""
-        tags_html = "".join(
-            f'<span class="writing-tag tag-{t.lower().replace("-", "")}">{t}</span>'
-            for t in post["tags"][:2]
-        )
-        items.append(
-            f'      <a href="writing/{post["slug"]}.html" class="featured-article" data-tag="{primary_tag}">\n'
-            f'        <div class="featured-article-meta">\n'
-            f'          {tags_html}\n'
-            f'          <span class="featured-article-date">{post["date_formatted"]} · {post["read_time"]} min</span>\n'
-            f'        </div>\n'
-            f'        <h3 class="featured-article-title">{post["title"]}</h3>\n'
-            f'        <p class="featured-article-lede">{post["description"]}</p>\n'
-            f'      </a>'
+    featured = posts[0]
+    featured_html = (
+        f'      <a href="writing/{featured["slug"]}.html" class="article-feature">\n'
+        f'        <div class="kicker">{" · ".join(featured["tags"][:2])} · Field notes</div>\n'
+        f'        <div>\n'
+        f'          <h3>{featured["title"]}</h3>\n'
+        f'          <p>{featured["description"]}</p>\n'
+        f'        </div>\n'
+        f'        <div class="article-meta"><span>{featured["read_time"]} min read</span>'
+        f'<span>{featured["date_formatted"]} ↗</span></div>\n'
+        f'      </a>'
+    )
+
+    article_rows = []
+    for post in posts[1:3]:
+        tags_label = " · ".join(post["tags"][:2])
+        article_rows.append(
+            f'        <a class="article-row" href="writing/{post["slug"]}.html">\n'
+            f'          <div class="meta">{tags_label} · {post["read_time"]} min</div>\n'
+            f'          <h3>{post["title"]}</h3>\n'
+            f'        </a>'
         )
 
-    cards_html = "\n".join(items)
+    rows_html = "\n".join(article_rows)
     view_all = (
         '\n      <p class="writing-view-all">'
         '<a href="writing/">View all articles →</a></p>'
@@ -164,8 +169,11 @@ def update_index_html(posts: list) -> None:
 
     new_block = (
         f"<!-- WRITING_START -->\n"
-        f"    <div class=\"featured-articles-grid\">\n\n"
-        f"{cards_html}\n\n"
+        f"    <div class=\"featured-articles-grid\">\n"
+        f"{featured_html}\n"
+        f"      <div class=\"article-list\">\n"
+        f"{rows_html}\n"
+        f"      </div>\n"
         f"    </div>{view_all}\n"
         f"    <!-- WRITING_END -->"
     )
