@@ -48,7 +48,8 @@
   <text x="942" y="298" class="sans" font-size="20" font-weight="600" fill="#eff6f1">“I can’t confirm</text>
   <text x="942" y="328" class="sans" font-size="20" font-weight="600" fill="#eff6f1">the departure yet.”</text>
   <path d="M942 350h186" stroke="#35433e" stroke-width="2"/>
-  <text x="942" y="384" class="sans" font-size="16" fill="#a4b1ac">Show last update · alert owner</text>
+  <text x="942" y="380" class="sans" font-size="15" fill="#a4b1ac">Show last update</text>
+  <text x="942" y="403" class="sans" font-size="15" fill="#a4b1ac">Alert the owner</text>
 
   <path d="M744 438v55H460v-55" fill="none" stroke="#e2bd73" stroke-width="2.5" stroke-dasharray="7 7" marker-end="url(#arrow)"/>
   <text x="486" y="482" class="mono" font-size="14" letter-spacing="1" fill="#e2bd73">EVALUATE · ALERT · FIX THE OWNING LAYER</text>
