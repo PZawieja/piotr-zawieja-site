@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1460" viewBox="0 0 720 1460" role="img" aria-labelledby="title desc">
+  <title id="title">Measure cost per accepted answer</title>
+  <desc id="desc">A mobile cost ledger shows illustrative model, warehouse, and retry costs, then divides total serving cost by answers passing a fixed quality bar.</desc>
+  <defs>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+  <rect width="720" height="1460" rx="26" fill="#121a1e"/>
+  <rect x="1" y="1" width="718" height="1458" rx="25" fill="none" stroke="#35433e" stroke-width="2"/>
+  <text x="40" y="62" class="mono" font-size="21" letter-spacing="2.5" fill="#77d6a5">FIELD GUIDE · 04</text>
+  <text x="40" y="112" class="sans" font-size="34" font-weight="700" fill="#eff6f1">Cost per accepted answer</text>
+  <text x="40" y="151" class="sans" font-size="22" fill="#a4b1ac">Illustrative serving costs, not vendor prices.</text>
+
+  <rect x="32" y="195" width="656" height="514" rx="18" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="62" y="240" class="mono" font-size="20" letter-spacing="1.3" fill="#e2bd73">BASELINE · 100 REQUESTS</text>
+  <rect x="58" y="270" width="604" height="68" rx="10" fill="#202e32"/>
+  <text x="82" y="313" class="sans" font-size="23" fill="#eff6f1">Model calls</text>
+  <text x="630" y="313" text-anchor="end" class="mono" font-size="23" fill="#eff6f1">$1.70</text>
+  <rect x="58" y="354" width="604" height="68" rx="10" fill="#202e32"/>
+  <text x="82" y="397" class="sans" font-size="23" fill="#eff6f1">Warehouse + tools</text>
+  <text x="630" y="397" text-anchor="end" class="mono" font-size="23" fill="#eff6f1">$1.20</text>
+  <rect x="58" y="438" width="604" height="68" rx="10" fill="#202e32"/>
+  <text x="82" y="481" class="sans" font-size="23" fill="#eff6f1">Retries + recovery</text>
+  <text x="630" y="481" text-anchor="end" class="mono" font-size="23" fill="#eff6f1">$1.30</text>
+  <path d="M58 532h604" stroke="#35433e" stroke-width="2"/>
+  <text x="82" y="588" class="sans" font-size="23" fill="#a4b1ac">Total serving cost</text>
+  <text x="630" y="588" text-anchor="end" class="mono" font-size="28" font-weight="700" fill="#eff6f1">$4.20</text>
+  <text x="62" y="664" class="sans" font-size="18" fill="#84928c">Keep evaluation-run costs separate from live serving.</text>
+
+  <rect x="32" y="751" width="656" height="400" rx="18" fill="#1b272b" stroke="#77d6a5" stroke-width="2"/>
+  <text x="62" y="796" class="mono" font-size="20" letter-spacing="1.3" fill="#77d6a5">SAME QUALITY BAR</text>
+  <rect x="58" y="826" width="604" height="104" rx="12" fill="#202e32"/>
+  <text x="82" y="869" class="sans" font-size="22" fill="#a4b1ac">Answers passing checks</text>
+  <text x="82" y="911" class="sans" font-size="32" font-weight="700" fill="#d5fa79">84 / 100 accepted</text>
+  <path d="M82 954h556" stroke="#35433e" stroke-width="2"/>
+  <text x="82" y="999" class="sans" font-size="22" fill="#a4b1ac">Cost per accepted answer</text>
+  <text x="82" y="1062" class="sans" font-size="24" fill="#eff6f1">$4.20 ÷ 84 =</text>
+  <text x="300" y="1073" class="sans" font-size="54" font-weight="700" fill="#d5fa79">$0.05</text>
+
+  <rect x="32" y="1194" width="656" height="204" rx="18" fill="#202e32"/>
+  <text x="58" y="1242" class="mono" font-size="19" letter-spacing="1" fill="#e2bd73">COMPARE FAIRLY</text>
+  <text x="58" y="1285" class="sans" font-size="21" fill="#eff6f1">Same questions, snapshot, and quality bar.</text>
+  <text x="58" y="1324" class="sans" font-size="20" fill="#a4b1ac">Check factuality, freshness, and usability.</text>
+  <text x="58" y="1368" class="sans" font-size="17" fill="#84928c">Example values only; not a benchmark.</text>
+</svg>

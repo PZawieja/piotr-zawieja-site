@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Give your analytics agent the right context, not the whole warehouse — Piotr Zawieja</title>
+<meta name="description" content="A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.">
+<meta property="og:title" content="Give your analytics agent the right context, not the whole warehouse">
+<meta property="og:description" content="A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.">
+<meta property="og:url" content="https://goldlayer.dev/writing/analytics-agent-context-engineering.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/analytics-agent-context-engineering/context-pack.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja<small>/ notes on data</small></span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← All field notes</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span>16 Nov 2026 · 10 min read</span>
+        </div>
+        <h1 class="article-title">Give your analytics agent the right context, not the whole warehouse</h1>
+        <p class="article-deck">A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-context-window-is-a-workbench-not-the-warehouse">The context window is a workbench, not the warehouse</a></li>
+<li><a href="#what-belongs-in-the-context-pack">What belongs in the context pack?</a></li>
+<li><a href="#assemble-context-just-in-time">Assemble context just in time</a></li>
+<li><a href="#keep-durable-knowledge-out-of-chat-history">Keep durable knowledge out of chat history</a></li>
+<li><a href="#when-to-retrieve-and-when-to-keep-something-ready">When to retrieve, and when to keep something ready</a></li>
+<li><a href="#test-context-selection-not-just-the-final-answer">Test context selection, not just the final answer</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>At Frostline Mountain, an operations lead asks the analytics agent:</p>
+<blockquote>
+<p>“Which lift had the longest queue in the two hours after Saturday’s 9 a.m. powder alert?”</p>
+</blockquote>
+<p>The agent has access to lift telemetry, an operations metric catalog, alert records, and a long conversation history. It answers: “Raven Ridge, 32 minutes.” That sounds useful—but did it use measured queue time, the resort app’s estimated wait, or even the chair’s ride duration? A stale note from a different report could make the right-looking answer refer to the wrong measurement.</p>
+<p>Adding every lift, trail, event, and past conversation to the system prompt will not fix this. It may make the conflict harder to spot. The better question is: <strong>what does the agent need for this step, and where should it get that information?</strong></p>
+<div class="callout callout-info">
+<span class="callout-label">field guide · 02</span>
+<p>This is the second article in a practical field guide to trustworthy analytics agents. <a href="https://goldlayer.dev/writing/analytics-agent-semantic-contract.html">Field guide 01</a> defines the contract behind a metric. This article is about selecting the right parts of that contract, relevant evidence, and conversation state for each model call. The resort and data below are illustrative.</p>
+</div>
+
+<h2 id="the-context-window-is-a-workbench-not-the-warehouse">The context window is a workbench, not the warehouse</h2>
+<p>“Context” is often used as shorthand for “the prompt.” In practice, the model may receive much more than an instruction: tool descriptions, the user’s question, retrieved documentation, previous messages, and results returned by earlier tool calls.</p>
+<p>That assembled input is the model’s <strong>working context for a particular call</strong>. It is not the warehouse, a durable memory store, or an access-control system. Those belong in the application and its systems of record. The application decides what information to retrieve and what tools the model may request.</p>
+<p>Imagine a mechanic’s workbench. The garage may contain a thousand tools and manuals, but the mechanic lays out the parts and instructions needed for the repair in front of them. Putting every tool on the bench does not make the repair better; it can make the right tool harder to find.</p>
+<p>An analytics agent needs the same kind of curation. The goal is not to make every prompt tiny. It is to give each step enough authoritative, relevant context to do its job—and not confuse that with a copy of the entire data estate.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/analytics-agent-context-engineering/context-pack-mobile.svg">
+<img src="../assets/posts/analytics-agent-context-engineering/context-pack.svg" alt="Resort metric definitions and lift telemetry stay in their source systems. For one question, the application retrieves the approved queue-wait measure, alert time window, and a compact lift-level result.">
+</picture>
+<figcaption>The application keeps source data and definitions authoritative, then assembles a task-specific context pack for the model.</figcaption>
+</figure>
+
+<h2 id="what-belongs-in-the-context-pack">What belongs in the context pack?</h2>
+<p>For Frostline Mountain, the question is about queue time after a specific alert. The agent does not need every lift, trail, and sensor definition. It needs enough context to identify the approved measure, use the correct time window, request a valid lift breakdown, and explain what the results do—and do not—show.</p>
+<table>
+<thead>
+<tr>
+<th>Context layer</th>
+<th>Include for this question</th>
+<th>Keep elsewhere</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stable instructions</td>
+<td>Use approved operations metrics; show the measure and time window; do not claim a cause from a queue comparison alone.</td>
+<td>Long lists of resort-specific exceptions that can be retrieved when relevant.</td>
+</tr>
+<tr>
+<td>Task details</td>
+<td>Frostline Mountain, the two hours after Saturday’s alert, and the clarified meaning of “queue.”</td>
+<td>Unrelated conversation turns and assumptions from prior reports.</td>
+</tr>
+<tr>
+<td>Authoritative meaning</td>
+<td>The current <code>median_queue_wait_minutes</code> definition, timestamp rules, and approved lift breakdown.</td>
+<td>Every metric, trail map, and sensor schema in the resort.</td>
+</tr>
+<tr>
+<td>Evidence</td>
+<td>The lift-level result, matched scan counts, time window, freshness, and source or query reference.</td>
+<td>Raw scans and logs not needed to answer this question.</td>
+</tr>
+<tr>
+<td>Conversation state</td>
+<td>A short, scoped record of a decision that still matters in this conversation.</td>
+<td>Guessed preferences or old clarifications treated as permanent business rules.</td>
+</tr>
+</tbody>
+</table>
+<p>This separation matters. The metric contract remains the source of truth; the agent receives the relevant definition as evidence for a specific task. A conversation summary can help preserve what the operations lead asked, but it should not silently replace the approved definition.</p>
+<p>Tool descriptions also consume part of the model's working context. Give the agent a small, distinct set of tools with clear purposes and inputs. A metadata-search tool can find the metric; a governed query tool can execute an approved request. Returning a compact definition or result is usually more useful than returning a long dump of every candidate model.</p>
+<h2 id="assemble-context-just-in-time">Assemble context just in time</h2>
+<p>Here is one reasonable sequence for the Frostline question:</p>
+<ol>
+<li><strong>Resolve the task.</strong> Interpret “longest queue” as wait duration, not chair speed, and resolve “after the alert” to the exact two-hour window. If the lead had asked only for the “slowest lift,” clarify which measure they mean.</li>
+<li><strong>Look up the approved definition.</strong> Retrieve <code>median_queue_wait_minutes</code>, how its start and end are measured, its version, and whether it can be grouped by lift.</li>
+<li><strong>Request only the needed slice.</strong> Ask the governed query service for the specified two-hour window and lift breakdown—not a season of raw scan events.</li>
+<li><strong>Return a compact, traceable result.</strong> Include the exact timestamps, measure, matched scan counts, freshness, and source or query reference.</li>
+<li><strong>Explain within the evidence.</strong> Name the lift with the highest observed median; distinguish that observation from an explanation of why the line formed.</li>
+</ol>
+<p>Suppose the approved query returns this illustrative result:</p>
+<table>
+<thead>
+<tr>
+<th>Lift</th>
+<th style="text-align: right;">Median queue wait</th>
+<th style="text-align: right;">Matched scan pairs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Raven Ridge</td>
+<td style="text-align: right;">32 minutes</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr>
+<td>Juniper Chair</td>
+<td style="text-align: right;">18 minutes</td>
+<td style="text-align: right;">56</td>
+</tr>
+<tr>
+<td>Marmot Express</td>
+<td style="text-align: right;">12 minutes</td>
+<td style="text-align: right;">41</td>
+</tr>
+</tbody>
+</table>
+<p>The answer can say Raven Ridge had the highest observed median queue wait: 32 minutes across 47 matched scan pairs. The data does <strong>not</strong> show why the wait was longer. Wind holds, lift capacity, staffing, or a burst of arrivals might be relevant, but those are hypotheses until the agent retrieves and checks the corresponding evidence.</p>
+<p>An illustrative tool result might look like this. The fields are an example, not a vendor-specific schema:</p>
+<pre><code class="language-json">{
+  &quot;metric&quot;: &quot;median_queue_wait_minutes&quot;,
+  &quot;definition_version&quot;: &quot;operations-v3&quot;,
+  &quot;definition&quot;: &quot;Median minutes from first queue scan to lift scan&quot;,
+  &quot;source&quot;: &quot;lift_queue_telemetry&quot;,
+  &quot;window&quot;: {
+    &quot;start&quot;: &quot;2026-11-14T09:00:00-07:00&quot;,
+    &quot;end&quot;: &quot;2026-11-14T11:00:00-07:00&quot;,
+    &quot;timezone&quot;: &quot;America/Denver&quot;
+  },
+  &quot;filters&quot;: {&quot;resort&quot;: &quot;Frostline Mountain&quot;},
+  &quot;breakdown&quot;: [
+    {&quot;lift&quot;: &quot;Raven Ridge&quot;, &quot;median_minutes&quot;: 32, &quot;matched_scan_pairs&quot;: 47},
+    {&quot;lift&quot;: &quot;Juniper Chair&quot;, &quot;median_minutes&quot;: 18, &quot;matched_scan_pairs&quot;: 56},
+    {&quot;lift&quot;: &quot;Marmot Express&quot;, &quot;median_minutes&quot;: 12, &quot;matched_scan_pairs&quot;: 41}
+  ],
+  &quot;data_updated_at&quot;: &quot;2026-11-14T11:20:00-07:00&quot;
+}
+</code></pre>
+<p>The application should supply the actual event boundaries and provenance rather than asking the model to infer them from “after the alert.” A concise, structured result gives the model less irrelevant material to sift through and gives the reader more of the context needed to check the answer.</p>
+<h2 id="keep-durable-knowledge-out-of-chat-history">Keep durable knowledge out of chat history</h2>
+<p>Not every fact has the same lifetime or authority:</p>
+<ul>
+<li><strong>Business definitions</strong> belong in a reviewed semantic model or catalog.</li>
+<li><strong>Permissions</strong> belong in the application and data platform, enforced at query time.</li>
+<li><strong>Current query results</strong> belong to the query response, with their filters and freshness.</li>
+<li><strong>A user clarification</strong> may belong in the current task or session, with its scope made explicit.</li>
+<li><strong>A durable personal preference</strong> should be saved only if the product intentionally supports it and the user understands that behavior.</li>
+</ul>
+<p>For example, “For this question, use the two hours after the 9 a.m. alert” is useful task state. It should not become a resort-wide default for every report. The definition of <code>median_queue_wait_minutes</code> belongs in the metric catalog, not in an old conversation about lift speed.</p>
+<p>When a conversation gets long, a summary can carry forward the goal, decisions, unresolved questions, and references needed to continue. Treat that summary as a map, not the territory: reload the canonical metric definition and query fresh data rather than relying on a paraphrase or an old result. Summarization can lose details, so test what must survive and what can be fetched again.</p>
+<h2 id="when-to-retrieve-and-when-to-keep-something-ready">When to retrieve, and when to keep something ready</h2>
+<p>There is a trade-off between retrieving everything up front and discovering information as the task unfolds.</p>
+<p>Keep a small set of stable instructions and tool descriptions ready on each call. Retrieve detailed metric definitions, schema information, or documentation only when the question needs them. If a candidate lookup returns several plausible metrics, show the alternatives or ask; do not choose one just because it appeared first.</p>
+<p>Just-in-time retrieval can reduce irrelevant context, but it adds tool calls and latency and depends on good search and tool design. A hybrid often works well: keep a brief rule and a metric-search tool available, then retrieve the full definition only after identifying a candidate. The right boundary depends on how dynamic the source is, how costly a wrong choice would be, and how reliably the agent can find the needed information.</p>
+<p>Prompt caching is a separate optimization. Current OpenAI and Anthropic documentation describes caching repeated prompt prefixes in supported APIs. That can reduce repeated processing under the documented conditions; it does not make stale or irrelevant context useful, and cache behavior and pricing are provider-specific. Measure actual input tokens, cache reads, latency, and cost for your workload.</p>
+<h2 id="test-context-selection-not-just-the-final-answer">Test context selection, not just the final answer</h2>
+<p>A correct answer on one happy-path question does not prove that context assembly is reliable. Test the steps that supply the answer:</p>
+<ul>
+<li><strong>Coverage:</strong> Did the model receive the current metric definition, time boundaries, and necessary filters?</li>
+<li><strong>Relevance:</strong> Did retrieval leave unrelated metrics, stale notes, and unused schemas out?</li>
+<li><strong>Authority and freshness:</strong> Did it use the approved definition and a sufficiently current result?</li>
+<li><strong>Ambiguity:</strong> When two definitions or periods are plausible, does it ask or expose the choice rather than silently guessing?</li>
+<li><strong>Evidence:</strong> Can the answer be traced to the query result, filters, and source used?</li>
+<li><strong>Boundaries:</strong> Does the application enforce permissions even if user text, retrieved documents, or tool output ask for something else?</li>
+<li><strong>Efficiency:</strong> How many input and output tokens, tool calls, and seconds does the answer require? Does caching actually help repeated prefixes?</li>
+</ul>
+<p>Use questions that are clear, ambiguous, unsupported, and near time boundaries. Include cases where the needed context is absent or outdated. Log enough to diagnose which context was retrieved and what the model received, while respecting your data-handling and retention requirements.</p>
+<p>Do not treat authorization as another prompt paragraph. A model can request a query; the application must validate that request and execute it under the intended user's permissions. Retrieved content and query results are evidence to reason about, not a replacement for server-side controls.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Context is more than the system prompt.</strong> It includes the tools, question, retrieved material, conversation, and tool results available to a model call.</li>
+<li><strong>Keep source-of-truth data outside the prompt.</strong> Retrieve the approved definition and current evidence needed for the task.</li>
+<li><strong>Use progressive disclosure.</strong> Start with a small, clear toolset and fetch detailed context when the question requires it.</li>
+<li><strong>Keep memory scoped and inspectable.</strong> Carry forward decisions and references, not guesses or stale query results.</li>
+<li><strong>Evaluate the context pipeline.</strong> Test relevance, authority, freshness, ambiguity, evidence, permissions, and measured cost—not only the final prose.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 16 November 2026. Context, model, and API behavior varies by provider and changes over time; verify the documentation for the product and version you deploy.</p>
+<ul>
+<li><a href="https://www.anthropic.com/research/effective-context-engineering-for-ai-agents">Effective context engineering for AI agents</a> — context as the full set of information available to a model, tool design, just-in-time retrieval, and long-running task state.</li>
+<li><a href="https://developers.openai.com/api/docs/guides/function-calling">OpenAI function calling</a> — tool calls are requests handled by the application, which returns tool outputs to the model.</li>
+<li><a href="https://developers.openai.com/api/docs/guides/conversation-state">OpenAI conversation state</a> and <a href="https://developers.openai.com/api/docs/guides/compaction">compaction</a> — ways to carry state across turns and reduce context for long-running interactions.</li>
+<li><a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI prompt caching</a> and <a href="https://platform.claude.com/docs/en/build-with-claude/prompt-caching">Anthropic prompt caching</a> — provider-specific behavior for reusing prompt prefixes.</li>
+<li><a href="https://docs.getdbt.com/docs/dbt-ai/about-mcp">dbt MCP server</a> — one example of exposing dbt-managed metadata and query capabilities to AI applications; available tools depend on setup and access.</li>
+</ul>
+<p>The warehouse is where the knowledge lives. The context pack is what the agent needs on the workbench right now. Give it enough to do the next step well—and a reliable way to fetch more when it needs it.</p>
+
+        <div class="rss-callout">
+          New field notes on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="analytics-agent-semantic-contract.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← all field notes</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

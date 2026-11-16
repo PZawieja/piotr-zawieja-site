@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Assemble a task-specific context pack</title>
+  <desc id="desc">Resort metric definitions and lift telemetry stay in their source systems. The application retrieves stable rules, the queue-wait definition, the alert time window, and a compact lift-level result for one model call.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#77d6a5"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+  <rect width="1200" height="700" rx="28" fill="#121a1e"/>
+  <rect x="1" y="1" width="1198" height="698" rx="27" fill="none" stroke="#35433e" stroke-width="2"/>
+
+  <text x="54" y="64" class="mono" font-size="18" letter-spacing="3" fill="#77d6a5">FIELD GUIDE · 02</text>
+  <text x="54" y="112" class="sans" font-size="35" font-weight="700" fill="#eff6f1">Build a context pack for the question</text>
+  <text x="54" y="148" class="sans" font-size="20" fill="#a4b1ac">Keep the source of truth. Retrieve only what this step needs.</text>
+
+  <rect x="48" y="214" width="265" height="236" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="72" y="254" class="mono" font-size="15" letter-spacing="1.1" fill="#e2bd73">RESORT SYSTEMS</text>
+  <text x="72" y="300" class="sans" font-size="21" font-weight="600" fill="#eff6f1">Operations catalog</text>
+  <text x="72" y="332" class="sans" font-size="17" fill="#a4b1ac">Metric · lift dimensions</text>
+  <path d="M72 351h218" stroke="#35433e" stroke-width="2"/>
+  <text x="72" y="388" class="sans" font-size="21" font-weight="600" fill="#eff6f1">Lift telemetry</text>
+  <text x="72" y="420" class="sans" font-size="17" fill="#a4b1ac">Queue scans · alert time</text>
+
+  <path d="M323 330h35" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="330" y="307" class="mono" font-size="13" fill="#84928c">retrieve</text>
+
+  <rect x="373" y="184" width="474" height="350" rx="16" fill="#1b272b" stroke="#77d6a5" stroke-width="2"/>
+  <text x="400" y="226" class="mono" font-size="16" letter-spacing="1.1" fill="#77d6a5">CONTEXT FOR THIS CALL</text>
+  <rect x="398" y="248" width="424" height="54" rx="9" fill="#202e32"/>
+  <text x="418" y="282" class="sans" font-size="19" font-weight="600" fill="#eff6f1">Stable rule · use approved measure</text>
+  <rect x="398" y="313" width="424" height="54" rx="9" fill="#202e32"/>
+  <text x="418" y="347" class="mono" font-size="17" font-weight="600" fill="#d5fa79">median_queue_wait_minutes</text>
+  <rect x="398" y="378" width="424" height="54" rx="9" fill="#202e32"/>
+  <text x="418" y="412" class="sans" font-size="19" fill="#eff6f1">Task · Frostline · Sat 09:00–11:00</text>
+  <rect x="398" y="443" width="424" height="64" rx="9" fill="#202e32"/>
+  <text x="418" y="470" class="sans" font-size="18" fill="#8ecff0">Evidence · lift · median · scan count</text>
+  <text x="418" y="493" class="sans" font-size="15" fill="#a4b1ac">alert window · source · freshness</text>
+
+  <path d="M857 330h35" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="907" y="214" width="245" height="236" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="930" y="254" class="mono" font-size="15" letter-spacing="1" fill="#8ecff0">GOVERNED QUERY</text>
+  <text x="930" y="300" class="sans" font-size="20" font-weight="600" fill="#eff6f1">Raven Ridge</text>
+  <text x="930" y="334" class="sans" font-size="19" fill="#d5fa79">32 minutes</text>
+  <text x="930" y="364" class="sans" font-size="16" fill="#a4b1ac">47 matched scan pairs</text>
+  <path d="M930 382h197" stroke="#35433e" stroke-width="2"/>
+  <text x="930" y="414" class="sans" font-size="16" fill="#77d6a5">Observed queue, not cause</text>
+
+  <rect x="48" y="583" width="1104" height="58" rx="12" fill="#202e32"/>
+  <text x="72" y="619" class="sans" font-size="18" fill="#a4b1ac">Keep every trail map, raw scan, and old chat out of the model's working context.</text>
+</svg>

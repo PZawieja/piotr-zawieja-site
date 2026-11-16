@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Give your analytics agent the right context, not the whole warehouse</title>
+      <link>https://goldlayer.dev/writing/analytics-agent-context-engineering.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-context-engineering.html</guid>
+      <pubDate>Mon, 16 Nov 2026 20:37:55 +0000</pubDate>
+      <description>A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.</description>
+    </item>
+    <item>
       <title>Give your analytics agent a contract, not a bigger prompt</title>
       <link>https://goldlayer.dev/writing/analytics-agent-semantic-contract.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-semantic-contract.html</guid>

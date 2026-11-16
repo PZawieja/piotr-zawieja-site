@@ -38,13 +38,13 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Writing · <span id="total-count">28</span> field notes</p>
+      <p class="eyebrow">Writing · <span id="total-count">29</span> field notes</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical notes on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest article">
-      <a class="featured-post" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt">
+      <a class="featured-post" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
@@ -53,19 +53,18 @@
             </div>
             <div class="category-tags">
               <span class="category-tag">AI</span>
-              <span class="category-tag secondary">dbt</span>
             </div>
-            <h2>Give your analytics agent a contract, not a bigger prompt</h2>
-            <p class="featured-description">A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</p>
+            <h2>Give your analytics agent the right context, not the whole warehouse</h2>
+            <p class="featured-description">A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.</p>
           </div>
           <div class="featured-meta">
-            <span>12 min read</span>
+            <span>10 min read</span>
             <span>Read the latest article →</span>
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/analytics-agent-semantic-contract/semantic-contract.png" alt="Diagram showing a business question becoming a defined metric contract, passing through a governed query interface, and returning an answer with its definition and time range.">
-          <figcaption class="featured-caption">A semantic contract gives the agent a defined way to ask; it does not make an ambiguous business question magically precise.</figcaption>
+          <img src="/assets/posts/analytics-agent-context-engineering/context-pack.png" alt="Diagram showing resort metrics and lift telemetry supplying an approved wait-time definition, a Saturday time window, and lift-level results to an analytics agent.">
+          <figcaption class="featured-caption">Keep metric definitions and event data in their systems of record; retrieve the lift, time window, and result needed for this question.</figcaption>
         </figure>
       </a>
     </section>
@@ -98,6 +97,19 @@
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-grid" id="archive-grid">
+        <a class="post-card" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt">
+          <div class="card-meta">
+            <span class="card-primary">AI</span>
+            <span>16 Nov 2026</span>
+          </div>
+          <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+          <p>A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</p>
+          <div class="card-footer">
+            <span>12 min read</span>
+            <span>dbt</span>
+            <span>Read →</span>
+          </div>
+        </a>
         <a class="post-card" href="semantic-layer-agent-harden.html" data-category="AI" data-tags="AI,dbt">
           <div class="card-meta">
             <span class="card-primary">AI</span>
@@ -455,7 +467,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 28 field notes</span>
+      <span>© 2026 Piotr Zawieja · 29 field notes</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>

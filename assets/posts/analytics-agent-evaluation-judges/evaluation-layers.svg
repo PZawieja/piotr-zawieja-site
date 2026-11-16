@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Evaluate an analytics agent in layers</title>
+  <desc id="desc">A test question and evidence pass through deterministic checks and a rubric-based judge. Uncertain or high-impact results go to human review.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#77d6a5"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+  <rect width="1200" height="700" rx="28" fill="#121a1e"/>
+  <rect x="1" y="1" width="1198" height="698" rx="27" fill="none" stroke="#35433e" stroke-width="2"/>
+
+  <text x="54" y="64" class="mono" font-size="18" letter-spacing="3" fill="#77d6a5">FIELD GUIDE · 03</text>
+  <text x="54" y="112" class="sans" font-size="35" font-weight="700" fill="#eff6f1">Evaluate the answer, not the vibes</text>
+  <text x="54" y="148" class="sans" font-size="20" fill="#a4b1ac">Give each failure mode the check that can actually catch it.</text>
+
+  <rect x="48" y="218" width="222" height="230" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="72" y="258" class="mono" font-size="15" letter-spacing="1" fill="#e2bd73">FIXED TEST CASE</text>
+  <text x="72" y="304" class="sans" font-size="21" font-weight="600" fill="#eff6f1">Question +</text>
+  <text x="72" y="333" class="sans" font-size="21" font-weight="600" fill="#eff6f1">approved evidence</text>
+  <path d="M72 354h172" stroke="#35433e" stroke-width="2"/>
+  <text x="72" y="388" class="sans" font-size="17" fill="#a4b1ac">Metric · period</text>
+  <text x="72" y="416" class="sans" font-size="17" fill="#a4b1ac">result · freshness</text>
+
+  <path d="M280 333h28" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="322" y="194" width="244" height="278" rx="16" fill="#1b272b" stroke="#77d6a5" stroke-width="2"/>
+  <text x="346" y="236" class="mono" font-size="15" letter-spacing="1" fill="#77d6a5">DETERMINISTIC</text>
+  <text x="346" y="282" class="sans" font-size="22" font-weight="600" fill="#eff6f1">Check what is exact</text>
+  <rect x="344" y="306" width="200" height="42" rx="8" fill="#202e32"/>
+  <text x="360" y="333" class="sans" font-size="17" fill="#d5fa79">Metric + filters</text>
+  <rect x="344" y="358" width="200" height="42" rx="8" fill="#202e32"/>
+  <text x="360" y="385" class="sans" font-size="17" fill="#d5fa79">Values + permissions</text>
+  <rect x="344" y="410" width="200" height="42" rx="8" fill="#202e32"/>
+  <text x="360" y="437" class="sans" font-size="17" fill="#d5fa79">Freshness + schema</text>
+
+  <path d="M576 333h28" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="618" y="194" width="244" height="278" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="642" y="236" class="mono" font-size="15" letter-spacing="1" fill="#8ecff0">RUBRIC-BASED JUDGE</text>
+  <text x="642" y="282" class="sans" font-size="22" font-weight="600" fill="#eff6f1">Check what needs</text>
+  <text x="642" y="310" class="sans" font-size="22" font-weight="600" fill="#eff6f1">interpretation</text>
+  <rect x="640" y="332" width="200" height="42" rx="8" fill="#202e32"/>
+  <text x="656" y="359" class="sans" font-size="17" fill="#eff6f1">Answers the question?</text>
+  <rect x="640" y="384" width="200" height="42" rx="8" fill="#202e32"/>
+  <text x="656" y="411" class="sans" font-size="17" fill="#eff6f1">Claims match evidence?</text>
+  <text x="642" y="450" class="sans" font-size="15" fill="#a4b1ac">Use fixed, observable criteria.</text>
+
+  <path d="M872 333h28" stroke="#77d6a5" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <rect x="914" y="218" width="238" height="230" rx="16" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="938" y="258" class="mono" font-size="15" letter-spacing="1" fill="#e2bd73">HUMAN REVIEW</text>
+  <text x="938" y="304" class="sans" font-size="21" font-weight="600" fill="#eff6f1">Calibrate the judge</text>
+  <text x="938" y="341" class="sans" font-size="17" fill="#a4b1ac">Review disagreements</text>
+  <text x="938" y="370" class="sans" font-size="17" fill="#a4b1ac">and high-impact cases.</text>
+  <path d="M938 390h190" stroke="#35433e" stroke-width="2"/>
+  <text x="938" y="420" class="sans" font-size="16" fill="#77d6a5">Tune rubric · test again</text>
+
+  <rect x="48" y="554" width="1104" height="70" rx="12" fill="#202e32"/>
+  <text x="72" y="584" class="mono" font-size="15" letter-spacing="1" fill="#e2bd73">HARD GATES</text>
+  <text x="72" y="610" class="sans" font-size="18" fill="#eff6f1">Metric · facts · permissions · freshness</text>
+  <path d="M584 570v38" stroke="#35433e" stroke-width="2"/>
+  <text x="616" y="584" class="mono" font-size="15" letter-spacing="1" fill="#8ecff0">INTERPRETIVE CHECKS</text>
+  <text x="616" y="610" class="sans" font-size="18" fill="#eff6f1">Clarity · caveats · evidence boundaries</text>
+
+  <text x="54" y="670" class="sans" font-size="16" fill="#84928c">A fluent answer can still fail a hard gate. Keep each result visible.</text>
+</svg>
