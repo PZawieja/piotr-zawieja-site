@@ -34,9 +34,12 @@ Reusable prompt:
 
 Write for people working in analytics engineering, data engineering, and
 analytics: practitioners building reliable data products, and the stakeholders
-who depend on them. Relevant themes include semantic layers, analytics agents,
-context management, evaluation and judges, accuracy, cost, governance, and
-operating data systems in production.
+who depend on them. The site should be where analytics engineers come back to
+find answers to real problems at work. Relevant themes include reliable and
+self-healing pipelines, alerting, warehouse and AI cost, new warehouse features,
+dbt practices and large projects, CI/CD and git, developer setups and tools,
+semantic layers, analytics agents, context management, model choice, evaluation
+and judges, governance, data team structure, and analytics engineering skills.
 
 Each post should have a clear reader and purpose. Prefer a useful, bounded
 question over a broad survey. Explain what the reader can understand, decide,
@@ -56,6 +59,18 @@ or do differently after reading.
   “always best” when the right choice depends on the system.
 - Keep the prose original. Do not imitate another author's distinctive phrasing
   or reproduce large passages from source material.
+
+## Length and series
+
+Readers want actionable answers, not long reads. Aim for 800-1,500 words with
+one problem and one outcome per post. When a topic needs more than that, split
+it into a series of short posts (usually 2-5). Each part should stand on its
+own, state its outcome, and link to the previous and next parts. Cut background
+the reader does not need to act; never pad to reach a length.
+
+Write so the reader can learn the topic and apply it at work: a memorable worked
+example they can reproduce, at least one diagram that shows how the mechanism
+works, and a concrete next step to try.
 
 ## A useful article shape
 
