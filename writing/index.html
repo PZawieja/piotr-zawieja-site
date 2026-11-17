@@ -4,17 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#121a1e">
-  <title>Writing — Piotr Zawieja</title>
-  <meta name="description" content="Practical notes on analytics engineering, semantic layers, and AI agents—with context, evaluation, accuracy, and cost in mind.">
+  <title>Blog — Piotr Zawieja</title>
+  <meta name="description" content="Practical blog posts on analytics engineering, semantic layers, and AI agents—with context, evaluation, accuracy, and cost in mind.">
   <link rel="canonical" href="https://goldlayer.dev/writing/">
-  <meta property="og:title" content="Writing — Piotr Zawieja">
-  <meta property="og:description" content="Practical notes on analytics engineering, semantic layers, and AI agents—with context, evaluation, accuracy, and cost in mind.">
+  <meta property="og:title" content="Blog — Piotr Zawieja">
+  <meta property="og:description" content="Practical blog posts on analytics engineering, semantic layers, and AI agents—with context, evaluation, accuracy, and cost in mind.">
   <meta property="og:url" content="https://goldlayer.dev/writing/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://goldlayer.dev/og-default.png">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Writing" href="feed.xml">
+  <link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="feed.xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,10 +26,10 @@
     <div class="container header-inner">
       <a class="brand" href="/" aria-label="Piotr Zawieja home">
         <span class="brand-mark">PZ</span>
-        <span>Piotr Zawieja<small>/ notes on data</small></span>
+        <span>Piotr Zawieja</span>
       </a>
       <nav class="primary-nav" aria-label="Main navigation">
-        <a href="/writing/" aria-current="page">Writing</a>
+        <a href="/writing/" aria-current="page">Blog</a>
         <a href="/projects/">Projects</a>
         <a href="/about/">About</a>
       </nav>
@@ -38,17 +38,17 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Writing · <span id="total-count">29</span> field notes</p>
+      <p class="eyebrow">Blog · <span id="total-count">29</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
-      <p>Practical notes on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
+      <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
-    <section aria-label="Latest article">
+    <section aria-label="Latest blog post">
       <a class="featured-post" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
-              <span class="latest-label">Latest field note</span>
+              <span class="latest-label">Latest post</span>
               <span>16 Nov 2026</span>
             </div>
             <div class="category-tags">
@@ -59,7 +59,7 @@
           </div>
           <div class="featured-meta">
             <span>10 min read</span>
-            <span>Read the latest article →</span>
+            <span>Read the latest post →</span>
           </div>
         </div>
         <figure class="featured-art">
@@ -91,8 +91,8 @@
           </button>
         </div>
         <label>
-          <span class="visually-hidden">Search titles, summaries, and topics</span>
-          <input class="search-input" id="article-search" type="search" placeholder="Search field notes…" autocomplete="off" aria-controls="archive-grid">
+          <span class="visually-hidden">Search blog post titles, summaries, and topics</span>
+          <input class="search-input" id="article-search" type="search" placeholder="Search blog posts…" autocomplete="off" aria-controls="archive-grid">
         </label>
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
@@ -462,12 +462,12 @@
           </div>
         </a>
       </div>
-      <p class="empty-state" id="empty-state" hidden>No field notes match. Try another topic or clear your search.</p>
+      <p class="empty-state" id="empty-state" hidden>No blog posts match. Try another topic or clear your search.</p>
       <p class="archive-note">Category color marks the primary topic; filters also match secondary topics.</p>
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 29 field notes</span>
+      <span>© 2026 Piotr Zawieja · 29 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>
@@ -505,7 +505,7 @@
       }
 
       emptyState.hidden = visibleCount !== 0;
-      archiveSummary.textContent = `Showing ${visibleCount} of ${cards.length} field notes.`;
+      archiveSummary.textContent = `Showing ${visibleCount} of ${cards.length} posts.`;
     }
 
     for (const button of filterButtons) {

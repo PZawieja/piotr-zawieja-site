@@ -7,7 +7,7 @@ Usage:
 
 Reads:  content/posts/*.md  (status: published only)
 Writes: writing/[slug].html, writing/index.html, writing/feed.xml
-        Injects writing list into index.html between WRITING_START/END markers.
+        Injects the latest blog post into index.html between WRITING_START/END markers.
 """
 import re
 import sys
@@ -176,42 +176,45 @@ def update_index_html(posts: list) -> None:
         sys.exit(1)
 
     featured = posts[0]
-    primary_tag = escape(featured["tags"][0] if featured["tags"] else "Field note", quote=True)
-    featured_tags = " · ".join(escape(tag) for tag in featured["tags"][:2])
+    primary_tag_value = featured["tags"][0] if featured["tags"] else ""
+    primary_tag = escape(primary_tag_value, quote=True)
+    primary_tag_label = (
+        "Data quality" if primary_tag_value == "data-quality"
+        else primary_tag_value or "Blog post"
+    )
+    featured_visual = ""
+    if featured["feature_image"]:
+        caption_html = (
+            f'          <figcaption>{escape(featured["feature_image_caption"])}</figcaption>\n'
+            if featured["feature_image_caption"]
+            else ""
+        )
+        featured_visual = (
+            f'        <figure class="home-path-art home-path-art-blog">\n'
+            f'          <div class="home-path-art-frame">\n'
+            f'            <img src="{escape(featured["feature_image"], quote=True)}" alt="{escape(featured["feature_image_alt"], quote=True)}">\n'
+            f'          </div>\n'
+            f'{caption_html}'
+            f'        </figure>\n'
+        )
     featured_html = (
-        f'        <a class="home-feature" href="/writing/{escape(featured["slug"], quote=True)}.html" data-category="{primary_tag}">\n'
-        f'          <div>\n'
-        f'            <p class="kicker">Latest field note · {featured_tags}</p>\n'
-        f'            <h3>{escape(featured["title"])}</h3>\n'
-        f'            <p>{escape(featured["description"])}</p>\n'
-        f'          </div>\n'
-        f'          <div class="home-feature-meta"><span>{escape(str(featured["read_time"]))} min read</span>'
-        f'<span>{escape(featured["date_formatted"])} · Read article →</span></div>\n'
+        f'      <a class="home-path home-path-blog" href="/writing/{escape(featured["slug"], quote=True)}.html" data-category="{primary_tag}">\n'
+        f'        <div class="home-path-head">\n'
+        f'          <span class="home-path-number">02</span>\n'
+        f'          <span class="home-path-label">Read · Latest blog post</span>\n'
+        f'        </div>\n'
+        f'{featured_visual}'
+        f'        <h2>{escape(featured["title"])}</h2>\n'
+        f'        <p class="home-path-copy">{escape(featured["description"])}</p>\n'
+        f'        <div class="home-path-meta"><span>{escape(featured["date_formatted"])}</span>'
+        f'<span>{escape(primary_tag_label)}</span><span>{escape(str(featured["read_time"]))} min read</span></div>\n'
+        f'        <div class="home-path-link"><span>Read the post</span><span aria-hidden="true">↗</span></div>\n'
         f'      </a>'
     )
 
-    article_rows = []
-    for post in posts[1:3]:
-        tags_label = " · ".join(
-            "Data quality" if tag == "data-quality" else tag
-            for tag in post["tags"][:2]
-        )
-        article_rows.append(
-            f'          <a class="home-note" href="/writing/{escape(post["slug"], quote=True)}.html">\n'
-            f'            <p class="kicker">{escape(tags_label)} · {escape(str(post["read_time"]))} min</p>\n'
-            f'            <h3>{escape(post["title"])}</h3>\n'
-            f'        </a>'
-        )
-
-    rows_html = "\n".join(article_rows)
     new_block = (
         f"<!-- WRITING_START -->\n"
-        f"      <div class=\"home-writing\">\n"
         f"{featured_html}\n"
-        f"        <div class=\"home-note-list\" aria-label=\"More recent articles\">\n"
-        f"{rows_html}\n"
-        f"        </div>\n"
-        f"      </div>\n"
         f"      <!-- WRITING_END -->"
     )
 

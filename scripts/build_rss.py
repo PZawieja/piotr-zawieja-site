@@ -27,7 +27,7 @@ def build_rss(posts: list, writing_dir: Path) -> None:
     rss = f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Piotr Zawieja — Writing</title>
+    <title>Piotr Zawieja — Blog</title>
     <link>{SITE_URL}/writing/</link>
     <description>Analytics engineering, dbt, Snowflake, and AI-assisted data systems.</description>
     <language>en</language>

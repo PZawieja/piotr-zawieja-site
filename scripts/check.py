@@ -191,7 +191,7 @@ def check_rendered_html(slug: str, template_classes: set[str]) -> None:
 def check_index_html() -> None:
     text = INDEX_HTML.read_text(encoding="utf-8")
 
-    # The Fern homepage promotes one current article and two recent notes.
+    # The homepage pairs the featured project with one current blog post.
     writing_block = re.search(
         r"<!-- WRITING_START -->(.*?)<!-- WRITING_END -->", text, re.DOTALL
     )
@@ -199,20 +199,22 @@ def check_index_html() -> None:
         fail("index.html: WRITING_START/END markers missing")
         return
 
-    if not re.search(r'<a class="section-link" href="/writing/">All field notes', text):
-        fail("index.html: link to the writing archive missing")
+    if not re.search(r'<a href="/writing/">Blog</a>', text):
+        fail("index.html: Blog navigation link missing")
     else:
-        ok("index.html: writing archive link present")
+        ok("index.html: Blog navigation link present")
 
     block = writing_block.group(1)
-    featured_count = len(re.findall(r'class="home-feature"', block))
-    recent_count = len(re.findall(r'class="home-note"', block))
+    featured_count = len(re.findall(r'class="home-path home-path-blog"', block))
     if featured_count != 1:
-        fail(f"index.html: {featured_count} featured article(s) in writing block (expected 1)")
-    if recent_count != 2:
-        fail(f"index.html: {recent_count} recent article(s) in writing block (expected 2)")
-    if featured_count == 1 and recent_count == 2:
-        ok("index.html: one featured article and two recent notes")
+        fail(f"index.html: {featured_count} featured blog post(s) in writing block (expected 1)")
+    else:
+        ok("index.html: one featured blog post present")
+
+    if 'class="home-path home-path-project"' not in text:
+        fail("index.html: featured project missing")
+    else:
+        ok("index.html: featured project present")
 
 
 def check_orphans() -> None:
