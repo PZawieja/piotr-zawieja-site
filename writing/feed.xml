@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Can you trust this answer? Evaluate the whole analytics agent</title>
+      <link>https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html</guid>
+      <pubDate>Tue, 17 Nov 2026 09:00:00 +0000</pubDate>
+      <description>Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</description>
+    </item>
+    <item>
       <title>Give your analytics agent the right context, not the whole warehouse</title>
       <link>https://goldlayer.dev/writing/analytics-agent-context-engineering.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-context-engineering.html</guid>

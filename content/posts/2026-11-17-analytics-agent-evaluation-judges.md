@@ -6,7 +6,7 @@ slug: analytics-agent-evaluation-judges
 description: "Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path."
 tags: [AI]
 read_time: 9
-status: draft
+status: published
 feature_image: ../assets/posts/analytics-agent-evaluation-judges/evaluation-layers.png
 feature_image_alt: "An analytics-agent evaluation flow: representative questions pass through deterministic checks and a calibrated judge, with human review for uncertain or high-impact cases."
 feature_image_caption: "Use exact checks for facts and policies; reserve a calibrated judge for qualities that need interpretation."

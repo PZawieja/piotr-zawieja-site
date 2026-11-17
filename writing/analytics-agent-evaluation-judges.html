@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Can you trust this answer? Evaluate the whole analytics agent — Piotr Zawieja</title>
+<meta name="description" content="Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.">
+<meta property="og:title" content="Can you trust this answer? Evaluate the whole analytics agent">
+<meta property="og:description" content="Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.">
+<meta property="og:url" content="https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/analytics-agent-evaluation-judges/evaluation-layers.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="AI">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">AI</span>
+          <span>17 Nov 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">Can you trust this answer? Evaluate the whole analytics agent</h1>
+        <p class="article-deck">Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#start-with-the-question-your-evaluation-should-answer">Start with the question your evaluation should answer</a></li>
+<li><a href="#evaluate-the-path-not-only-the-paragraph">Evaluate the path, not only the paragraph</a></li>
+<li><a href="#build-cases-that-can-catch-real-mistakes">Build cases that can catch real mistakes</a></li>
+<li><a href="#use-a-judge-for-the-fuzzy-partand-calibrate-it">Use a judge for the fuzzy part—and calibrate it</a></li>
+<li><a href="#make-the-score-useful-for-a-release-decision">Make the score useful for a release decision</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>At the Sail &amp; Sky Museum, a visitor-experience lead asks: “Which gallery kept visitors longest in October, and why?”</p>
+<p>The agent reports that Moon Garden had a median dwell time of 18.4 minutes, compared with 12.1 minutes in Dino Lab. The numbers are right. Then it adds that the new lighting “caused visitors to stay longer.” The visitor data contains no evidence about lighting.</p>
+<p>Is that a good answer? A single “looks right” score cannot tell you. The agent got the comparison right and invented the explanation. This article is about evaluating both parts—and knowing when an LLM judge helps, when it does not, and how to check the judge itself.</p>
+<div class="callout callout-info">
+<span class="callout-label">field guide · 03</span>
+<p>This is the third article in a practical field guide to trustworthy analytics agents. <a href="https://goldlayer.dev/writing/analytics-agent-semantic-contract.html">Field guide 01</a> covers the metric contract; <a href="https://goldlayer.dev/writing/analytics-agent-context-engineering.html">field guide 02</a> covers the context supplied to a model call. The museum and data here are illustrative. For the mechanics of a repeatable, deterministic test harness, see <a href="https://goldlayer.dev/writing/analytics-agent-eval-harness.html">How to know if your analytics agent still works</a>.</p>
+</div>
+
+<h2 id="start-with-the-question-your-evaluation-should-answer">Start with the question your evaluation should answer</h2>
+<p>“Is the agent accurate?” is too broad to be a useful test plan. Accuracy could mean the selected metric, the date filter, the query result, the answer’s wording, or whether the agent correctly refuses to make a causal claim.</p>
+<p>For the museum question, suppose the approved measure is the median number of minutes between a visitor’s first and last recorded scan in a gallery. The illustrative October result is:</p>
+<table>
+<thead>
+<tr>
+<th>Gallery</th>
+<th style="text-align: right;">Median dwell</th>
+<th style="text-align: right;">Completed visits</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Moon Garden</td>
+<td style="text-align: right;">18.4 minutes</td>
+<td style="text-align: right;">80</td>
+</tr>
+<tr>
+<td>Dino Lab</td>
+<td style="text-align: right;">12.1 minutes</td>
+<td style="text-align: right;">100</td>
+</tr>
+</tbody>
+</table>
+<p>A well-supported answer can report the comparison, identify the measure and period, and say that the result does not explain why visitors stayed longer. It should not turn an observed difference into a causal claim.</p>
+<p>Write those expectations down before choosing a score. A rubric might ask:</p>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>What to check</th>
+<th>Best first check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Metric and filters</td>
+<td>Correct measure, gallery, and October window</td>
+<td>Exact structured fields</td>
+</tr>
+<tr>
+<td>Factual support</td>
+<td>Values and visit counts match the query result</td>
+<td>Deterministic comparison</td>
+</tr>
+<tr>
+<td>Evidence boundary</td>
+<td>No claim about lighting or visitor motivation without evidence</td>
+<td>Judge plus targeted cases</td>
+</tr>
+<tr>
+<td>Communication</td>
+<td>Clear comparison, units, and a useful caveat</td>
+<td>Human review or calibrated judge</td>
+</tr>
+<tr>
+<td>Safe behavior</td>
+<td>Clarifies an ambiguous period; respects the user’s access</td>
+<td>Application checks and tests</td>
+</tr>
+</tbody>
+</table>
+<p>This is not one score. Some failures are hard stops; others are quality signals. Keep them separate so a polished sentence cannot hide a wrong metric.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/analytics-agent-evaluation-judges/evaluation-layers-mobile.svg">
+<img src="../assets/posts/analytics-agent-evaluation-judges/evaluation-layers.svg" alt="Evaluation starts with a fixed question and evidence, checks facts and policy deterministically, uses a rubric-based judge for interpretation, and sends uncertain or high-impact results for human review.">
+</picture>
+<figcaption>Use the cheapest reliable check for each failure mode; a language model should not grade arithmetic or access control.</figcaption>
+</figure>
+
+<h2 id="evaluate-the-path-not-only-the-paragraph">Evaluate the path, not only the paragraph</h2>
+<p>An analytics agent is a chain of decisions: resolve the question, select an approved metric, construct a permitted query, inspect current results, then explain them. A final answer can look plausible even if an earlier step was wrong.</p>
+<p>Capture a compact record for each evaluation case:</p>
+<ul>
+<li>the user question and expected behavior;</li>
+<li>the metric identifier, filters, time boundaries, and query result;</li>
+<li>the data-freshness state and permission outcome;</li>
+<li>the final answer and any clarification or refusal;</li>
+<li>model, prompt, tool, and metric-contract versions.</li>
+</ul>
+<p>Then put exact properties under deterministic checks. Compare metric IDs and query arguments to expected values. Check returned numbers against a fixed fixture or trusted query result, with explicit numeric tolerance where formatting or rounding requires it. Verify that a stale source triggers the intended behavior. Check access control in the application, not by asking a judge whether the response “seems safe.”</p>
+<p>For the gallery example, a test can assert that the agent requested the approved dwell-time metric for 1–31 October, and that its final answer includes 18.4 minutes for Moon Garden and 12.1 for Dino Lab. It can separately fail any unsupported cause claim. The exact date boundaries depend on the business timezone and definition; include those assumptions in the test rather than hiding them in prose.</p>
+<p>This division matters because a judge is another model call, not an oracle. It may miss arithmetic, share the candidate model’s blind spots, or reward a confident explanation. Use it for criteria that require interpretation—such as whether a caveat is clear—not as the source of truth for facts the system already knows exactly.</p>
+<h2 id="build-cases-that-can-catch-real-mistakes">Build cases that can catch real mistakes</h2>
+<p>Start with questions based on how people actually use the agent. Include normal requests, but also the questions most likely to expose ambiguity or an unsupported leap:</p>
+<ul>
+<li><strong>Metric ambiguity:</strong> “How long do people stay?” could mean mean or median, visits or unique visitors. The expected behavior may be to ask.</li>
+<li><strong>Time boundaries:</strong> Test the museum’s local timezone, a month boundary, and partial data at the beginning or end of the requested period.</li>
+<li><strong>Small or missing samples:</strong> If a gallery has too few completed visits, the answer should disclose the limitation or follow the approved suppression rule.</li>
+<li><strong>Unsupported explanation:</strong> Ask “Why did dwell time increase?” when the only available evidence is a dwell-time comparison. The agent should distinguish observation from cause.</li>
+<li><strong>Stale or failed source:</strong> A query failure or late scan feed should not become a confident answer based on old results.</li>
+<li><strong>Permission boundaries:</strong> A user should not see a restricted gallery or visitor segment because the prompt requested it.</li>
+</ul>
+<p>Keep the expected behavior and, where possible, the input data with the case. Use stable snapshots for regression tests so a changed source table does not make yesterday’s test produce a different “correct” answer. Add a case when a real failure occurs, then make sure it represents the underlying failure mode rather than only memorizing one exact wording.</p>
+<h2 id="use-a-judge-for-the-fuzzy-partand-calibrate-it">Use a judge for the fuzzy part—and calibrate it</h2>
+<p>When an answer can be correct in several phrasings, substring matching is not enough. A rubric-based LLM judge can assess whether the response answers the question, states its measure and time window, stays within the supplied evidence, and explains an uncertainty.</p>
+<p>Keep the judge’s job narrow. Give it the question, the approved definition, the result, the answer, and a short criterion. Ask for structured findings such as <code>pass</code>, <code>fail</code>, or <code>uncertain</code>, plus the criterion that failed. Do not ask for a free-form “quality score” with no anchors; different runs may interpret a vague 1–5 scale differently.</p>
+<p>For example:</p>
+<pre><code class="language-json">{
+  &quot;supported_comparison&quot;: &quot;pass&quot;,
+  &quot;states_period_and_measure&quot;: &quot;pass&quot;,
+  &quot;unsupported_causal_claim&quot;: &quot;fail&quot;,
+  &quot;evidence&quot;: &quot;The answer attributes longer visits to lighting, which is not in the supplied result.&quot;
+}
+</code></pre>
+<p>Treat that shape as an example, not a provider API schema. Validate the output and fail closed if the judge does not return the required fields. The judge’s evidence should point to text or data it actually received.</p>
+<p>Now evaluate the evaluator. Have people review a varied sample of outputs and label the same criteria independently of the judge. Compare disagreements, especially false passes on wrong numbers, missing caveats, or unsupported explanations. If a judge is being used as a release gate, measure its false-pass and false-fail behavior on cases your team cares about. Revisit the rubric when metrics, prompts, models, or user expectations change.</p>
+<p>LLM judges can be sensitive to answer order, verbosity, and whether a candidate resembles the judge’s own style. A widely cited study documents these and other limitations, while also finding that strong judges can approximate human preferences in its evaluated settings. That is a reason to calibrate for your task, not a guarantee that a judge will agree with your analysts. When comparing two versions, blind their identities, randomize presentation order, and avoid rewarding length for its own sake.</p>
+<h2 id="make-the-score-useful-for-a-release-decision">Make the score useful for a release decision</h2>
+<p>Keep hard requirements as gates: correct metric, valid permissions, no unsupported material claim, and correct data-freshness behavior. Track softer properties—clarity, usefulness, unnecessary detail—as separate scores. Report results by question category as well as overall; an average can hide a regression in the rare questions with the highest impact.</p>
+<p>Run the same fixed set before and after a prompt, model, tool, or semantic-definition change. When results vary between runs, repeat the affected cases and inspect the spread instead of treating one favorable sample as proof. Use a held-out set of cases to check whether repeated prompt tuning has simply taught the agent the test questions.</p>
+<p>Offline checks do not replace production observation. Sample real, privacy-approved interactions for review, collect explicit corrections where appropriate, and convert recurring failure patterns into new tests. Define who reviews the sample and how sensitive data is handled before capturing prompts or results.</p>
+<div class="callout callout-warn">
+<span class="callout-label">tooling note</span>
+<p>Evaluation products and APIs change. As checked on 16 November 2026, OpenAI says its Evals platform became read-only for existing users on 31 October and is scheduled to shut down on 30 November; its graders documentation also says those workflows are being deprecated. The techniques here are portable; check a provider's current lifecycle and data-handling terms before choosing a product.</p>
+</div>
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Split the rubric by failure mode.</strong> Exact facts, permissions, and freshness deserve deterministic application checks.</li>
+<li><strong>Test the whole path.</strong> Metric selection, filters, evidence, and final wording can fail independently.</li>
+<li><strong>Use an LLM judge narrowly.</strong> Give it evidence and observable criteria, then compare its decisions with human review.</li>
+<li><strong>Gate on the failures that matter.</strong> A strong average score cannot excuse a wrong metric or an unsupported claim.</li>
+<li><strong>Turn incidents into cases.</strong> A growing, representative test set makes each change easier to assess.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 16 November 2026. Evaluation platforms, model behavior, and APIs change; verify current documentation before adopting a specific tool.</p>
+<ul>
+<li><a href="https://developers.openai.com/api/docs/guides/graders">OpenAI graders</a> — grader types and evaluation concepts; the hosted <a href="https://developers.openai.com/api/docs/guides/evals">Evals platform documentation</a> explains its lifecycle notice.</li>
+<li><a href="https://platform.claude.com/docs/en/test-and-evaluate/develop-tests">Anthropic: Define success criteria and build evaluations</a> — practical evaluation design and criteria.</li>
+<li><a href="https://arxiv.org/abs/2306.05685">Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena</a> — research on judge agreement and limitations including position and verbosity bias.</li>
+</ul>
+<p>The useful question is not “Did the judge give it an eight?” It is “Which behavior did we test, what evidence supports the score, and what would make us stop the release?”</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="analytics-agent-context-engineering.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent the right context, not the whole warehouse</h3>
+              <span>10 min read →</span>
+            </a>
+            <a href="analytics-agent-semantic-contract.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>
