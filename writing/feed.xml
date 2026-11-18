@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Pipeline test (temporary)</title>
+      <link>https://goldlayer.dev/writing/pipeline-test.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/pipeline-test.html</guid>
+      <pubDate>Wed, 18 Nov 2026 10:21:29 +0000</pubDate>
+      <description>Most engineers start with SQL. The skill is knowing what to build before touching the keyboard — three signal categories, one dbt layer design, one controversial first-version choice.</description>
+    </item>
+    <item>
       <title>Your warehouse is a prompt injection vector</title>
       <link>https://goldlayer.dev/writing/warehouse-prompt-injection-analytics-agents.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/warehouse-prompt-injection-analytics-agents.html</guid>
