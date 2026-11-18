@@ -334,6 +334,8 @@ section { border-color: var(--border); }
 .rss-nudge, .takeaways, .decision-tree { border-color: var(--border); }
 .takeaways, .decision-tree { border-left-color: var(--green); }
 .pull-quote { border-left-color: var(--green); color: var(--white); }
+.post-brief { border-left-color: var(--green); }
+.post-brief ul li::before { color: var(--green); }
 .callout-tip { background: rgba(119, 214, 165, .07); border-color: rgba(119, 214, 165, .28); }
 .callout-tip .callout-label { color: var(--green); }
 .callout-warn { background: rgba(213, 250, 121, .06); border-color: rgba(213, 250, 121, .25); }

@@ -56,6 +56,10 @@ or do differently after reading.
   hook that sets the tone: a strong or contrarian statement, a sourced number or
   fact, a behaviour readers recognise, a curiosity, or a problem many people
   feel. The hook states or implies the thesis; no warm-up before the point.
+- Right after the hook, add a brief of two or three very short bullets (about
+  12 words each) that make the case for reading on: the problem, why it
+  matters, what most people get wrong, or what the reader gains. State stakes,
+  not answers, and never repeat the takeaways.
 - Vary how posts open. Avoid a repeated formula such as "a fictional company
   gives its team a tool, then someone asks a question." Fictional worked
   examples belong in the body, and any "this example is fictional" note stays

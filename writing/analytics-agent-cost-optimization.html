@@ -282,6 +282,22 @@
     line-height: 1.5;
   }
 
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
   /* ─── Takeaways ────────────────────────────────────────────── */
   .takeaways {
     background: var(--surface); border: 1px solid var(--border);
@@ -549,6 +565,14 @@
         <p>Your analytics agent is probably paying a language model to do arithmetic.</p>
 <p>I mean that literally. When you trace what an agent does to answer one ordinary question, the expensive part is rarely the reasoning. It is the agent hauling a full menu, months of raw order lines and five tool descriptions into its context, asking a model to add up numbers SQL could sum exactly, timing out, retrying, and then asking a second model whether its own answer sounds right.</p>
 <p>Nobody sees any of it. A question goes in, a sensible number comes back a few seconds later, and the bill shows up at the end of the month.</p>
+<div class="post-brief">
+<ul>
+<li>Token counts hide where an agent's money actually goes.</li>
+<li>The usual fix, trimming prompts blindly, buys cheaper wrong answers.</li>
+<li>One metric and a five-step order make the waste visible and cuttable.</li>
+</ul>
+</div>
+
 <div class="callout callout-info">
 <span class="callout-label">field guide · 04</span>
 <p>This is the fourth article in a practical field guide to trustworthy analytics agents. <a href="https://goldlayer.dev/writing/analytics-agent-context-engineering.html">Field guide 02</a> explains context selection; <a href="https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html">field guide 03</a> explains how to measure answer quality. The market, requests, and values below are illustrative—not customer or vendor pricing data.</p>

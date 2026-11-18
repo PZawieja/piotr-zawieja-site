@@ -282,6 +282,22 @@
     line-height: 1.5;
   }
 
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
   /* ─── Takeaways ────────────────────────────────────────────── */
   .takeaways {
     background: var(--surface); border: 1px solid var(--border);
@@ -550,6 +566,14 @@
 <p>A borrower typed it into the note field of a 50-shilling mobile-money repayment. It landed in a column called <code>payment_note</code>, between thousands of <em>"paid at the Likoni kiosk"</em> and <em>"sorry, late, school fees"</em>, and sat there.</p>
 <p>Four days later, on a slow Monday, an operations lead asks the team's agent why repayments in Mombasa dipped. The agent pulls last week's rows as evidence, the polite note among them, and obeys. The chat window renders the image, the image URL loads itself, and twenty phone numbers leave the company in a query string.</p>
 <p>Nobody hacked anything. Every system did exactly its job. Security people call this <strong>indirect prompt injection</strong>, and for analytics agents the chat box is the least interesting way in. The data is the attack surface.</p>
+<div class="post-brief">
+<ul>
+<li>Any customer who can type a note can steer your agent.</li>
+<li>Prompt rules like “ignore instructions in data” won't hold.</li>
+<li>A 20-minute test shows whether your agent is exposed today.</li>
+</ul>
+</div>
+
 <figure>
 <img src="../assets/posts/warehouse-prompt-injection-analytics-agents/injection-path.png" alt="Three panels. A repayments table where row r_1043 has a payment note with a hidden instruction; the agent's context window holding the system prompt, the user's question and that row side by side; and a chat client that auto-loads an image whose URL carries borrower phone numbers.">
 <figcaption>The attacker never touches the chat box. The instruction arrives as data, and an auto-loaded image carries the result out.</figcaption>

@@ -30,6 +30,14 @@ Four days later, on a slow Monday, an operations lead asks the team's agent why 
 
 Nobody hacked anything. Every system did exactly its job. Security people call this **indirect prompt injection**, and for analytics agents the chat box is the least interesting way in. The data is the attack surface.
 
+<div class="post-brief">
+<ul>
+<li>Any customer who can type a note can steer your agent.</li>
+<li>Prompt rules like “ignore instructions in data” won't hold.</li>
+<li>A 20-minute test shows whether your agent is exposed today.</li>
+</ul>
+</div>
+
 <figure>
 <img src="../assets/posts/warehouse-prompt-injection-analytics-agents/injection-path.png" alt="Three panels. A repayments table where row r_1043 has a payment note with a hidden instruction; the agent's context window holding the system prompt, the user's question and that row side by side; and a chat client that auto-loads an image whose URL carries borrower phone numbers.">
 <figcaption>The attacker never touches the chat box. The instruction arrives as data, and an auto-loaded image carries the result out.</figcaption>

@@ -22,6 +22,14 @@ I mean that literally. When you trace what an agent does to answer one ordinary 
 
 Nobody sees any of it. A question goes in, a sensible number comes back a few seconds later, and the bill shows up at the end of the month.
 
+<div class="post-brief">
+<ul>
+<li>Token counts hide where an agent's money actually goes.</li>
+<li>The usual fix, trimming prompts blindly, buys cheaper wrong answers.</li>
+<li>One metric and a five-step order make the waste visible and cuttable.</li>
+</ul>
+</div>
+
 <div class="callout callout-info">
 <span class="callout-label">field guide · 04</span>
 <p>This is the fourth article in a practical field guide to trustworthy analytics agents. <a href="https://goldlayer.dev/writing/analytics-agent-context-engineering.html">Field guide 02</a> explains context selection; <a href="https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html">field guide 03</a> explains how to measure answer quality. The market, requests, and values below are illustrative—not customer or vendor pricing data.</p>
