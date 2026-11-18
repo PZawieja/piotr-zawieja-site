@@ -1,0 +1,52 @@
+name: Publish due posts
+
+on:
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: publish-due
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+      NOTION_POSTS_DATA_SOURCE_ID: ${{ secrets.NOTION_POSTS_DATA_SOURCE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -q -r requirements.txt "notion-client>=3.1"
+
+      - name: Find due posts
+        id: due
+        run: |
+          if [ -z "$NOTION_TOKEN" ]; then echo "due=0" >> "$GITHUB_OUTPUT"; echo "NOTION_TOKEN not set"; exit 0; fi
+          python scripts/publish_due.py --count
+
+      - name: Check out drafts
+        if: steps.due.outputs.due != '0'
+        uses: actions/checkout@v4
+        with:
+          repository: PZawieja/goldlayer-drafts
+          token: ${{ secrets.DRAFTS_REPO_TOKEN }}
+          path: _drafts
+
+      - name: Publish
+        if: steps.due.outputs.due != '0'
+        env:
+          BLOCKLIST: ${{ secrets.BLOCKLIST }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          python scripts/publish_due.py
