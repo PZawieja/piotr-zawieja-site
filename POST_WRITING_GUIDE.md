@@ -52,10 +52,23 @@ or do differently after reading.
   define acronyms when they first matter.
 - Use concrete examples and everyday metaphors to make difficult ideas easier
   to grasp. Connect the metaphor back to the real system and its limitations.
+- Write like a columnist, not a manual. The first one to three sentences are a
+  hook that sets the tone: a strong or contrarian statement, a sourced number or
+  fact, a behaviour readers recognise, a curiosity, or a problem many people
+  feel. The hook states or implies the thesis; no warm-up before the point.
 - Vary how posts open. Avoid a repeated formula such as "a fictional company
-  gives its team a tool, then someone asks a question." Start from the artifact,
-  the failure, a number, an opinion, or a small human moment, and keep any
-  "this example is fictional" note short and out of the first line.
+  gives its team a tool, then someone asks a question." Fictional worked
+  examples belong in the body, and any "this example is fictional" note stays
+  short and out of the first lines. Nothing, including series boxes, goes above
+  the hook.
+- Sound like the author's own research and observations: first person for
+  opinions, for what was checked or measured, and for things built. Never
+  invent personal anecdotes or attribute made-up numbers to experience.
+- Avoid prose that reads as machine-written: stock openers ("Here's how", "The
+  real question is", "In today's…"), reflexive "it's not X, it's Y" contrasts,
+  lists of three everywhere, em-dash chains, uniform paragraph lengths,
+  section-ending recaps, and words like "crucial", "robust", "seamless",
+  "leverage", "delve".
 - Use light humor only when it feels natural. Never let a joke obscure a
   technical point.
 - Be confident where evidence supports it and candid about uncertainty,
