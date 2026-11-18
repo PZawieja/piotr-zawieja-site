@@ -1,22 +1,26 @@
 ---
-title: "Make every token earn its place: cost optimization for analytics agents"
+title: 'Make every token earn its place: cost optimization for analytics agents'
 date: 2026-11-18
-published_at: 2026-11-18T09:00:00Z
+published_at: '2026-11-18T08:37:01Z'
 slug: analytics-agent-cost-optimization
-description: "Measure cost per accepted answer, then reduce wasted model work without trading away the accuracy, freshness, and evidence users depend on."
-tags: [AI]
+description: Measure cost per accepted answer, then reduce wasted model work without
+  trading away the accuracy, freshness, and evidence users depend on.
+tags:
+- AI
 read_time: 8
-status: draft
+status: published
 feature_image: ../assets/posts/analytics-agent-cost-optimization/cost-per-answer.png
-feature_image_alt: "A cost-per-answer diagram separates model, warehouse, and retry costs, then compares total serving spend with answers that pass the quality bar."
-feature_image_caption: "Optimize for the cost of an answer that meets its quality bar, not tokens in isolation."
+feature_image_alt: A cost-per-answer diagram separates model, warehouse, and retry
+  costs, then compares total serving spend with answers that pass the quality bar.
+feature_image_caption: Optimize for the cost of an answer that meets its quality bar,
+  not tokens in isolation.
 ---
 
-At the Lantern & Ladle night market, the prep manager asks an analytics agent: “How many bowls of sesame noodles should we prep for tonight’s concert?”
+Nobody notices what one question costs. Someone at a night-market noodle stall types “How many bowls of sesame noodles should we prep for tonight’s concert?”, a sensible number comes back a few seconds later, and everyone gets on with chopping spring onions.
 
-The agent fetches the full menu, months of order lines, vendor notes, weather reports, and five tool descriptions. It asks a model to add quantities that SQL could calculate exactly, retries once after a timeout, then asks a second model whether its answer sounds reasonable.
+Look under the hood, though. To get that number, the agent pulled the full menu, months of order lines, vendor notes, a weather report and five tool descriptions into its context. It asked a model to add quantities that SQL could sum exactly, timed out once and retried, then asked a second model whether its own answer sounded reasonable.
 
-The answer may be good. But which part of that spend bought the manager confidence—and which part was a very expensive way to add noodles?
+The answer may well be good. The real question is which part of that spend bought confidence, and which part was a very expensive way to add up noodles.
 
 <div class="callout callout-info">
 <span class="callout-label">field guide · 04</span>

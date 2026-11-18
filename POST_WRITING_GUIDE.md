@@ -52,6 +52,10 @@ or do differently after reading.
   define acronyms when they first matter.
 - Use concrete examples and everyday metaphors to make difficult ideas easier
   to grasp. Connect the metaphor back to the real system and its limitations.
+- Vary how posts open. Avoid a repeated formula such as "a fictional company
+  gives its team a tool, then someone asks a question." Start from the artifact,
+  the failure, a number, an opinion, or a small human moment, and keep any
+  "this example is fictional" note short and out of the first line.
 - Use light humor only when it feels natural. Never let a joke obscure a
   technical point.
 - Be confident where evidence supports it and candid about uncertainty,

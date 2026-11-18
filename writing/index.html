@@ -38,33 +38,34 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">30</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">32</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="analytics-agent-evaluation-judges.html" data-category="AI" data-tags="AI">
+      <a class="featured-post" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>17 Nov 2026</span>
+              <span>18 Nov 2026</span>
             </div>
             <div class="category-tags">
               <span class="category-tag">AI</span>
+              <span class="category-tag secondary">Snowflake</span>
             </div>
-            <h2>Can you trust this answer? Evaluate the whole analytics agent</h2>
-            <p class="featured-description">Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</p>
+            <h2>Your warehouse is a prompt injection vector</h2>
+            <p class="featured-description">Free-text columns and table comments can carry instructions to your analytics agent. Threat-model it, then cut one leg of the risk.</p>
           </div>
           <div class="featured-meta">
-            <span>9 min read</span>
+            <span>8 min read</span>
             <span>Read the latest post →</span>
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/analytics-agent-evaluation-judges/evaluation-layers.png" alt="An analytics-agent evaluation flow: representative questions pass through deterministic checks and a calibrated judge, with human review for uncertain or high-impact cases.">
-          <figcaption class="featured-caption">Use exact checks for facts and policies; reserve a calibrated judge for qualities that need interpretation.</figcaption>
+          <img src="/assets/posts/warehouse-prompt-injection-analytics-agents/injection-path.png" alt="A repayment table row whose payment note contains a hidden instruction flows into an analytics agent's context, next to the user's real question, and the agent treats both as instructions.">
+          <figcaption class="featured-caption">The attacker never touches the chat box. The instruction arrives as data.</figcaption>
         </figure>
       </a>
     </section>
@@ -97,6 +98,32 @@
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-grid" id="archive-grid">
+        <a class="post-card" href="analytics-agent-cost-optimization.html" data-category="AI" data-tags="AI">
+          <div class="card-meta">
+            <span class="card-primary">AI</span>
+            <span>18 Nov 2026</span>
+          </div>
+          <h3>Make every token earn its place: cost optimization for analytics agents</h3>
+          <p>Measure cost per accepted answer, then reduce wasted model work without trading away the accuracy, freshness, and evidence users depend on.</p>
+          <div class="card-footer">
+            <span>8 min read</span>
+            <span></span>
+            <span>Read →</span>
+          </div>
+        </a>
+        <a class="post-card" href="analytics-agent-evaluation-judges.html" data-category="AI" data-tags="AI">
+          <div class="card-meta">
+            <span class="card-primary">AI</span>
+            <span>17 Nov 2026</span>
+          </div>
+          <h3>Can you trust this answer? Evaluate the whole analytics agent</h3>
+          <p>Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</p>
+          <div class="card-footer">
+            <span>9 min read</span>
+            <span></span>
+            <span>Read →</span>
+          </div>
+        </a>
         <a class="post-card" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI">
           <div class="card-meta">
             <span class="card-primary">AI</span>
@@ -480,7 +507,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 30 posts</span>
+      <span>© 2026 Piotr Zawieja · 32 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>

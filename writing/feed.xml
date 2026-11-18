@@ -7,6 +7,20 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Your warehouse is a prompt injection vector</title>
+      <link>https://goldlayer.dev/writing/warehouse-prompt-injection-analytics-agents.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/warehouse-prompt-injection-analytics-agents.html</guid>
+      <pubDate>Wed, 18 Nov 2026 08:38:00 +0000</pubDate>
+      <description>Free-text columns and table comments can carry instructions to your analytics agent. Threat-model it, then cut one leg of the risk.</description>
+    </item>
+    <item>
+      <title>Make every token earn its place: cost optimization for analytics agents</title>
+      <link>https://goldlayer.dev/writing/analytics-agent-cost-optimization.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-cost-optimization.html</guid>
+      <pubDate>Wed, 18 Nov 2026 08:37:01 +0000</pubDate>
+      <description>Measure cost per accepted answer, then reduce wasted model work without trading away the accuracy, freshness, and evidence users depend on.</description>
+    </item>
+    <item>
       <title>Can you trust this answer? Evaluate the whole analytics agent</title>
       <link>https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html</guid>

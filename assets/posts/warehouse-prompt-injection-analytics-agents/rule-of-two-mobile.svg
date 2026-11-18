@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1360" viewBox="0 0 720 1360" role="img" aria-labelledby="title desc">
+  <title id="title">The Agents Rule of Two for analytics agents</title>
+  <desc id="desc">A vertical diagram for small screens. Three overlapping circles: private data, untrusted text, and external communication or state change. Two safe designs each remove one circle.</desc>
+  <defs>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    </style>
+  </defs>
+  <rect width="720" height="1360" rx="26" fill="#121a1e"/>
+  <rect x="1" y="1" width="718" height="1358" rx="25" fill="none" stroke="#35433e" stroke-width="2"/>
+
+  <text x="44" y="70" class="mono" font-size="22" letter-spacing="3" fill="#77d6a5">AGENTS RULE OF TWO</text>
+  <text x="44" y="120" class="sans" font-size="34" font-weight="700" fill="#eff6f1">Any two legs are manageable.</text>
+  <text x="44" y="162" class="sans" font-size="34" font-weight="700" fill="#eff6f1">All three steal data.</text>
+
+  <circle cx="280" cy="350" r="130" fill="#8ecff0" fill-opacity="0.13" stroke="#8ecff0" stroke-width="3"/>
+  <circle cx="440" cy="350" r="130" fill="#e2bd73" fill-opacity="0.13" stroke="#e2bd73" stroke-width="3"/>
+  <circle cx="360" cy="480" r="130" fill="#ef8f74" fill-opacity="0.13" stroke="#ef8f74" stroke-width="3"/>
+  <text x="185" y="320" class="sans" font-size="25" font-weight="700" fill="#8ecff0">Private</text>
+  <text x="185" y="350" class="sans" font-size="25" font-weight="700" fill="#8ecff0">data</text>
+  <text x="455" y="320" class="sans" font-size="25" font-weight="700" fill="#e2bd73">Untrusted</text>
+  <text x="455" y="350" class="sans" font-size="25" font-weight="700" fill="#e2bd73">text</text>
+  <text x="360" y="555" class="sans" font-size="25" font-weight="700" fill="#ef8f74" text-anchor="middle">Sends, writes</text>
+  <text x="360" y="585" class="sans" font-size="25" font-weight="700" fill="#ef8f74" text-anchor="middle">or renders links</text>
+  <circle cx="360" cy="398" r="36" fill="#121a1e" stroke="#ef8f74" stroke-width="3"/>
+  <text x="360" y="408" class="sans" font-size="28" font-weight="700" fill="#ef8f74" text-anchor="middle">!</text>
+  <text x="360" y="665" class="sans" font-size="22" fill="#a4b1ac" text-anchor="middle">Centre: a hidden instruction can exfiltrate data</text>
+
+  <rect x="40" y="710" width="640" height="290" rx="18" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="70" y="755" class="mono" font-size="20" letter-spacing="2" fill="#77d6a5">DESIGN A · CUT UNTRUSTED TEXT</text>
+  <text x="70" y="800" class="sans" font-size="26" fill="#eff6f1">Agent reads curated views only</text>
+  <text x="70" y="845" class="sans" font-size="23" fill="#a4b1ac">• facts, IDs and flags such as has_note</text>
+  <text x="70" y="882" class="sans" font-size="23" fill="#a4b1ac">• no notes, tickets, reviews or web pages</text>
+  <text x="70" y="919" class="sans" font-size="23" fill="#a4b1ac">• may post to a fixed channel</text>
+  <text x="70" y="956" class="sans" font-size="23" fill="#a4b1ac">• keeps: private data + actions</text>
+
+  <rect x="40" y="1030" width="640" height="290" rx="18" fill="#1b272b" stroke="#43534d" stroke-width="2"/>
+  <text x="70" y="1075" class="mono" font-size="20" letter-spacing="2" fill="#77d6a5">DESIGN B · CUT OUTBOUND + WRITES</text>
+  <text x="70" y="1120" class="sans" font-size="26" fill="#eff6f1">Agent may read free text, can't act</text>
+  <text x="70" y="1165" class="sans" font-size="23" fill="#a4b1ac">• read-only role, no write grants</text>
+  <text x="70" y="1202" class="sans" font-size="23" fill="#a4b1ac">• no fetch_url, no external integrations</text>
+  <text x="70" y="1239" class="sans" font-size="23" fill="#a4b1ac">• plain-text answers, no auto-loaded links</text>
+  <text x="70" y="1276" class="sans" font-size="23" fill="#a4b1ac">• keeps: private data + untrusted text</text>
+</svg>
