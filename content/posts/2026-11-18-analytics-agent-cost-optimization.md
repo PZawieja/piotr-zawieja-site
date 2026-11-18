@@ -16,11 +16,11 @@ feature_image_caption: Optimize for the cost of an answer that meets its quality
   not tokens in isolation.
 ---
 
-Nobody notices what one question costs. Someone at a night-market noodle stall types “How many bowls of sesame noodles should we prep for tonight’s concert?”, a sensible number comes back a few seconds later, and everyone gets on with chopping spring onions.
+Your analytics agent is probably paying a language model to do arithmetic.
 
-Look under the hood, though. To get that number, the agent pulled the full menu, months of order lines, vendor notes, a weather report and five tool descriptions into its context. It asked a model to add quantities that SQL could sum exactly, timed out once and retried, then asked a second model whether its own answer sounded reasonable.
+I mean that literally. When you trace what an agent does to answer one ordinary question, the expensive part is rarely the reasoning. It is the agent hauling a full menu, months of raw order lines and five tool descriptions into its context, asking a model to add up numbers SQL could sum exactly, timing out, retrying, and then asking a second model whether its own answer sounds right.
 
-The answer may well be good. The real question is which part of that spend bought confidence, and which part was a very expensive way to add up noodles.
+Nobody sees any of it. A question goes in, a sensible number comes back a few seconds later, and the bill shows up at the end of the month.
 
 <div class="callout callout-info">
 <span class="callout-label">field guide · 04</span>
@@ -29,7 +29,7 @@ The answer may well be good. The real question is which part of that spend bough
 
 ## Measure the cost of a passing answer
 
-Counting tokens is useful, but it does not tell you whether the agent was worth running. Track the cost of one request across its actual work:
+Token counts are the number everyone watches, and on their own they say almost nothing about whether the agent was worth running. I track one request across all the work it caused:
 
 - model input and output, including retries and any judge calls;
 - cache reads and writes where the provider bills them differently;
@@ -37,13 +37,13 @@ Counting tokens is useful, but it does not tell you whether the agent was worth 
 - external tools, orchestration, and failed attempts;
 - engineering or evaluation overhead separately from live serving.
 
-Keep these categories visible. A prompt-cache hit may lower input cost while an oversized warehouse query still dominates the bill. A cheaper model may reduce the model line but require more retries—or produce fewer answers that meet the bar.
+Keep these lines apart. A prompt-cache hit can shrink the input bill while one oversized warehouse query quietly eats the savings. A cheaper model can cut the model line and then need more retries, or pass fewer answers. Lump it all together and those stories cancel out.
 
-The unit that matters for this example is **serving cost per accepted answer**:
+The number I care about is **serving cost per accepted answer**:
 
 > total serving cost for a representative set ÷ answers that pass the agreed quality bar
 
-Suppose 100 market requests cost an illustrative $4.20 to serve and 84 pass the same quality checks. That is $0.05 per accepted answer. A revised setup costs $3.60 and 90 pass, or $0.04 per accepted answer. These numbers are made up to show the calculation; they are not model prices or a benchmark. In a real comparison, run both setups on the same questions and data snapshot, and report the quality dimensions alongside the cost.
+Take a night-market noodle stall whose agent answers prep questions like "How many bowls of sesame noodles for tonight's concert?" Suppose 100 of those cost an illustrative $4.20 to serve and 84 pass the quality checks. That is $0.05 per accepted answer. A revised setup costs $3.60 and 90 pass: $0.04. The numbers are invented to show the arithmetic, not model prices or a benchmark. In a real comparison, run both setups on the same questions and data snapshot, and put the quality results next to the cost.
 
 <figure>
 <picture>
@@ -53,13 +53,13 @@ Suppose 100 market requests cost an illustrative $4.20 to serve and 84 pass the 
 <figcaption>A cost reduction only counts if the answers still meet the same factual, freshness, and usability requirements.</figcaption>
 </figure>
 
-Separate experiment costs—such as running a large offline judge suite—from the cost of serving a user request. They matter to the project budget, but mixing them into a per-answer number makes operational comparisons hard to interpret. Track both.
+Keep experiment costs out of that number. A large offline judge suite matters to the project budget, but fold it into the per-answer figure and every operational comparison turns to mush. Track both, separately.
 
 ## Find the expensive work before optimizing
 
-Attach a request ID to every model and tool call. For each task, record the agent and prompt version, model, input and output usage, cached usage where reported, tool calls, query duration or warehouse cost, retries, and final evaluation outcome. Include percentiles and distributions, not just averages: one question that explodes into a long tool loop can disappear inside a healthy-looking mean.
+The most common waste I see is a clever optimization aimed at the wrong stage. So start with a trace. Attach a request ID to every model and tool call and record the agent and prompt version, model, input and output usage, cached usage where reported, tool calls, query duration or warehouse cost, retries, and the final evaluation outcome. Look at percentiles, not only averages. One question that spirals into a long tool loop vanishes inside a healthy-looking mean.
 
-Group the trace by stage:
+Then group the trace by stage:
 
 1. **Interpretation:** Did the model need several turns to resolve a predictable request?
 2. **Retrieval:** Did the agent fetch a whole catalog or raw table when a short definition and a bounded query would do?
@@ -67,45 +67,45 @@ Group the trace by stage:
 4. **Explanation:** Did the agent generate a long answer or call a judge when the user needed a simple result?
 5. **Recovery:** Did an avoidable timeout, ambiguous error, or unbounded retry multiply the work?
 
-This is where [context engineering](https://goldlayer.dev/writing/analytics-agent-context-engineering.html) and cost management meet. A concise context pack can help, but shrinking a prompt blindly is not a strategy: removing the definition, freshness timestamp, or access boundary may lower tokens and raise the cost of a wrong answer.
+[Context engineering](https://goldlayer.dev/writing/analytics-agent-context-engineering.html) and cost meet right here. A tight context pack helps. Shrinking a prompt blindly does not: cut the metric definition, the freshness timestamp or the access boundary, and you save a few tokens while raising the price of a wrong answer, which is the most expensive answer there is.
 
 ## Reduce work in the order that protects correctness
 
 ### 1. Let deterministic systems do deterministic work
 
-Use the metric layer and query engine to aggregate, filter, and calculate. The model can interpret the request, choose among approved capabilities, and explain the result; it should not sum hundreds of order rows in prose. Return the smallest result that preserves the evidence the answer needs: metric, time window, units, relevant groups, sample size, and freshness.
+Aggregation, filtering and calculation belong to the metric layer and the query engine. The model interprets the request, picks among approved capabilities and explains the result. It has no business summing hundreds of order rows in prose. Hand it the smallest result that still carries the evidence: metric, time window, units, relevant groups, sample size and freshness.
 
-For the night market, ask a governed service for historical orders matching the event, day of week, weather assumptions, and product. Do not give the model raw transactions and hope it performs the equivalent of a tested forecast.
+For the noodle stall, that means a governed service returning historical orders for matching events, weekday, weather and product. Giving the model raw transactions and hoping it reinvents a tested forecast is a slow, expensive way to be wrong.
 
 ### 2. Bound calls, retries, and results
 
-Set explicit limits for tool rounds, query duration, returned rows, output size, and retry policy. Retry only errors that are plausibly transient; use backoff and an overall deadline. A permission denial, invalid metric, or malformed request is not a reason to call the same tool repeatedly.
+Set explicit limits for tool rounds, query duration, returned rows, output size and retries. Retry only errors that could plausibly go away, with backoff and an overall deadline. A permission denial, an invalid metric or a malformed request will fail exactly the same way on the fifth attempt.
 
-When a result exceeds the allowed size, narrow or summarize it in the query layer. Do not silently truncate rows and present the partial set as complete. If the task cannot be completed within the budget, return a clear limitation or ask a scoped follow-up.
+When a result is too big, narrow or summarize it in the query layer. Never truncate rows silently and present what is left as complete. If the task cannot be done within budget, say so, or ask a scoped follow-up.
 
 ### 3. Reuse repeated work carefully
 
-If many requests share stable instructions or tool schemas, measure whether the provider’s prompt caching actually hits. Keep reusable content stable and place request-specific values after it where the provider’s documented cache behavior allows. Cache eligibility, minimum lengths, retention, and prices differ; a shared agent session alone does not guarantee a cache hit.
+If many requests share stable instructions or tool schemas, check whether prompt caching actually hits. Keep the reusable part stable and put request-specific values after it, where the provider's documented cache behavior allows. Eligibility, minimum lengths, retention and prices differ by provider, and a shared agent session alone guarantees nothing.
 
-Query-result caching is a separate decision. Its key must include the dimensions that change the answer—such as user scope, metric version, filters, and time window—and its freshness policy must match the product promise. Never reuse one user's authorized result for another user simply because the questions look alike.
+Query-result caching is a separate decision, and a riskier one. The cache key must include everything that changes the answer: user scope, metric version, filters, time window. Its freshness policy must match what the product promises. Never serve one user's authorized result to another because the two questions look alike.
 
 ### 4. Route by demonstrated need
 
-A smaller or faster model may be enough for a bounded classification or a familiar request; a harder task may need a more capable model. Choose using the evaluation set, not a label such as “simple” inferred from one model's uncalibrated confidence. Compare task success, failure types, latency, and cost for each route. Escalate when a deterministic signal indicates ambiguity or when the response fails a check—not only when a model says it is unsure.
+A smaller, faster model may be enough for a bounded classification or a familiar request. A hard task may need a more capable one. Decide with the evaluation set, not with a "simple" label one model guessed with uncalibrated confidence. Compare task success, failure types, latency and cost for each route, and escalate on deterministic signals of ambiguity or on a failed check. A model saying it is unsure is a weak signal by itself.
 
 ### 5. Treat caching and compactness as measured changes
 
-Prompt caching can lower repeated-prefix processing cost and latency under provider-specific conditions. It does not make irrelevant context useful, and cache writes may have different rates from cache hits. Verify billed usage and the cache-read telemetry for your exact model and request shape before claiming savings.
+Prompt caching can cut the cost and latency of a repeated prefix under provider-specific conditions. It does not make irrelevant context useful, and cache writes can be billed differently from hits. Before claiming savings, I check billed usage and cache-read telemetry for the exact model and request shape.
 
-Likewise, shorter output is not automatically better. A one-line answer may omit units, date boundaries, or a stale-data warning. Keep the minimum evidence required by the reader and test for it.
+Shorter output is not automatically better either. A one-line answer that drops the units, the date boundary or the stale-data warning is cheap and useless. Decide the minimum evidence the reader needs, and test for it.
 
 ## Compare systems without buying a cheaper wrong answer
 
-Run baseline and candidate versions on the same representative questions, snapshot, user permissions, and evaluation rubric. Report cost per request, accepted-answer rate, cost per accepted answer, latency, and the critical failure categories. For non-deterministic behavior, repeat tests where variation could change the decision.
+Run baseline and candidate on the same representative questions, snapshot, user permissions and rubric. Report cost per request, accepted-answer rate, cost per accepted answer, latency and the critical failure categories. Where behavior is non-deterministic and variation could flip the decision, repeat the runs.
 
-A quality floor should block a cost optimization that breaks a must-have behavior. If the candidate saves 30% but starts confusing “orders” with “bowls” or ignores a delayed point-of-sale feed, it has not improved the product. Conversely, an expensive judge call on every routine answer may be unnecessary if deterministic checks cover the risks and human review is reserved for sampled or high-impact cases.
+A quality floor should veto any saving that breaks a must-have behavior. If the candidate is 30% cheaper but starts confusing "orders" with "bowls", or ignores a delayed point-of-sale feed, the product got worse. It cuts the other way too: an expensive judge call on every routine answer is often waste when deterministic checks cover the real risks and people review a sample of high-impact cases.
 
-Set budgets at more than one level: per request, per user or tenant where appropriate, and for the system over a time window. Alert on unexpected growth in tokens, query scans, retries, or judge usage. A budget limit should produce a useful, explicit response—not a silent switch to an untested model or stale cache.
+Set budgets at more than one level: per request, per user or tenant where it makes sense, and for the whole system over a time window. Alert on unexpected growth in tokens, scans, retries or judge calls. When a budget trips, the user should get an explicit, useful response. A silent switch to an untested model or a stale cache is worse than an honest error.
 
 <div class="callout callout-tip">
 <span class="callout-label">a useful first pass</span>
@@ -131,4 +131,4 @@ Checked on 16 November 2026. Prices, model availability, cache rules, and usage 
 - [Anthropic pricing](https://platform.claude.com/docs/en/about-claude/pricing) and [prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching) — model pricing, cache writes, and cache hits.
 - [Field guide 03: evaluating analytics agents](https://goldlayer.dev/writing/analytics-agent-evaluation-judges.html) — separating quality gates from soft scoring.
 
-The goal is not to make every answer cheap. It is to stop paying for work that does not make the answer more correct, useful, or trustworthy.
+Every dollar an agent spends should buy correctness, usefulness or trust. The spend that buys none of the three is where I would start cutting.
