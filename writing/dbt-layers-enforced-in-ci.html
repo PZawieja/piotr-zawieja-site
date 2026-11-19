@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your dbt layers are a suggestion until CI enforces them — Piotr Zawieja</title>
+<meta name="description" content="Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.">
+<meta property="og:title" content="Your dbt layers are a suggestion until CI enforces them">
+<meta property="og:description" content="Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.">
+<meta property="og:url" content="https://goldlayer.dev/writing/dbt-layers-enforced-in-ci.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/dbt-layers-enforced-in-ci/layer-rules.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>19 Nov 2026 · 9 min read</span>
+        </div>
+        <h1 class="article-title">Your dbt layers are a suggestion until CI enforces them</h1>
+        <p class="article-deck">Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#layers-are-a-contract-about-where-decisions-live">Layers are a contract about where decisions live</a></li>
+<li><a href="#the-checks-behind-each-rule">The checks behind each rule</a></li>
+<li><a href="#make-the-rules-fail-the-pull-request">Make the rules fail the pull request</a></li>
+<li><a href="#what-the-checks-cant-see">What the checks can't see</a></li>
+<li><a href="#try-this-at-work">Try this at work</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Run <code>grep -rl "source(" models/marts models/intermediate</code> on your dbt project. Every file it prints is a model that skipped staging, so a rename, a cast or a currency fix now lives in two places, and one copy will drift.</p>
+<p>Nobody decided that. Someone needed a column staging didn't expose yet, the deadline was Friday, and the reviewer was busy checking the logic. A layering convention that lives in a README lasts until the first busy week. After that it's a suggestion.</p>
+<div class="post-brief">
+<ul>
+<li>A README can't fail a pull request, so layering quietly drifts.</li>
+<li>Reviewers read the SQL and miss the lineage it changes.</li>
+<li>Since dbt 2.0, the shape of your DAG can block a merge.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">the example</span>
+<p>Bangka Lines is fictional: an inter-island ferry operator in the Visayas, with fares in pesos. I built it as a small dbt-duckdb project and ran every command below on dbt 2.0.12 with dbt_project_evaluator 2.0.2.</p>
+</div>
+
+<hr />
+<h2 id="layers-are-a-contract-about-where-decisions-live">Layers are a contract about where decisions live</h2>
+<p>Think of a restaurant kitchen. The prep station washes and portions the vegetables once, and line cooks take from prep, never from the delivery crate. When a line cook grabs carrots straight from the crate, the dish still goes out. But now nobody can say which carrots were washed.</p>
+<p>In dbt the prep station is staging: one model per source table, where columns get renamed and cast. Intermediate models are where joins and business logic live. Marts are what dashboards and people query. Each layer is a promise about where one kind of decision gets made, and the folders only label it.</p>
+<p>Three rules keep that promise:</p>
+<ol>
+<li><strong>Only staging reads a source.</strong></li>
+<li><strong>Staging reads nothing but its source.</strong> No staging model selects from another model.</li>
+<li><strong>A model's name tells the truth about its layer.</strong></li>
+</ol>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/dbt-layers-enforced-in-ci/layer-rules-mobile.svg">
+<img src="../assets/posts/dbt-layers-enforced-in-ci/layer-rules.svg" alt="Four columns, sources, staging, intermediate and marts, joined by green arrows that flow left to right one layer at a time. Below them, three pairs of red-bordered boxes linked by dashed red arrows show the forbidden edges: a source straight into a mart, one staging model into another, and a mart back into staging.">
+</picture>
+<figcaption>Allowed edges move one step to the right. Every red edge is a decision made in the wrong place.</figcaption>
+</figure>
+
+<p>The Bangka Lines model <code>fct_sailing_load</code> breaks rule 1. It counts seats sold per sailing, but it reads raw bookings directly instead of <code>stg_booking__bookings</code>:</p>
+<pre><code class="language-sql">SELECT
+    s.sailing_id
+    , s.route
+    , s.seats
+    , COUNT(b.booking_id) AS seats_sold
+FROM {{ ref('int_sailings_with_vessel') }} AS s
+LEFT JOIN {{ source('booking', 'bookings') }} AS b
+    ON s.sailing_id = b.sailing_id
+GROUP BY s.sailing_id, s.route, s.seats
+</code></pre>
+<p>The query is correct today. The day staging starts filtering out test bookings, this mart won't get the memo.</p>
+<hr />
+<h2 id="the-checks-behind-each-rule">The checks behind each rule</h2>
+<p>A check works like a building inspector who reads the blueprint before anyone pours concrete. dbt 2.0 added <a href="https://docs.getdbt.com/docs/build/checks">checks</a>: SQL queries over your project's metadata that run locally in DuckDB, with no warehouse connection. A check passes when it returns zero rows. If a check with <code>severity: error</code> fails, <code>dbt build</code> stops before compiling a single model. <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/rules/modeling/">dbt_project_evaluator</a> 2.x ships its rules as checks, and seven of them map onto the three rules:</p>
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">rule 1</span>
+<span class="ts-desc"><strong>Only staging reads a source.</strong> <code>fct_marts_or_intermediate_dependent_on_source</code> flags a mart or intermediate model selecting from a source. <code>fct_direct_join_to_source</code> flags any model mixing a source with a ref.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">rule 2</span>
+<span class="ts-desc"><strong>Staging reads nothing but its source.</strong> <code>fct_staging_dependent_on_staging</code> and <code>fct_staging_dependent_on_marts_or_intermediate</code> flag staging selecting from another model. <code>fct_multiple_sources_joined</code> flags any model joining two sources.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">rule 3</span>
+<span class="ts-desc"><strong>Names tell the truth.</strong> <code>fct_model_naming_conventions</code> flags a prefix that doesn't match the layer. <code>fct_model_directories</code> flags a file in the wrong folder.</span>
+</div>
+</div>
+
+<p>Rule 3 looks like housekeeping, but the other six depend on it. The package <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/customization/overriding-variables/">decides a model's layer</a> from its prefix first (<code>stg_</code>, <code>int_</code>, <code>fct_</code>/<code>dim_</code> by default) and only falls back to the folder when no prefix matches. Bangka Lines has a <code>route_revenue</code> model in <code>models/marts</code> with no prefix, so the folder makes it a mart. Rename it <code>stg_route_revenue</code> and the evaluator judges it as staging. Only <code>fct_model_directories</code> would notice a staging model sitting in the marts folder, and moving the file silences that too. Keep that in mind for the last section.</p>
+<p>This is the row <code>dbt check</code> printed for it, trimmed to the useful columns:</p>
+<pre><code class="language-text">check 'fct_model_naming_conventions' found with 1 violation(s)
+name           model_type  appropriate_prefixes  original_file_path
+route_revenue  marts       fct_, dim_            models/marts/route_revenue.sql
+</code></pre>
+<p>On the deliberately broken project, five of the seven layer checks failed:</p>
+<p><img src="../assets/posts/dbt-layers-enforced-in-ci/check-failed-terminal.png" alt="Dark terminal window running dbt check on the bangka project. Five layer checks show Failed in red, a violation table lists fct_sailing_load reading the source booking.bookings next to int_sailings_with_vessel, and the summary line reads 10 warnings and 5 errors."></p>
+<hr />
+<h2 id="make-the-rules-fail-the-pull-request">Make the rules fail the pull request</h2>
+<p>Every check in the package warns by default. I want the seven layer checks to warn on my laptop and block in CI, so their severity reads an environment variable. The <code>&amp;layer</code> anchor writes it once and <code>*layer</code> reuses it:</p>
+<pre><code class="language-yaml"># packages.yml
+packages:
+  - package: dbt-labs/dbt_project_evaluator
+    version: [&quot;&gt;=2.0.0&quot;, &quot;&lt;3.0.0&quot;]
+</code></pre>
+<pre><code class="language-yaml"># dbt_project.yml
+checks:
+  dbt_project_evaluator:
+    modeling:
+      fct_marts_or_intermediate_dependent_on_source:
+        +severity: &amp;layer &quot;{{ env_var('LAYER_RULES_SEVERITY', 'warn') }}&quot;
+      fct_direct_join_to_source: {+severity: *layer}
+      fct_multiple_sources_joined: {+severity: *layer}
+      fct_staging_dependent_on_staging: {+severity: *layer}
+      fct_staging_dependent_on_marts_or_intermediate: {+severity: *layer}
+    structure:
+      fct_model_naming_conventions: {+severity: *layer}
+      fct_model_directories: {+severity: *layer}
+</code></pre>
+<p>Your project already breaks some of these rules, and you can't fix them all before Monday. You don't have to. Think of a spell-checker that only underlines what you typed today. Since version 2 of the package, <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/ci-check/"><code>state:modified</code> scopes the checks</a> the same way: dbt compares your branch with the parsed project from main and reports only the resources that changed. The CI job, abridged from the package docs, parses main to get something to compare against:</p>
+<pre><code class="language-yaml"># .github/workflows/layer-rules.yml (steps only)
+      - run: pip install &quot;dbt&gt;=2.0.0,&lt;3.0.0&quot;
+      - name: Parse main to compare against
+        run: |
+          git worktree add ../base &quot;origin/${{ github.base_ref }}&quot;
+          cd ../base &amp;&amp; dbt deps &amp;&amp; dbt parse
+      - run: dbt deps
+      - name: Layer rules on changed models
+        env:
+          LAYER_RULES_SEVERITY: error
+        run: dbt check --select state:modified --state ../base/target
+</code></pre>
+<p>Both <code>dbt parse</code> and <code>dbt check</code> need a valid profile, but the checks themselves never query your warehouse.</p>
+<p>To test it, I left the legacy <code>route_revenue</code> on main and opened a branch that adds <code>fct_refunds</code>, a new mart reading raw bookings. The check failed with exit code 1 and named only the new model. The old violation didn't block anyone.</p>
+<p><img src="../assets/posts/dbt-layers-enforced-in-ci/pr-state-modified.png" alt="Two panels side by side. On the left, a full-project dbt check lists violations for the legacy route_revenue and the new fct_refunds. On the right, a pull request check scoped with state:modified fails on a single row: fct_refunds reading the source booking.bookings."></p>
+<p>Debt you mean to keep belongs in the <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/customization/exceptions/">exceptions variable</a>, one named model at a time, so a full-project run can go green too:</p>
+<pre><code class="language-yaml">vars:
+  dbt_project_evaluator_exceptions:
+    fct_marts_or_intermediate_dependent_on_source:
+      - route_revenue   # owner: revenue analytics, rebuild planned
+</code></pre>
+<div class="callout callout-warn">
+<span class="callout-label">still on dbt 1.x?</span>
+<p>dbt_project_evaluator 2.x requires dbt 2.0. On dbt 1.x, pin the package to <code>["&gt;=1.0.0", "&lt;2.0.0"]</code>. There the rules are models and tests: run <code>dbt build --select package:dbt_project_evaluator</code> and set severity under <code>data_tests: dbt_project_evaluator:</code>. Version 1 evaluates the whole project on every run, so fix existing violations or add them as exceptions before you make it blocking.</p>
+</div>
+
+<hr />
+<h2 id="what-the-checks-cant-see">What the checks can't see</h2>
+<p>An inspector who only reads blueprints never sees what's inside the walls. So I tried to cheat. I renamed <code>fct_refunds</code> to <code>stg_booking__refunds</code> and moved it into <code>models/staging/booking/</code>. The SQL stayed the same: one source, a filter on fares. The pull request check passed with exit code 0.</p>
+<p>That isn't a bug. A staging model with exactly one source parent is precisely what rule 1 asks for. The checks read the edges of your DAG, so a staging model that filters, aggregates or applies business logic passes every rule.</p>
+<div class="pull-quote">
+The checks read the shape of your DAG. They will never read the intent of your SQL.
+</div>
+
+<p>One check did notice: <code>fct_source_fanout</code>, because raw bookings now fed one more model. It's a source check, though, and in dbt 2.0.x <code>--select</code> <a href="https://github.com/dbt-labs/dbt/issues/16554">can't scope sources yet</a>, so with <code>state:modified</code> it reports nothing. I'd close the gap two ways. An unscoped step:</p>
+<pre><code class="language-bash">dbt check fct_source_fanout   # unscoped, non-blocking step in the same job
+</code></pre>
+<p>And a <code>CODEOWNERS</code> entry (GitHub's file that requests reviewers by path) for <code>models/staging/</code>, so someone who cares about staging sees every new file there. A check finds the edges. A person still has to judge the logic.</p>
+<p><img src="../assets/posts/dbt-layers-enforced-in-ci/rename-escape.png" alt="Two pull request results stacked. The top one, fct_refunds in models/marts, fails with exit code 1 on fct_marts_or_intermediate_dependent_on_source. The bottom one has the same SQL renamed stg_booking__refunds in models/staging and passes with exit code 0, with a note that only the unscoped fct_source_fanout check sees it."></p>
+<hr />
+<h2 id="try-this-at-work">Try this at work</h2>
+<div class="callout callout-tip">
+<span class="callout-label">this week</span>
+<p>Add the package and run <code>dbt check</code> with default severities. Count the violations of the seven layer checks. Add every existing one to the exceptions variable with a comment naming the owner. Then switch on <code>LAYER_RULES_SEVERITY=error</code> with <code>state:modified</code> in CI. From that day, a new violation needs either a fix or an exception someone signs off in review.</p>
+</div>
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Enforcement belongs in the build</strong> — a check with <code>severity: error</code> stops <code>dbt build</code> before any model compiles.</li>
+<li><strong>Three rules cover the drift I see most</strong> — sources only into staging, staging reads only its source, names match layers.</li>
+<li><strong>Naming carries the other rules</strong> — the evaluator infers a model's layer from its prefix, then its folder.</li>
+<li><strong>Scope CI to the change</strong> — <code>state:modified</code> blocks new violations without forcing you to fix old debt first.</li>
+<li><strong>Checks see lineage, not logic</strong> — a renamed model can pass, so add an unscoped source fanout step and a code owner.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 18 November 2026 against dbt 2.0.12 and dbt_project_evaluator 2.0.2. The source-selection limit is tracked in an open issue and may be fixed in a later 2.0.x release.</p>
+<ul>
+<li><a href="https://docs.getdbt.com/docs/build/checks">Checks</a> — dbt Developer Hub, v2.</li>
+<li><a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/rules/modeling/">Modeling rules</a> and <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/rules/structure/">structure rules</a> — dbt_project_evaluator.</li>
+<li><a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/ci-check/">Running the package as a CI check</a> and <a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/customization/exceptions/">configuring exceptions</a>.</li>
+<li><a href="https://dbt-labs.github.io/dbt-project-evaluator/latest/migrating-to-v2/">Migrating to version 2</a> — the 1.x vs 2.x differences.</li>
+<li><a href="https://github.com/dbt-labs/dbt/issues/16554">dbt-labs/dbt#16554</a> — <code>dbt check --select</code> can't scope source rows.</li>
+<li><a href="https://docs.getdbt.com/best-practices/how-we-structure/1-guide-overview">How we structure our dbt projects</a> — dbt Labs' staging, intermediate and marts guide.</li>
+</ul>
+<p>Which layer rule does your project break most often, and would you have guessed it before running the check?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="analytics-agent-semantic-contract.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-build.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
+              <span>11 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>
