@@ -7,7 +7,7 @@ Usage:
 
 Reads:  content/posts/*.md  (status: published only)
 Writes: writing/[slug].html, writing/index.html, writing/feed.xml
-        Injects the latest blog post into index.html between WRITING_START/END markers.
+        Injects the latest five blog posts into index.html between WRITING_START/END markers.
 """
 import re
 import sys
@@ -167,6 +167,51 @@ def build_writing_index(posts: list, env: Environment) -> None:
     print("  ✓ writing/index.html")
 
 
+TAG_LABELS = {"data-quality": "Data quality"}
+HOME_RECENT_COUNT = 4
+
+
+def _tag_label(tag: str) -> str:
+    return TAG_LABELS.get(tag, tag)
+
+
+def _home_lead_html(post: dict) -> str:
+    primary_tag = post["tags"][0] if post["tags"] else ""
+    visual = ""
+    if post["feature_image"]:
+        visual = (
+            f'          <figure class="home-lead-art">\n'
+            f'            <img src="{escape(post["feature_image"], quote=True)}" alt="{escape(post["feature_image_alt"], quote=True)}">\n'
+            f'          </figure>\n'
+        )
+    return (
+        f'        <a class="home-lead" href="/writing/{escape(post["slug"], quote=True)}.html" data-category="{escape(primary_tag, quote=True)}">\n'
+        f'          <p class="home-kicker">Newest post</p>\n'
+        f'{visual}'
+        f'          <h3>{escape(post["title"])}</h3>\n'
+        f'          <p class="home-lead-copy">{escape(post["description"])}</p>\n'
+        f'          <div class="home-meta"><span>{escape(post["date_formatted"])}</span>'
+        f'<span class="home-meta-tag">{escape(_tag_label(primary_tag) or "Blog post")}</span>'
+        f'<span>{escape(str(post["read_time"]))} min read</span></div>\n'
+        f'        </a>\n'
+    )
+
+
+def _home_recent_html(post: dict) -> str:
+    primary_tag = post["tags"][0] if post["tags"] else ""
+    tags = " · ".join(_tag_label(t) for t in post["tags"]) or "Blog post"
+    published_at = post["published_at"]
+    short_date = f"{published_at.day} {MONTH_ABBR[published_at.month]}"
+    return (
+        f'            <li><a class="home-recent-item" href="/writing/{escape(post["slug"], quote=True)}.html" data-category="{escape(primary_tag, quote=True)}">\n'
+        f'              <p class="home-kicker">{escape(tags)}</p>\n'
+        f'              <h3>{escape(post["title"])}</h3>\n'
+        f'              <div class="home-meta"><span>{escape(short_date)}</span>'
+        f'<span>{escape(str(post["read_time"]))} min</span></div>\n'
+        f'            </a></li>\n'
+    )
+
+
 def update_index_html(posts: list) -> None:
     content = INDEX_HTML.read_text(encoding="utf-8")
 
@@ -175,46 +220,27 @@ def update_index_html(posts: list) -> None:
         print("ERROR: writing section markers not found in index.html", file=sys.stderr)
         sys.exit(1)
 
-    featured = posts[0]
-    primary_tag_value = featured["tags"][0] if featured["tags"] else ""
-    primary_tag = escape(primary_tag_value, quote=True)
-    primary_tag_label = (
-        "Data quality" if primary_tag_value == "data-quality"
-        else primary_tag_value or "Blog post"
-    )
-    featured_visual = ""
-    if featured["feature_image"]:
-        caption_html = (
-            f'          <figcaption>{escape(featured["feature_image_caption"])}</figcaption>\n'
-            if featured["feature_image_caption"]
-            else ""
-        )
-        featured_visual = (
-            f'        <figure class="home-path-art home-path-art-blog">\n'
-            f'          <div class="home-path-art-frame">\n'
-            f'            <img src="{escape(featured["feature_image"], quote=True)}" alt="{escape(featured["feature_image_alt"], quote=True)}">\n'
-            f'          </div>\n'
-            f'{caption_html}'
-            f'        </figure>\n'
-        )
-    featured_html = (
-        f'      <a class="home-path home-path-blog" href="/writing/{escape(featured["slug"], quote=True)}.html" data-category="{primary_tag}">\n'
-        f'        <div class="home-path-head">\n'
-        f'          <span class="home-path-number">02</span>\n'
-        f'          <span class="home-path-label">Read · Latest blog post</span>\n'
+    lead_tag = escape(posts[0]["tags"][0] if posts[0]["tags"] else "", quote=True)
+    recent_html = "".join(_home_recent_html(p) for p in posts[1 : 1 + HOME_RECENT_COUNT])
+    block_html = (
+        f'      <div class="home-section-head">\n'
+        f'        <h2 id="home-latest-title">Latest writing</h2>\n'
+        f'        <a href="/writing/">All {len(posts)} posts →</a>\n'
+        f'      </div>\n'
+        f'      <div class="home-read" data-category="{lead_tag}">\n'
+        f'{_home_lead_html(posts[0])}'
+        f'        <div class="home-recent">\n'
+        f'          <ul>\n'
+        f'{recent_html}'
+        f'          </ul>\n'
+        f'          <a class="home-recent-all" href="/writing/">Browse by topic: AI · dbt · Snowflake · Data quality →</a>\n'
         f'        </div>\n'
-        f'{featured_visual}'
-        f'        <h2>{escape(featured["title"])}</h2>\n'
-        f'        <p class="home-path-copy">{escape(featured["description"])}</p>\n'
-        f'        <div class="home-path-meta"><span>{escape(featured["date_formatted"])}</span>'
-        f'<span>{escape(primary_tag_label)}</span><span>{escape(str(featured["read_time"]))} min read</span></div>\n'
-        f'        <div class="home-path-link"><span>Read the post</span><span aria-hidden="true">↗</span></div>\n'
-        f'      </a>'
+        f'      </div>'
     )
 
     new_block = (
         f"<!-- WRITING_START -->\n"
-        f"{featured_html}\n"
+        f"{block_html}\n"
         f"      <!-- WRITING_END -->"
     )
 

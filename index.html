@@ -42,39 +42,91 @@
       <p class="hero-copy">I build production analytics foundations and practical AI tools grounded in trusted business definitions.</p>
     </section>
 
-    <section class="home-paths" aria-label="Featured project and latest blog post">
-      <a class="home-path home-path-project" href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener noreferrer">
-        <div class="home-path-head">
-          <span class="home-path-number">01</span>
-          <span class="home-path-label">Build · Open-source project</span>
-        </div>
-        <figure class="home-path-art home-path-art-project">
-          <div class="home-path-art-frame">
-            <img src="/assets/posts/revenue-intelligence-agent-ai-cs-copilot/dashboard.png" alt="Revenue Intelligence Agent portfolio dashboard with daily briefing cards and KPI strip">
-          </div>
-          <figcaption>Portfolio view · daily briefing and KPI strip</figcaption>
-        </figure>
-        <h2>Revenue Intelligence Agent</h2>
-        <p class="home-path-copy">Curated dbt metrics and parameterised templates keep answers useful, bounded, and auditable—without free-form SQL.</p>
-        <div class="home-path-link"><span>Explore the project</span><span aria-hidden="true">↗</span></div>
-      </a>
+    <section class="home-latest" aria-labelledby="home-latest-title">
       <!-- WRITING_START -->
-      <a class="home-path home-path-blog" href="/writing/git-for-analytics-engineers.html" data-category="dbt">
-        <div class="home-path-head">
-          <span class="home-path-number">02</span>
-          <span class="home-path-label">Read · Latest blog post</span>
-        </div>
-        <figure class="home-path-art home-path-art-blog">
-          <div class="home-path-art-frame">
+      <div class="home-section-head">
+        <h2 id="home-latest-title">Latest writing</h2>
+        <a href="/writing/">All 34 posts →</a>
+      </div>
+      <div class="home-read" data-category="dbt">
+        <a class="home-lead" href="/writing/git-for-analytics-engineers.html" data-category="dbt">
+          <p class="home-kicker">Newest post</p>
+          <figure class="home-lead-art">
             <img src="/assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches.">
-          </div>
-        </figure>
-        <h2>Git for analytics engineers, Part 1: Branch or not to branch</h2>
-        <p class="home-path-copy">What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture explains it.</p>
-        <div class="home-path-meta"><span>20 Nov 2026</span><span>dbt</span><span>8 min read</span></div>
-        <div class="home-path-link"><span>Read the post</span><span aria-hidden="true">↗</span></div>
-      </a>
+          </figure>
+          <h3>Git for analytics engineers, Part 1: Branch or not to branch</h3>
+          <p class="home-lead-copy">What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture explains it.</p>
+          <div class="home-meta"><span>20 Nov 2026</span><span class="home-meta-tag">dbt</span><span>8 min read</span></div>
+        </a>
+        <div class="home-recent">
+          <ul>
+            <li><a class="home-recent-item" href="/writing/dbt-layers-enforced-in-ci.html" data-category="dbt">
+              <p class="home-kicker">dbt · Data quality</p>
+              <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+              <div class="home-meta"><span>19 Nov</span><span>9 min</span></div>
+            </a></li>
+            <li><a class="home-recent-item" href="/writing/warehouse-prompt-injection-analytics-agents.html" data-category="AI">
+              <p class="home-kicker">AI · Snowflake</p>
+              <h3>Your warehouse is a prompt injection vector</h3>
+              <div class="home-meta"><span>18 Nov</span><span>8 min</span></div>
+            </a></li>
+            <li><a class="home-recent-item" href="/writing/analytics-agent-cost-optimization.html" data-category="AI">
+              <p class="home-kicker">AI</p>
+              <h3>Make every token earn its place: cost optimization for analytics agents</h3>
+              <div class="home-meta"><span>18 Nov</span><span>8 min</span></div>
+            </a></li>
+            <li><a class="home-recent-item" href="/writing/analytics-agent-evaluation-judges.html" data-category="AI">
+              <p class="home-kicker">AI</p>
+              <h3>Can you trust this answer? Evaluate the whole analytics agent</h3>
+              <div class="home-meta"><span>17 Nov</span><span>9 min</span></div>
+            </a></li>
+          </ul>
+          <a class="home-recent-all" href="/writing/">Browse by topic: AI · dbt · Snowflake · Data quality →</a>
+        </div>
+      </div>
       <!-- WRITING_END -->
+    </section>
+
+    <section class="home-shelf" aria-labelledby="home-shelf-title">
+      <div class="home-section-head">
+        <h2 id="home-shelf-title">Build · open-source projects</h2>
+        <a href="/projects/">All projects →</a>
+      </div>
+      <div class="home-shelf-grid">
+        <a class="home-project-tile is-flagship" href="https://github.com/PZawieja/revenue-intelligence-agent" target="_blank" rel="noopener noreferrer">
+          <figure class="home-project-art">
+            <img src="/assets/posts/revenue-intelligence-agent-ai-cs-copilot/dashboard.png" alt="Revenue Intelligence Agent portfolio dashboard with daily briefing cards and KPI strip">
+          </figure>
+          <p class="home-kicker">Flagship · governed AI</p>
+          <h3>Revenue Intelligence Agent</h3>
+          <p>Curated dbt metrics and parameterised templates keep answers bounded and auditable, with no free-form SQL.</p>
+          <ul class="home-chips"><li>dbt</li><li>DuckDB</li><li>Streamlit</li></ul>
+        </a>
+        <a class="home-project-tile" href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener noreferrer">
+          <p class="home-kicker">Revenue analytics</p>
+          <h3>GTM Revenue Analytics Platform</h3>
+          <p>MRR waterfall, NRR cohorts, ARR bridge and churn by tenure, tested in dbt.</p>
+          <ul class="home-chips"><li>dbt</li><li>CI/CD</li></ul>
+        </a>
+        <a class="home-project-tile" href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener noreferrer">
+          <p class="home-kicker">Experimentation</p>
+          <h3>Experimentation Analytics Platform</h3>
+          <p>An A/B testing pipeline that gates statistical output on integrity checks.</p>
+          <ul class="home-chips"><li>dbt</li><li>Statistics</li></ul>
+        </a>
+        <a class="home-project-tile" href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener noreferrer">
+          <p class="home-kicker">Anomaly detection</p>
+          <h3>Air Traffic Pulse</h3>
+          <p>Live anomaly detection on ADS-B aircraft data over four European cities.</p>
+          <ul class="home-chips"><li>Python</li><li>DuckDB</li></ul>
+        </a>
+        <a class="home-project-tile" href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener noreferrer">
+          <p class="home-kicker">Event analytics</p>
+          <h3>Event Analytics Platform</h3>
+          <p>A behavioral event pipeline from raw stream to a governed self-service layer.</p>
+          <ul class="home-chips"><li>dbt</li><li>Funnels</li></ul>
+        </a>
+      </div>
     </section>
 
     <footer class="site-footer">

@@ -191,7 +191,6 @@ def check_rendered_html(slug: str, template_classes: set[str]) -> None:
 def check_index_html() -> None:
     text = INDEX_HTML.read_text(encoding="utf-8")
 
-    # The homepage pairs the featured project with one current blog post.
     writing_block = re.search(
         r"<!-- WRITING_START -->(.*?)<!-- WRITING_END -->", text, re.DOTALL
     )
@@ -205,16 +204,23 @@ def check_index_html() -> None:
         ok("index.html: Blog navigation link present")
 
     block = writing_block.group(1)
-    featured_count = len(re.findall(r'class="home-path home-path-blog"', block))
-    if featured_count != 1:
-        fail(f"index.html: {featured_count} featured blog post(s) in writing block (expected 1)")
+    lead_count = len(re.findall(r'class="home-lead"', block))
+    if lead_count != 1:
+        fail(f"index.html: {lead_count} lead blog post(s) in writing block (expected 1)")
     else:
-        ok("index.html: one featured blog post present")
+        ok("index.html: one lead blog post present")
 
-    if 'class="home-path home-path-project"' not in text:
-        fail("index.html: featured project missing")
+    recent_count = len(re.findall(r'class="home-recent-item"', block))
+    if recent_count == 0:
+        fail("index.html: no recent blog posts in writing block")
     else:
-        ok("index.html: featured project present")
+        ok(f"index.html: {recent_count} recent blog post(s) present")
+
+    tile_count = len(re.findall(r'class="home-project-tile[ "]', text))
+    if 'class="home-project-tile is-flagship"' not in text:
+        fail("index.html: flagship project missing from project shelf")
+    else:
+        ok(f"index.html: project shelf present ({tile_count} projects)")
 
 
 def check_orphans() -> None:
