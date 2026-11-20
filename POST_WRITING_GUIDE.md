@@ -83,8 +83,9 @@ or do differently after reading.
 
 ## Length and series
 
-Readers want actionable answers, not long reads. Aim for 800-1,500 words with
-one problem and one outcome per post. When a topic needs more than that, split
+Readers want actionable answers, not long reads. Aim for a 5-8 minute read
+(`read_time` as `scripts/check.py` counts it: all body words, code and HTML
+included, divided by 200) with one problem and one outcome per post. When a topic needs more than that, split
 it into a series of short posts (usually 2-5). Each part should stand on its
 own, state its outcome, and link to the previous and next parts. Cut background
 the reader does not need to act; never pad to reach a length.
