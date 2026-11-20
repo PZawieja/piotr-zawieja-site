@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Branch or not to branch: git for analytics engineers in one picture</title>
+      <link>https://goldlayer.dev/writing/git-for-analytics-engineers.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/git-for-analytics-engineers.html</guid>
+      <pubDate>Fri, 20 Nov 2026 13:04:35 +0000</pubDate>
+      <description>What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture, one daily routine.</description>
+    </item>
+    <item>
       <title>Your dbt layers are a suggestion until CI enforces them</title>
       <link>https://goldlayer.dev/writing/dbt-layers-enforced-in-ci.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/dbt-layers-enforced-in-ci.html</guid>

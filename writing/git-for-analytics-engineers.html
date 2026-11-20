@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branch or not to branch: git for analytics engineers in one picture — Piotr Zawieja</title>
+<meta name="description" content="What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture, one daily routine.">
+<meta property="og:title" content="Branch or not to branch: git for analytics engineers in one picture">
+<meta property="og:description" content="What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture, one daily routine.">
+<meta property="og:url" content="https://goldlayer.dev/writing/git-for-analytics-engineers.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/git-for-analytics-engineers/four-places.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>20 Nov 2026 · 12 min read</span>
+        </div>
+        <h1 class="article-title">Branch or not to branch: git for analytics engineers in one picture</h1>
+        <p class="article-deck">What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture, one daily routine.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#your-code-lives-in-four-places">Your code lives in four places</a></li>
+<li><a href="#branch-or-not-to-branch">Branch or not to branch</a></li>
+<li><a href="#fetch-pull-rebase-what-each-one-changes">Fetch, pull, rebase: what each one changes</a></li>
+<li><a href="#a-real-change-command-by-command">A real change, command by command</a></li>
+<li><a href="#try-this-at-work">Try this at work</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>I keep seeing the same git setup on data teams: five commands copied from a wiki page in someone's first week, and a small prayer whenever one of them prints red text.</p>
+<p>It holds up until the morning <code>git status</code> says your branch is up to date and your pull request still collides with work you have never seen. Both statements were true at the same time. Once you see why, most of git stops being scary.</p>
+<div class="post-brief">
+<ul>
+<li><code>git status</code> reports on a snapshot that can be days old.</li>
+<li>Most git panic traces back to four words nobody explained.</li>
+<li>One picture and one real metric change cover a normal working day.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">the example</span>
+<p>Telhado is fictional: a rooftop-solar co-op in Porto with a small dbt project. I ran every git command in this post on git 2.54 in a scratch repository, with two clones playing two teammates, including the rebase conflict and the squash merge. The outputs are copied from those runs.</p>
+</div>
+
+<hr />
+<h2 id="your-code-lives-in-four-places">Your code lives in four places</h2>
+<p>Picture a restaurant that keeps its recipes in one binder on the kitchen shelf. Every cook follows that binder. You take a full photocopy home, scribble changes on sticky notes, and bring them back for the head chef to approve. Before leaving the kitchen you snapped a photo of the shelf, so you know what the binder looked like.</p>
+<p>The photo is the part everyone forgets. Git works the same way:</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/git-for-analytics-engineers/four-places-mobile.svg">
+<img src="../assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches.">
+</picture>
+<figcaption>Only fetch, pull and push cross the line between your laptop and GitHub. Everything else happens locally.</figcaption>
+</figure>
+
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">commit</span>
+<span class="ts-desc">A saved snapshot of the project with a message and an ID (a hash like <code>dec1e17</code>).</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">branch</span>
+<span class="ts-desc">A movable label that points at one commit. New commits move the label forward.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">main</span>
+<span class="ts-desc">The branch everyone treats as the truth, and the one production usually builds from. It's only a name: GitHub has used it for new repositories since October 2020, and older ones may say <code>master</code>.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">origin</span>
+<span class="ts-desc">The default nickname for the repository you cloned from. For most teams, the one on GitHub.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">origin/main</span>
+<span class="ts-desc">Your laptop's copy of where <code>main</code> was on origin the last time you talked to it. The photo of the shelf.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">HEAD</span>
+<span class="ts-desc">Where you are right now: the branch your next commit will land on.</span>
+</div>
+</div>
+
+<p>Here is the morning from the opening. My teammate Ana merged two commits into <code>main</code> on GitHub. On my laptop, nothing had talked to GitHub since. I asked git where I stood:</p>
+<pre><code class="language-bash">$ git status
+On branch main
+Your branch is up to date with 'origin/main'.
+</code></pre>
+<p>Up to date with the photo. Then I ran <code>git fetch</code>, which downloads new commits and moves <code>origin/main</code>, without touching my files or my branches:</p>
+<pre><code class="language-bash">$ git fetch
+   323b105..54742cf  main       -&gt; origin/main
+$ git status
+On branch main
+Your branch is behind 'origin/main' by 2 commits, and can be fast-forwarded.
+</code></pre>
+<div class="pull-quote">
+<code>git status</code> compares you with a photo, not with GitHub. <code>git fetch</code> takes a new photo.
+</div>
+
+<p><img src="../assets/posts/git-for-analytics-engineers/status-before-after.png" alt="Two terminal panes side by side. The left pane, before fetch, shows git status saying the branch is up to date with origin/main. The right pane runs git fetch, which moves origin/main from 323b105 to 54742cf, then git status says the branch is behind origin/main by 2 commits."></p>
+<hr />
+<h2 id="branch-or-not-to-branch">Branch or not to branch</h2>
+<p>Branch. In a team repository, every change starts on its own branch and reaches <code>main</code> through a pull request, even a one-line fix. <code>main</code> is what your production job builds from, so writing on it directly is writing in the shared binder in pen.</p>
+<p>Branches are cheap enough that there's no reason to skip them. In my scratch repository a branch was a 41-byte file: one commit hash and a newline. Creating one copies nothing.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">New branch or not?</p>
+<div class="decision-step">
+<span class="decision-q">Starting any change to models, tests or macros in a team repo</span>
+<span class="decision-a">New branch from a freshly pulled <strong>main</strong></span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A reviewer asked for a fix on your open pull request</span>
+<span class="decision-a">Commit on the <strong>same branch</strong>; the PR updates itself</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">Two unrelated changes</span>
+<span class="decision-a"><strong>Two branches</strong>, two pull requests, two easy reviews</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">A personal sandbox nothing deploys from</span>
+<span class="decision-a">Committing to <strong>main</strong> is fine</span>
+</div>
+</div>
+
+<p>My rule: a branch lives for days, not weeks. The longer it lives, the further <code>main</code> moves away from it, and every day adds to the conflict you resolve at the end. Name it after the change (<code>fix/generation-timezone</code>), not after yourself.</p>
+<hr />
+<h2 id="fetch-pull-rebase-what-each-one-changes">Fetch, pull, rebase: what each one changes</h2>
+<p>Back to Telhado. I'm on <code>fix/generation-timezone</code> with one commit that converts timestamps to Lisbon time. Meanwhile Ana's two commits (<code>dim_sites</code> and its tests) are now on <code>main</code>. My branch has fallen behind, and four commands could deal with that:</p>
+<div class="tradeoff-grid">
+<div class="tradeoff-row header">
+<span class="tradeoff-cell">Command</span>
+<span class="tradeoff-cell">What it does</span>
+<span class="tradeoff-cell">Changes your files?</span>
+<span class="tradeoff-cell">Use it when</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell"><code>git fetch</code></span>
+<span class="tradeoff-cell">Downloads new commits and moves <code>origin/main</code></span>
+<span class="tradeoff-cell">No</span>
+<span class="tradeoff-cell">Any time. It's always safe</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell"><code>git pull</code></span>
+<span class="tradeoff-cell">Fetch, then move your current branch to match its copy on GitHub</span>
+<span class="tradeoff-cell">Yes</span>
+<span class="tradeoff-cell">On <code>main</code>, before you start a branch</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell"><code>git rebase origin/main</code></span>
+<span class="tradeoff-cell">Replays your commits on top of the latest main</span>
+<span class="tradeoff-cell">Yes, on your branch</span>
+<span class="tradeoff-cell">Your own branch is behind and nobody else commits to it</span>
+</div>
+<div class="tradeoff-row">
+<span class="tradeoff-cell"><code>git merge origin/main</code></span>
+<span class="tradeoff-cell">Joins both histories with a merge commit</span>
+<span class="tradeoff-cell">Yes, on your branch</span>
+<span class="tradeoff-cell">Others also commit to the branch, or your team prefers merges</span>
+</div>
+</div>
+
+<p>The surprise is <code>git pull</code>. When I ran <code>git pull origin main</code> on my branch, git refused:</p>
+<pre><code class="language-bash">$ git pull origin main
+hint: You have divergent branches and need to specify how to reconcile them.
+fatal: Need to specify how to reconcile divergent branches.
+</code></pre>
+<p>That's git declining to guess. Ana's commits and mine both started from the same point, so there's no simple way to line them up, and current git defaults to fast-forward only: pull updates a branch only when it's behind and has nothing new of its own. On <code>main</code>, where you never commit directly, that is always the case. On a feature branch, pick rebase or merge yourself.</p>
+<p>Rebase is peeling your sticky notes off the old binder and sticking them onto the newest edition. Merge staples the two editions together with a note saying they were combined. Both keep your work. Rebase leaves a straight line that is easier to read in review; merge keeps the history exactly as it happened.</p>
+<p><img src="../assets/posts/git-for-analytics-engineers/merge-vs-rebase.png" alt="Two commit graphs side by side. On the left, after git merge origin/main, the branch commit dec1e17 and main's commits 0b17664 and 54742cf join in a new merge commit. On the right, after git rebase origin/main, the history is one straight line ending in 8379303, the same change with a new hash, on top of 54742cf."></p>
+<p>Look at the hashes on the right. Rebase rewrote my commit: <code>dec1e17</code> became <code>8379303</code>. That matters the moment the branch is already on GitHub.</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>After rebasing a branch you already pushed, <code>git push</code> is rejected, and git's hint says to run <code>git pull</code>. Don't. With the default settings pull just fails again, and with merge configured it brings the old copies of your commits back, so every change appears twice. Use <code>git push --force-with-lease</code>: it overwrites your branch on GitHub only if nobody else pushed to it since your last fetch. Never rebase <code>main</code> or a branch a teammate is committing to.</p>
+</div>
+
+<hr />
+<h2 id="a-real-change-command-by-command">A real change, command by command</h2>
+<p>Every analytics engineer has had this request. Telhado's operations lead writes on a Tuesday morning: capacity factor should divide by each site's installed capacity, not its peak output, and could the daily table show the inverter model too? That's one model, one metric and one new column. Here is the whole job in git, start to finish. Check your own routine against each step.</p>
+<p><strong>1. Start from a fresh main.</strong></p>
+<pre><code class="language-bash">git switch main
+git pull
+</code></pre>
+<p>You want <code>Already up to date.</code> or a fast-forward. If pull refuses with "divergent branches", your local <code>main</code> has commits that never went through review. Move them onto a branch with <code>git switch -c &lt;name&gt;</code>, then put <code>main</code> back with <code>git switch main</code> and <code>git reset --hard origin/main</code>. Run that reset only once the branch holds your commits.</p>
+<p><strong>2. One branch for the request.</strong></p>
+<pre><code class="language-bash">git switch -c feat/capacity-factor-installed-kw
+</code></pre>
+<p>Both changes touch the same model and ship together, so they share a branch. If the same message also asks you to rename a dashboard field, that's a second branch.</p>
+<p><strong>3. Change the model, then build it with everything downstream.</strong></p>
+<pre><code class="language-bash">dbt build --select fct_daily_generation+
+</code></pre>
+<p>The <code>+</code> builds and tests every model that depends on this one. A metric change rarely breaks the model you edited. It breaks the reporting model two steps downstream.</p>
+<p><strong>4. Read your own diff before git does anything with it.</strong></p>
+<pre><code class="language-bash">git status
+git diff
+</code></pre>
+<p>Only the files you meant to change should appear. If <code>target/</code>, <code>logs/</code> or a <code>profiles.yml</code> show up, they belong in <code>.gitignore</code>, not in a commit.</p>
+<p><strong>5. Commit files by name, with a message about the data.</strong></p>
+<pre><code class="language-bash">git add models/marts/fct_daily_generation.sql
+git commit -m &quot;Use installed capacity in capacity_factor&quot;
+</code></pre>
+<p><code>git add .</code> is how a stray CSV ends up in history forever. "fix" and "wip" tell a reviewer nothing; the message should say what changes in the numbers.</p>
+<p><strong>6. Push and open the pull request.</strong></p>
+<pre><code class="language-bash">git push -u origin feat/capacity-factor-installed-kw
+</code></pre>
+<p>The <code>-u</code> links your branch to its copy on GitHub, so later a plain <code>git push</code> knows where to go. In the pull request, say how the numbers moved: which sites' capacity factor went up or down, and roughly by how much. Reviewers can read SQL. They can't guess what it does to last month's report.</p>
+<p><strong>7. Answer review on the same branch.</strong></p>
+<p>The reviewer asks you to document the new column:</p>
+<pre><code class="language-bash">git add models/marts/schema.yml
+git commit -m &quot;Document inverter_model&quot;
+git push
+</code></pre>
+<p>No new branch and no new pull request. The open one picks up the commit.</p>
+<p><strong>8. Catch up when main moves under you.</strong></p>
+<p>Meanwhile Ana merged a change that rounds <code>capacity_factor</code> to four decimals. It's the same line you changed.</p>
+<pre><code class="language-bash">git fetch
+git rebase origin/main
+</code></pre>
+<p>In my run, the rebase stopped with <code>CONFLICT (content): Merge conflict in models/marts/fct_daily_generation.sql</code>, and the file held both versions:</p>
+<pre><code class="language-sql">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+    , ROUND(kwh_generated / (peak_kw * 24), 4) AS capacity_factor
+=======
+    , inverter_model
+    , kwh_generated / (installed_kw * 24) AS capacity_factor
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; 3372d74 (Use installed capacity in capacity_factor)
+</code></pre>
+<p>During a rebase the top half, marked <code>HEAD</code>, is main's version and the bottom half is yours. Most people expect the opposite. Don't pick a side: keep both intents, Ana's rounding and your denominator, and delete the marker lines.</p>
+<pre><code class="language-sql">    , inverter_model
+    , ROUND(kwh_generated / (installed_kw * 24), 4) AS capacity_factor
+</code></pre>
+<pre><code class="language-bash">git add models/marts/fct_daily_generation.sql
+git rebase --continue
+dbt build --select fct_daily_generation+
+git push --force-with-lease
+</code></pre>
+<p>Build again before pushing, because the combined line is new code nobody has run. If <code>--continue</code> opens an editor for the commit message, save and close it.</p>
+<p><strong>9. Clean up after the merge.</strong></p>
+<pre><code class="language-bash">git switch main
+git pull
+git branch -d feat/capacity-factor-installed-kw
+</code></pre>
+<p>If your team squash-merges on GitHub, <code>-d</code> refuses with "not fully merged". A squash merge lands your work on main as one new commit, so git can't find your branch's commits inside main. Once the pull request shows Merged, <code>git branch -D</code> is safe.</p>
+<p>When something goes sideways, three commands get you out of almost everything:</p>
+<ul>
+<li><strong><code>git status</code></strong> first, every time. It names the state you're in and usually prints the next command.</li>
+<li><strong><code>git rebase --abort</code></strong> when a rebase hits conflicts you don't want to resolve now. You land back where you started.</li>
+<li><strong><code>git reflog</code></strong> when you think you lost work. It lists every place your branch has pointed, including commits that are no longer on any branch. Git keeps those entries for 30 days by default.</li>
+</ul>
+<pre><code class="language-bash">$ git reflog -3 fix/generation-timezone
+2b9124e fix/generation-timezone@{0}: rebase (finish): ...
+8379303 fix/generation-timezone@{1}: rebase (finish): ...
+dec1e17 fix/generation-timezone@{2}: commit: Convert generation timestamps to Europe/Lisbon
+</code></pre>
+<p>Even after two rebases, the original <code>dec1e17</code> is still there. <code>git switch -c rescue dec1e17</code> would bring it back as a new branch.</p>
+<p><img src="../assets/posts/git-for-analytics-engineers/daily-routine.png" alt="A cheat sheet card titled the analytics engineer's git day, with four columns: start, with git switch main, git pull and git switch -c; work, with dbt build, git add and git commit; catch up, with git fetch and git rebase origin/main; share, with git push -u origin and open a pull request. A strip at the bottom lists git status, git rebase --abort and git reflog for when things go wrong."></p>
+<hr />
+<h2 id="try-this-at-work">Try this at work</h2>
+<div class="callout callout-tip">
+<span class="callout-label">five minutes</span>
+<p>Run the three lines below once. Older git versions merged silently on pull, and <code>pull.ff only</code> makes every machine behave like current git. <code>fetch.prune</code> removes <code>origin/</code> branches that were deleted on GitHub after their pull requests merged. Then <code>git tree</code> draws the picture from this post for your own repository.</p>
+</div>
+
+<pre><code class="language-bash">git config --global pull.ff only
+git config --global fetch.prune true
+git config --global alias.tree &quot;log --oneline --graph --all&quot;
+</code></pre>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>origin/main is a photo, not a live view</strong> — <code>git status</code> compares you with your last fetch, so fetch before you trust it.</li>
+<li><strong>Only three everyday commands talk to GitHub</strong> — fetch and pull download, push uploads, and everything else is local.</li>
+<li><strong>Branch for every change in a team repo</strong> — a branch is a pointer, costs nothing, and keeps <code>main</code> deployable.</li>
+<li><strong>Pull on main, rebase or merge on branches</strong> — current git refuses to guess when histories diverge, and that's a feature.</li>
+<li><strong>Rebase rewrites hashes</strong> — after rebasing a pushed branch, use <code>--force-with-lease</code>, never pull.</li>
+<li><strong>Resolve conflicts by keeping both intents</strong> — then rebuild with dbt, because the merged line is untested code.</li>
+<li><strong>Almost nothing is truly lost</strong> — <code>git reflog</code> remembers where your branch has been for at least 30 days.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 19 November 2026. I ran every command on git 2.54.0; the documentation below is current to git 2.56.1. Older git versions behave differently on <code>git pull</code> without configuration: they merged and printed a warning instead of stopping.</p>
+<ul>
+<li><a href="https://git-scm.com/docs/git-fetch">git-fetch</a>, <a href="https://git-scm.com/docs/git-pull">git-pull</a> and <a href="https://git-scm.com/docs/git-rebase">git-rebase</a> — git reference manual, including <code>--ff-only</code> as the pull default.</li>
+<li><a href="https://git-scm.com/docs/git-push">git-push</a> — what <code>--force-with-lease</code> checks before overwriting.</li>
+<li><a href="https://git-scm.com/docs/git-config">git-config</a> — <code>pull.ff</code>, <code>fetch.prune</code> and <code>gc.reflogExpireUnreachable</code> (30 days).</li>
+<li><a href="https://git-scm.com/book/en/v2/Git-Branching-Branches-in-a-Nutshell">Branches in a Nutshell</a> and <a href="https://git-scm.com/book/en/v2/Git-Branching-Remote-Branches">Remote Branches</a> — Pro Git.</li>
+<li><a href="https://github.blog/changelog/2020-10-01-the-default-branch-for-newly-created-repositories-is-now-main/">The default branch for newly-created repositories is now main</a> — GitHub changelog, 1 October 2020.</li>
+</ul>
+<p>Which git command did you copy for months before you knew what it did?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="dbt-layers-enforced-in-ci.html" class="related-card" data-category="dbt">
+              <span>dbt · 19 Nov 2026</span>
+              <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+              <span>9 min read →</span>
+            </a>
+            <a href="analytics-agent-semantic-contract.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+              <span>12 min read →</span>
+            </a>
+            <a href="semantic-layer-agent-harden.html" class="related-card" data-category="AI">
+              <span>AI · 30 Jun 2026</span>
+              <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
+              <span>12 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

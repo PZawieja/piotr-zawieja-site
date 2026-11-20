@@ -38,33 +38,32 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">33</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">34</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="dbt-layers-enforced-in-ci.html" data-category="dbt" data-tags="dbt,data-quality">
+      <a class="featured-post" href="git-for-analytics-engineers.html" data-category="dbt" data-tags="dbt">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>19 Nov 2026</span>
+              <span>20 Nov 2026</span>
             </div>
             <div class="category-tags">
               <span class="category-tag">dbt</span>
-              <span class="category-tag secondary">Data quality</span>
             </div>
-            <h2>Your dbt layers are a suggestion until CI enforces them</h2>
-            <p class="featured-description">Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.</p>
+            <h2>Branch or not to branch: git for analytics engineers in one picture</h2>
+            <p class="featured-description">What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture, one daily routine.</p>
           </div>
           <div class="featured-meta">
-            <span>9 min read</span>
+            <span>12 min read</span>
             <span>Read the latest post →</span>
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/dbt-layers-enforced-in-ci/layer-rules.svg" alt="Four columns, sources, staging, intermediate and marts, joined by green arrows that flow left to right one layer at a time. Below them, three pairs of red-bordered boxes linked by dashed red arrows show the forbidden edges: a source straight into a mart, one staging model into another, and a mart back into staging.">
+          <img src="/assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches.">
           <figcaption class="featured-caption"></figcaption>
         </figure>
       </a>
@@ -98,6 +97,19 @@
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-grid" id="archive-grid">
+        <a class="post-card" href="dbt-layers-enforced-in-ci.html" data-category="dbt" data-tags="dbt,data-quality">
+          <div class="card-meta">
+            <span class="card-primary">dbt</span>
+            <span>19 Nov 2026</span>
+          </div>
+          <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+          <p>Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.</p>
+          <div class="card-footer">
+            <span>9 min read</span>
+            <span>Data quality</span>
+            <span>Read →</span>
+          </div>
+        </a>
         <a class="post-card" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake">
           <div class="card-meta">
             <span class="card-primary">AI</span>
@@ -520,7 +532,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 33 posts</span>
+      <span>© 2026 Piotr Zawieja · 34 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>
