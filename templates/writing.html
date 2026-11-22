@@ -79,45 +79,95 @@
       </a>
     </section>
 
-    <section class="archive">
-      <div class="section-heading">
-        <div><p class="section-label">The archive · newest first</p><h2>Find your next useful idea.</h2></div>
-        <p>Latest stays featured by default. Search and topics apply to the full archive.</p>
+    {% macro tag_label(tag) %}{{ "Data quality" if tag == "data-quality" else tag }}{% endmacro %}
+    <section class="recent" id="recent" aria-labelledby="recent-title">
+      <div class="writing-section-head">
+        <h2 id="recent-title">Recent</h2>
+        <span>Newest {{ recent_count }} after the latest</span>
+      </div>
+      <div class="recent-grid">
+        {% for post in posts[1:recent_count + 1] %}
+        <a class="recent-card" href="{{ post.slug }}.html" data-category="{{ post.tags[0] if post.tags else '' }}">
+          {% if post.feature_image %}
+          <figure class="recent-art">
+            <img src="{{ post.feature_image }}" alt="{{ post.feature_image_alt }}" loading="lazy">
+          </figure>
+          {% else %}
+          <div class="recent-art recent-cover" aria-hidden="true">
+            <span>{{ tag_label(post.tags[0]) if post.tags else "Blog" }}</span>
+          </div>
+          {% endif %}
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">{{ post.tags|map("replace", "data-quality", "Data quality")|join(" · ") }}</span><span>{{ post.date_short }}</span></p>
+            <h3>{{ post.title }}</h3>
+            <p class="recent-read">{{ post.read_time }} min read</p>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+
+    {% if series %}
+    <section class="series" id="series" aria-labelledby="series-title">
+      <div class="writing-section-head">
+        <h2 id="series-title">Series</h2>
+        <span>Read in order</span>
+      </div>
+      <div class="series-rail">
+        {% for s in series %}
+        <article class="series-card" data-category="{{ s.category }}">
+          <header class="series-head">
+            <h3>{{ s.name }}</h3>
+            <span>{{ s.parts|length }} part{{ "s" if s.parts|length != 1 }} · {{ s.read_time }} min</span>
+          </header>
+          <ol class="series-parts">
+            {% for part in s.parts %}
+            <li><a href="{{ part.slug }}.html"><span class="series-num">{{ part.part }}</span><span class="series-title">{{ part.title }}</span><span class="series-time">{{ part.read_time }} min</span></a></li>
+            {% endfor %}
+          </ol>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="archive" aria-labelledby="archive-title">
+      <div class="writing-section-head">
+        <h2 id="archive-title">Archive</h2>
+        <span>All posts, newest first</span>
       </div>
       <div class="archive-controls">
         <div class="topic-filters" role="group" aria-label="Filter articles by topic">
           <button class="filter-button" type="button" data-filter="all" aria-pressed="true">All <span class="filter-count"></span></button>
           {% for tag in all_tags %}
           <button class="filter-button" type="button" data-filter="{{ tag }}" aria-pressed="false">
-            <span class="filter-dot" aria-hidden="true"></span>{{ "Data quality" if tag == "data-quality" else tag }} <span class="filter-count"></span>
+            <span class="filter-dot" aria-hidden="true"></span>{{ tag_label(tag) }} <span class="filter-count"></span>
           </button>
           {% endfor %}
         </div>
         <label>
           <span class="visually-hidden">Search blog post titles, summaries, and topics</span>
-          <input class="search-input" id="article-search" type="search" placeholder="Search blog posts…" autocomplete="off" aria-controls="archive-grid">
+          <input class="search-input" id="article-search" type="search" placeholder="Search blog posts…" autocomplete="off" aria-controls="archive-list">
         </label>
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
-      <div class="archive-grid" id="archive-grid">
+      <div class="archive-list" id="archive-list">
         {% for post in posts[1:] %}
-        <a class="post-card" href="{{ post.slug }}.html" data-category="{{ post.tags[0] if post.tags else '' }}" data-tags="{{ post.tags|join(',') }}">
-          <div class="card-meta">
-            <span class="card-primary">{{ "Data quality" if post.tags and post.tags[0] == "data-quality" else post.tags[0] if post.tags else "Blog post" }}</span>
-            <span>{{ post.date_formatted }}</span>
-          </div>
-          <h3>{{ post.title }}</h3>
-          <p>{{ post.description }}</p>
-          <div class="card-footer">
-            <span>{{ post.read_time }} min read</span>
-            <span>{% for tag in post.tags[1:] %}{{ "Data quality" if tag == "data-quality" else tag }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
-            <span>Read →</span>
-          </div>
+        {% if loop.changed(post.month_label) %}
+        <h3 class="archive-month" data-month="{{ post.month_label }}">{{ post.month_label }}</h3>
+        {% endif %}
+        <a class="archive-row" href="{{ post.slug }}.html" data-category="{{ post.tags[0] if post.tags else '' }}" data-tags="{{ post.tags|join(',') }}" data-month="{{ post.month_label }}"{% if loop.index <= recent_count %} data-in-recent{% endif %}>
+          <span class="archive-date">{{ post.date_short }}</span>
+          <span class="archive-tag">{{ tag_label(post.tags[0]) if post.tags else "Blog" }}</span>
+          <span class="archive-text">
+            <strong>{{ post.title }}</strong>
+            <span>{{ post.description }}</span>
+          </span>
+          <span class="archive-time">{{ post.read_time }} min</span>
         </a>
         {% endfor %}
       </div>
       <p class="empty-state" id="empty-state" hidden>No blog posts match. Try another topic or clear your search.</p>
-      <p class="archive-note">Category color marks the primary topic; filters also match secondary topics.</p>
     </section>
 
     <footer class="site-footer">
@@ -135,31 +185,42 @@
   </main>
 
   <script>
-    const cards = [...document.querySelectorAll(".featured-post, .post-card")];
+    const featured = document.querySelector(".featured-post");
+    const rows = [...document.querySelectorAll(".archive-row")];
+    const months = [...document.querySelectorAll(".archive-month")];
+    const curated = [...document.querySelectorAll("#recent, #series")];
+    const cards = [featured, ...rows];
     const filterButtons = [...document.querySelectorAll(".filter-button")];
     const searchInput = document.querySelector("#article-search");
     const archiveSummary = document.querySelector("#archive-summary");
     const emptyState = document.querySelector("#empty-state");
     let activeTopic = "all";
 
-    function topicLabel(topic) {
-      return topic === "data-quality" ? "Data quality" : topic;
+    function matches(card, query) {
+      const tags = card.dataset.tags ? card.dataset.tags.split(",") : [];
+      const matchesTopic = activeTopic === "all" || tags.includes(activeTopic);
+      return matchesTopic && (!query || card.textContent.toLowerCase().includes(query));
     }
 
     function updateArchive() {
       const query = searchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
+      const browsing = activeTopic === "all" && !query;
+      let matchCount = 0;
 
       for (const card of cards) {
-        const tags = card.dataset.tags ? card.dataset.tags.split(",") : [];
-        const matchesTopic = activeTopic === "all" || tags.includes(activeTopic);
-        const matchesQuery = !query || card.textContent.toLowerCase().includes(query);
-        card.hidden = !(matchesTopic && matchesQuery);
-        if (!card.hidden) visibleCount += 1;
+        const isMatch = matches(card, query);
+        if (isMatch) matchCount += 1;
+        card.hidden = !isMatch || (browsing && "inRecent" in card.dataset);
+      }
+      for (const section of curated) section.hidden = !browsing;
+      for (const month of months) {
+        month.hidden = !rows.some(row => !row.hidden && row.dataset.month === month.dataset.month);
       }
 
-      emptyState.hidden = visibleCount !== 0;
-      archiveSummary.textContent = `Showing ${visibleCount} of ${cards.length} posts.`;
+      emptyState.hidden = matchCount !== 0;
+      archiveSummary.textContent = browsing
+        ? `${cards.length} posts. Pick a topic or search to see every match in one list.`
+        : `Showing ${matchCount} of ${cards.length} posts.`;
     }
 
     for (const button of filterButtons) {

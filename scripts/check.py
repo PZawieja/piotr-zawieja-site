@@ -246,7 +246,7 @@ def check_writing_index(published_slugs: list[str]) -> None:
         return
     text = wi.read_text(encoding="utf-8")
     count = len(re.findall(r'class="featured-post"', text))
-    count += len(re.findall(r'class="post-card"', text))
+    count += len(re.findall(r'class="archive-row"', text))
     if count != len(published_slugs):
         fail(
             f"writing/index.html lists {count} articles but {len(published_slugs)} "
@@ -254,6 +254,11 @@ def check_writing_index(published_slugs: list[str]) -> None:
         )
     else:
         ok(f"writing/index.html: {count} articles listed (matches published count)")
+    recent = len(re.findall(r'class="recent-card"', text))
+    if len(published_slugs) > 1 and recent == 0:
+        fail("writing/index.html has no recent cards — run build.py")
+    else:
+        ok(f"writing/index.html: {recent} recent card(s)")
 
 
 # ── main ──────────────────────────────────────────────────────────────

@@ -69,10 +69,108 @@
       </a>
     </section>
 
-    <section class="archive">
-      <div class="section-heading">
-        <div><p class="section-label">The archive · newest first</p><h2>Find your next useful idea.</h2></div>
-        <p>Latest stays featured by default. Search and topics apply to the full archive.</p>
+    <section class="recent" id="recent" aria-labelledby="recent-title">
+      <div class="writing-section-head">
+        <h2 id="recent-title">Recent</h2>
+        <span>Newest 6 after the latest</span>
+      </div>
+      <div class="recent-grid">
+        <a class="recent-card" href="dbt-layers-enforced-in-ci.html" data-category="dbt">
+          <figure class="recent-art">
+            <img src="/assets/posts/dbt-layers-enforced-in-ci/layer-rules.svg" alt="Four columns, sources, staging, intermediate and marts, joined by green arrows that flow left to right one layer at a time. Below them, three pairs of red-bordered boxes linked by dashed red arrows show the forbidden edges: a source straight into a mart, one staging model into another, and a mart back into staging." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">dbt · Data quality</span><span>19 Nov</span></p>
+            <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+            <p class="recent-read">9 min read</p>
+          </div>
+        </a>
+        <a class="recent-card" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI">
+          <figure class="recent-art">
+            <img src="/assets/posts/warehouse-prompt-injection-analytics-agents/injection-path.png" alt="A repayment table row whose payment note contains a hidden instruction flows into an analytics agent's context, next to the user's real question, and the agent treats both as instructions." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">AI · Snowflake</span><span>18 Nov</span></p>
+            <h3>Your warehouse is a prompt injection vector</h3>
+            <p class="recent-read">8 min read</p>
+          </div>
+        </a>
+        <a class="recent-card" href="analytics-agent-cost-optimization.html" data-category="AI">
+          <figure class="recent-art">
+            <img src="/assets/posts/analytics-agent-cost-optimization/cost-per-answer.png" alt="A cost-per-answer diagram separates model, warehouse, and retry costs, then compares total serving spend with answers that pass the quality bar." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">AI</span><span>18 Nov</span></p>
+            <h3>Make every token earn its place: cost optimization for analytics agents</h3>
+            <p class="recent-read">8 min read</p>
+          </div>
+        </a>
+        <a class="recent-card" href="analytics-agent-evaluation-judges.html" data-category="AI">
+          <figure class="recent-art">
+            <img src="/assets/posts/analytics-agent-evaluation-judges/evaluation-layers.png" alt="An analytics-agent evaluation flow: representative questions pass through deterministic checks and a calibrated judge, with human review for uncertain or high-impact cases." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">AI</span><span>17 Nov</span></p>
+            <h3>Can you trust this answer? Evaluate the whole analytics agent</h3>
+            <p class="recent-read">9 min read</p>
+          </div>
+        </a>
+        <a class="recent-card" href="analytics-agent-context-engineering.html" data-category="AI">
+          <figure class="recent-art">
+            <img src="/assets/posts/analytics-agent-context-engineering/context-pack.png" alt="Diagram showing resort metrics and lift telemetry supplying an approved wait-time definition, a Saturday time window, and lift-level results to an analytics agent." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">AI</span><span>16 Nov</span></p>
+            <h3>Give your analytics agent the right context, not the whole warehouse</h3>
+            <p class="recent-read">10 min read</p>
+          </div>
+        </a>
+        <a class="recent-card" href="analytics-agent-semantic-contract.html" data-category="AI">
+          <figure class="recent-art">
+            <img src="/assets/posts/analytics-agent-semantic-contract/semantic-contract.png" alt="Diagram showing a business question becoming a defined metric contract, passing through a governed query interface, and returning an answer with its definition and time range." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">AI · dbt</span><span>16 Nov</span></p>
+            <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+            <p class="recent-read">12 min read</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <section class="series" id="series" aria-labelledby="series-title">
+      <div class="writing-section-head">
+        <h2 id="series-title">Series</h2>
+        <span>Read in order</span>
+      </div>
+      <div class="series-rail">
+        <article class="series-card" data-category="dbt">
+          <header class="series-head">
+            <h3>Git for analytics engineers</h3>
+            <span>1 part · 8 min</span>
+          </header>
+          <ol class="series-parts">
+            <li><a href="git-for-analytics-engineers.html"><span class="series-num">1</span><span class="series-title">Branch or not to branch</span><span class="series-time">8 min</span></a></li>
+          </ol>
+        </article>
+        <article class="series-card" data-category="AI">
+          <header class="series-head">
+            <h3>Agents on your semantic layer</h3>
+            <span>3 parts · 38 min</span>
+          </header>
+          <ol class="series-parts">
+            <li><a href="agents-on-semantic-layer-101.html"><span class="series-num">0</span><span class="series-title">Your analytics agent is confident. That's the problem.</span><span class="series-time">15 min</span></a></li>
+            <li><a href="semantic-layer-agent-build.html"><span class="series-num">1</span><span class="series-title">Three tools. One loop. A working analytics agent.</span><span class="series-time">11 min</span></a></li>
+            <li><a href="semantic-layer-agent-harden.html"><span class="series-num">2</span><span class="series-title">Three additions that make it production-safe.</span><span class="series-time">12 min</span></a></li>
+          </ol>
+        </article>
+      </div>
+    </section>
+
+    <section class="archive" aria-labelledby="archive-title">
+      <div class="writing-section-head">
+        <h2 id="archive-title">Archive</h2>
+        <span>All posts, newest first</span>
       </div>
       <div class="archive-controls">
         <div class="topic-filters" role="group" aria-label="Filter articles by topic">
@@ -92,443 +190,312 @@
         </div>
         <label>
           <span class="visually-hidden">Search blog post titles, summaries, and topics</span>
-          <input class="search-input" id="article-search" type="search" placeholder="Search blog posts…" autocomplete="off" aria-controls="archive-grid">
+          <input class="search-input" id="article-search" type="search" placeholder="Search blog posts…" autocomplete="off" aria-controls="archive-list">
         </label>
       </div>
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
-      <div class="archive-grid" id="archive-grid">
-        <a class="post-card" href="dbt-layers-enforced-in-ci.html" data-category="dbt" data-tags="dbt,data-quality">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>19 Nov 2026</span>
-          </div>
-          <h3>Your dbt layers are a suggestion until CI enforces them</h3>
-          <p>Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span>Data quality</span>
-            <span>Read →</span>
-          </div>
+      <div class="archive-list" id="archive-list">
+        <h3 class="archive-month" data-month="November 2026">November 2026</h3>
+        <a class="archive-row" href="dbt-layers-enforced-in-ci.html" data-category="dbt" data-tags="dbt,data-quality" data-month="November 2026" data-in-recent>
+          <span class="archive-date">19 Nov</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Your dbt layers are a suggestion until CI enforces them</strong>
+            <span>Three layering rules for dbt, the dbt_project_evaluator checks behind each, and a CI step that blocks only the violations a PR introduces.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>18 Nov 2026</span>
-          </div>
-          <h3>Your warehouse is a prompt injection vector</h3>
-          <p>Free-text columns and table comments can carry instructions to your analytics agent. Threat-model it, then cut one leg of the risk.</p>
-          <div class="card-footer">
-            <span>8 min read</span>
-            <span>Snowflake</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake" data-month="November 2026" data-in-recent>
+          <span class="archive-date">18 Nov</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Your warehouse is a prompt injection vector</strong>
+            <span>Free-text columns and table comments can carry instructions to your analytics agent. Threat-model it, then cut one leg of the risk.</span>
+          </span>
+          <span class="archive-time">8 min</span>
         </a>
-        <a class="post-card" href="analytics-agent-cost-optimization.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>18 Nov 2026</span>
-          </div>
-          <h3>Make every token earn its place: cost optimization for analytics agents</h3>
-          <p>Measure cost per accepted answer, then reduce wasted model work without trading away the accuracy, freshness, and evidence users depend on.</p>
-          <div class="card-footer">
-            <span>8 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="analytics-agent-cost-optimization.html" data-category="AI" data-tags="AI" data-month="November 2026" data-in-recent>
+          <span class="archive-date">18 Nov</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Make every token earn its place: cost optimization for analytics agents</strong>
+            <span>Measure cost per accepted answer, then reduce wasted model work without trading away the accuracy, freshness, and evidence users depend on.</span>
+          </span>
+          <span class="archive-time">8 min</span>
         </a>
-        <a class="post-card" href="analytics-agent-evaluation-judges.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>17 Nov 2026</span>
-          </div>
-          <h3>Can you trust this answer? Evaluate the whole analytics agent</h3>
-          <p>Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="analytics-agent-evaluation-judges.html" data-category="AI" data-tags="AI" data-month="November 2026" data-in-recent>
+          <span class="archive-date">17 Nov</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Can you trust this answer? Evaluate the whole analytics agent</strong>
+            <span>Build useful analytics-agent evaluations with deterministic checks, calibrated LLM judges, human review, and cases that test the whole answer path.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>16 Nov 2026</span>
-          </div>
-          <h3>Give your analytics agent the right context, not the whole warehouse</h3>
-          <p>A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.</p>
-          <div class="card-footer">
-            <span>10 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI" data-month="November 2026" data-in-recent>
+          <span class="archive-date">16 Nov</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Give your analytics agent the right context, not the whole warehouse</strong>
+            <span>A practical way to assemble relevant, current context for analytics agents without dumping every metric, schema, and chat turn into the prompt.</span>
+          </span>
+          <span class="archive-time">10 min</span>
         </a>
-        <a class="post-card" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>16 Nov 2026</span>
-          </div>
-          <h3>Give your analytics agent a contract, not a bigger prompt</h3>
-          <p>A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</p>
-          <div class="card-footer">
-            <span>12 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt" data-month="November 2026" data-in-recent>
+          <span class="archive-date">16 Nov</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Give your analytics agent a contract, not a bigger prompt</strong>
+            <span>A clear, practical guide to defining metric meaning, grain, time, joins, and access before an AI agent queries business data.</span>
+          </span>
+          <span class="archive-time">12 min</span>
         </a>
-        <a class="post-card" href="semantic-layer-agent-harden.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>30 Jun 2026</span>
-          </div>
-          <h3>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</h3>
-          <p>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</p>
-          <div class="card-footer">
-            <span>12 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <h3 class="archive-month" data-month="June 2026">June 2026</h3>
+        <a class="archive-row" href="semantic-layer-agent-harden.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">30 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Agents on your semantic layer, Part 2: Three additions that make it production-safe.</strong>
+            <span>Add disambiguation pre-flight, template matching, and three-tier memory to your dbt Semantic Layer agent. Part 2 of 2 — the hardening layer.</span>
+          </span>
+          <span class="archive-time">12 min</span>
         </a>
-        <a class="post-card" href="semantic-layer-agent-build.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>30 Jun 2026</span>
-          </div>
-          <h3>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</h3>
-          <p>Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="semantic-layer-agent-build.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">30 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Agents on your semantic layer, Part 1: Three tools. One loop. A working analytics agent.</strong>
+            <span>Build a real analytics agent on dbt Semantic Layer and Snowflake: three tools, one Claude loop, about 80 lines of Python. Part 1 of 2.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="agents-on-semantic-layer-101.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>30 Jun 2026</span>
-          </div>
-          <h3>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</h3>
-          <p>Semantic layer agents fail silently. Here's what breaks, how to prevent hallucinations, and why your agent should ask before it answers.</p>
-          <div class="card-footer">
-            <span>15 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="agents-on-semantic-layer-101.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">30 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Agents on your semantic layer, Part 0: Your analytics agent is confident. That's the problem.</strong>
+            <span>Semantic layer agents fail silently. Here's what breaks, how to prevent hallucinations, and why your agent should ask before it answers.</span>
+          </span>
+          <span class="archive-time">15 min</span>
         </a>
-        <a class="post-card" href="ai-triage-data-monitoring-alerts.html" data-category="AI" data-tags="AI,data-quality">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>28 Jun 2026</span>
-          </div>
-          <h3>40 data alerts at 6am. AI triaged them in 90 seconds.</h3>
-          <p>Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</p>
-          <div class="card-footer">
-            <span>10 min read</span>
-            <span>Data quality</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="ai-triage-data-monitoring-alerts.html" data-category="AI" data-tags="AI,data-quality" data-month="June 2026">
+          <span class="archive-date">28 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>40 data alerts at 6am. AI triaged them in 90 seconds.</strong>
+            <span>Data monitoring tools produce more alerts than humans can triage. Here's the classification framework and prompt structure to separate signal from noise.</span>
+          </span>
+          <span class="archive-time">10 min</span>
         </a>
-        <a class="post-card" href="ai-analytics-not-sql-generation.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>28 Jun 2026</span>
-          </div>
-          <h3>Six analytics jobs I've handed to AI — none of them are writing SQL</h3>
-          <p>SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="ai-analytics-not-sql-generation.html" data-category="AI" data-tags="AI" data-month="June 2026">
+          <span class="archive-date">28 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Six analytics jobs I've handed to AI — none of them are writing SQL</strong>
+            <span>SQL generation demos well. Here's where AI actually saves the most time in analytics work — and none of it is writing code.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="snowflake-variant-flatten.html" data-category="Snowflake" data-tags="Snowflake">
-          <div class="card-meta">
-            <span class="card-primary">Snowflake</span>
-            <span>27 Jun 2026</span>
-          </div>
-          <h3>You've been flattening Snowflake JSON wrong</h3>
-          <p>LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="snowflake-variant-flatten.html" data-category="Snowflake" data-tags="Snowflake" data-month="June 2026">
+          <span class="archive-date">27 Jun</span>
+          <span class="archive-tag">Snowflake</span>
+          <span class="archive-text">
+            <strong>You've been flattening Snowflake JSON wrong</strong>
+            <span>LATERAL FLATTEN is the wrong default for Snowflake JSON. Dot-notation, parsed columns, and when to actually flatten — with SQL for each.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="analytics-agent-eval-harness.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>26 Jun 2026</span>
-          </div>
-          <h3>How to know if your analytics agent still works: a deterministic eval harness</h3>
-          <p>Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="analytics-agent-eval-harness.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">26 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>How to know if your analytics agent still works: a deterministic eval harness</strong>
+            <span>Scoring, cost tracking from real runs, and regression gating for a dbt analytics agent — without LLM-as-judge.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="dbt-agentic-engine-build-log.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>26 Jun 2026</span>
-          </div>
-          <h3>Building an analytics agent on a real dbt project: what actually broke</h3>
-          <p>A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-agentic-engine-build-log.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">26 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Building an analytics agent on a real dbt project: what actually broke</strong>
+            <span>A build log for dbt-agentic-engine — four tools, a hard call budget, a structured trace, and the things that only broke on live API calls.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="revenue-intelligence-agent-ai-cs-copilot.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>23 Jun 2026</span>
-          </div>
-          <h3>Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</h3>
-          <p>A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="revenue-intelligence-agent-ai-cs-copilot.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">23 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Revenue Intelligence Agent: an AI co-pilot that stops Customer Success from firefighting</strong>
+            <span>A demo and build log for Revenue Intelligence Agent — an AI co-pilot that turns a renewal pipeline into daily, proactive CS action.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="reconciling-metric-definitions-llm.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>21 Jun 2026</span>
-          </div>
-          <h3>Reconciling competing metric definitions across teams with an LLM</h3>
-          <p>An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.</p>
-          <div class="card-footer">
-            <span>8 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="reconciling-metric-definitions-llm.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">21 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Reconciling competing metric definitions across teams with an LLM</strong>
+            <span>An LLM can't decide what 'active customer' means. It can find every definition you have, show where they diverge, and draft the doc.</span>
+          </span>
+          <span class="archive-time">8 min</span>
         </a>
-        <a class="post-card" href="forecasting-llm-vs-time-series-model.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>21 Jun 2026</span>
-          </div>
-          <h3>Forecasting with an LLM vs. a real time-series model: where each one is the right call</h3>
-          <p>An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="forecasting-llm-vs-time-series-model.html" data-category="AI" data-tags="AI" data-month="June 2026">
+          <span class="archive-date">21 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Forecasting with an LLM vs. a real time-series model: where each one is the right call</strong>
+            <span>An LLM is good at explaining a forecast, not producing one. Where Prophet or ETS still beats asking Claude to predict next quarter's numbers.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="snowflake-clustering-keys-guide.html" data-category="Snowflake" data-tags="Snowflake">
-          <div class="card-meta">
-            <span class="card-primary">Snowflake</span>
-            <span>16 Jun 2026</span>
-          </div>
-          <h3>Snowflake clustering keys: what they are, when they help, and when to skip them</h3>
-          <p>Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</p>
-          <div class="card-footer">
-            <span>10 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="snowflake-clustering-keys-guide.html" data-category="Snowflake" data-tags="Snowflake" data-month="June 2026">
+          <span class="archive-date">16 Jun</span>
+          <span class="archive-tag">Snowflake</span>
+          <span class="archive-text">
+            <strong>Snowflake clustering keys: what they are, when they help, and when to skip them</strong>
+            <span>Clustering keys improve query performance by rearranging micro-partitions — but they cost credits continuously. Here is when the trade-off is worth it.</span>
+          </span>
+          <span class="archive-time">10 min</span>
         </a>
-        <a class="post-card" href="dbt-idempotency-pipelines.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>16 Jun 2026</span>
-          </div>
-          <h3>Idempotency in dbt: the one pipeline property worth obsessing over</h3>
-          <p>Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-idempotency-pipelines.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">16 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Idempotency in dbt: the one pipeline property worth obsessing over</strong>
+            <span>Most dbt models look idempotent but aren't. What breaks it silently and the concrete patterns — unique_key, surrogate keys, partition replacement — that fix it.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="ai-for-analytics-engineering.html" data-category="AI" data-tags="AI">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>14 Jun 2026</span>
-          </div>
-          <h3>AI for analytics engineering: where it actually helps and where it doesn't</h3>
-          <p>Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="ai-for-analytics-engineering.html" data-category="AI" data-tags="AI" data-month="June 2026">
+          <span class="archive-date">14 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>AI for analytics engineering: where it actually helps and where it doesn't</strong>
+            <span>Not a hype piece. Where AI tools earn their place in an analytics engineering workflow — and where they consistently fall short.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="dbt-packages-worth-using-2026.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>14 Jun 2026</span>
-          </div>
-          <h3>dbt packages worth using in 2026</h3>
-          <p>An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</p>
-          <div class="card-footer">
-            <span>7 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-packages-worth-using-2026.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">14 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>dbt packages worth using in 2026</strong>
+            <span>An honest assessment of which dbt packages actually earn their dependency weight — and which ones add complexity without proportional value.</span>
+          </span>
+          <span class="archive-time">7 min</span>
         </a>
-        <a class="post-card" href="dimensional-modeling-dbt-practical-patterns.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>14 Jun 2026</span>
-          </div>
-          <h3>Dimensional modeling in dbt: the patterns that don't fit the textbook</h3>
-          <p>Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</p>
-          <div class="card-footer">
-            <span>10 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dimensional-modeling-dbt-practical-patterns.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">14 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Dimensional modeling in dbt: the patterns that don't fit the textbook</strong>
+            <span>Kimball tells you what to build, dbt gives you the tools. Where SCD Type 2 snapshots, bridge tables, and role-playing dimensions actually live.</span>
+          </span>
+          <span class="archive-time">10 min</span>
         </a>
-        <a class="post-card" href="dbt-tests-business-logic-errors.html" data-category="dbt" data-tags="dbt,data-quality">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>12 Jun 2026</span>
-          </div>
-          <h3>How to write dbt tests that catch real business logic errors (not just nulls)</h3>
-          <p>Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</p>
-          <div class="card-footer">
-            <span>6 min read</span>
-            <span>Data quality</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-tests-business-logic-errors.html" data-category="dbt" data-tags="dbt,data-quality" data-month="June 2026">
+          <span class="archive-date">12 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>How to write dbt tests that catch real business logic errors (not just nulls)</strong>
+            <span>Most dbt test suites catch infrastructure failures like nulls and duplicate keys, but miss the business logic errors that surface in weekly business reviews.</span>
+          </span>
+          <span class="archive-time">6 min</span>
         </a>
-        <a class="post-card" href="dbt-semantic-layer-vs-metric-marts.html" data-category="dbt" data-tags="dbt,AI">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>12 Jun 2026</span>
-          </div>
-          <h3>dbt Semantic Layer vs. homegrown metric marts: when to use which</h3>
-          <p>A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</p>
-          <div class="card-footer">
-            <span>7 min read</span>
-            <span>AI</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-semantic-layer-vs-metric-marts.html" data-category="dbt" data-tags="dbt,AI" data-month="June 2026">
+          <span class="archive-date">12 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>dbt Semantic Layer vs. homegrown metric marts: when to use which</strong>
+            <span>A practical decision framework for analytics engineers choosing between pre-aggregated metric marts and the dbt Semantic Layer with MetricFlow.</span>
+          </span>
+          <span class="archive-time">7 min</span>
         </a>
-        <a class="post-card" href="snowflake-cortex-analyst-in-practice.html" data-category="Snowflake" data-tags="Snowflake,AI">
-          <div class="card-meta">
-            <span class="card-primary">Snowflake</span>
-            <span>12 Jun 2026</span>
-          </div>
-          <h3>Snowflake Cortex Analyst in practice: what the demo doesn't show you</h3>
-          <p>Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</p>
-          <div class="card-footer">
-            <span>8 min read</span>
-            <span>AI</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="snowflake-cortex-analyst-in-practice.html" data-category="Snowflake" data-tags="Snowflake,AI" data-month="June 2026">
+          <span class="archive-date">12 Jun</span>
+          <span class="archive-tag">Snowflake</span>
+          <span class="archive-text">
+            <strong>Snowflake Cortex Analyst in practice: what the demo doesn't show you</strong>
+            <span>Cortex Analyst looks smooth in a demo. Here is what actually happens when you point it at a real warehouse in week two.</span>
+          </span>
+          <span class="archive-time">8 min</span>
         </a>
-        <a class="post-card" href="ai-assisted-sql-review-claude-dbt.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>12 Jun 2026</span>
-          </div>
-          <h3>AI-assisted SQL review: using Claude to catch data quality issues before they ship</h3>
-          <p>Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</p>
-          <div class="card-footer">
-            <span>8 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="ai-assisted-sql-review-claude-dbt.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">12 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>AI-assisted SQL review: using Claude to catch data quality issues before they ship</strong>
+            <span>Not 'AI is transforming data teams' — a concrete workflow: the prompt, what it catches reliably, and where it fails. For analytics engineers who review dbt PRs.</span>
+          </span>
+          <span class="archive-time">8 min</span>
         </a>
-        <a class="post-card" href="late-arriving-data-dbt-incremental.html" data-category="dbt" data-tags="dbt,data-quality">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>11 Jun 2026</span>
-          </div>
-          <h3>Late-arriving data: the silent failure that breaks your incremental models</h3>
-          <p>Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. Late-arriving events and the dbt patterns that handle them correctly.</p>
-          <div class="card-footer">
-            <span>15 min read</span>
-            <span>Data quality</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="late-arriving-data-dbt-incremental.html" data-category="dbt" data-tags="dbt,data-quality" data-month="June 2026">
+          <span class="archive-date">11 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Late-arriving data: the silent failure that breaks your incremental models</strong>
+            <span>Your dbt run succeeds. Tests pass. The dashboard looks fine. The data is still wrong. Late-arriving events and the dbt patterns that handle them correctly.</span>
+          </span>
+          <span class="archive-time">15 min</span>
         </a>
-        <a class="post-card" href="dbt-incremental-models-complete-guide.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>11 Jun 2026</span>
-          </div>
-          <h3>dbt incremental models: the complete guide</h3>
-          <p>How incremental models work, when each strategy applies, and the patterns that only surface after something breaks in production.</p>
-          <div class="card-footer">
-            <span>14 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-incremental-models-complete-guide.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">11 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>dbt incremental models: the complete guide</strong>
+            <span>How incremental models work, when each strategy applies, and the patterns that only surface after something breaks in production.</span>
+          </span>
+          <span class="archive-time">14 min</span>
         </a>
-        <a class="post-card" href="claude-code-analytics-setup.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>8 Jun 2026</span>
-          </div>
-          <h3>How I set up Claude Code for analytics engineering work</h3>
-          <p>Most analytics engineers re-explain their stack every AI session. CLAUDE.md, skills, and a few conventions make Claude useful from the first prompt.</p>
-          <div class="card-footer">
-            <span>6 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="claude-code-analytics-setup.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">8 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>How I set up Claude Code for analytics engineering work</strong>
+            <span>Most analytics engineers re-explain their stack every AI session. CLAUDE.md, skills, and a few conventions make Claude useful from the first prompt.</span>
+          </span>
+          <span class="archive-time">6 min</span>
         </a>
-        <a class="post-card" href="governed-ai-warehouse-beats-rag.html" data-category="AI" data-tags="AI,dbt">
-          <div class="card-meta">
-            <span class="card-primary">AI</span>
-            <span>8 Jun 2026</span>
-          </div>
-          <h3>Why governed AI on your warehouse beats RAG on your docs</h3>
-          <p>Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</p>
-          <div class="card-footer">
-            <span>10 min read</span>
-            <span>dbt</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="governed-ai-warehouse-beats-rag.html" data-category="AI" data-tags="AI,dbt" data-month="June 2026">
+          <span class="archive-date">8 Jun</span>
+          <span class="archive-tag">AI</span>
+          <span class="archive-text">
+            <strong>Why governed AI on your warehouse beats RAG on your docs</strong>
+            <span>Most enterprise data AI projects start by indexing documentation — here is why that is backwards, and what a warehouse-native approach looks like instead.</span>
+          </span>
+          <span class="archive-time">10 min</span>
         </a>
-        <a class="post-card" href="data-platform-decisions.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>8 Jun 2026</span>
-          </div>
-          <h3>How to build a modern analytics data platform: the decisions nobody documents</h3>
-          <p>Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</p>
-          <div class="card-footer">
-            <span>11 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="data-platform-decisions.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">8 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>How to build a modern analytics data platform: the decisions nobody documents</strong>
+            <span>Everyone writes about the tools. Nobody writes about the architectural choices made in the first three months that you cannot change without rebuilding.</span>
+          </span>
+          <span class="archive-time">11 min</span>
         </a>
-        <a class="post-card" href="excel-to-dbt-polish-data-teams.html" data-category="dbt" data-tags="dbt">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>5 Jun 2026</span>
-          </div>
-          <h3>From Excel to dbt: a realistic transition guide for Polish data teams</h3>
-          <p>A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</p>
-          <div class="card-footer">
-            <span>9 min read</span>
-            <span></span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="excel-to-dbt-polish-data-teams.html" data-category="dbt" data-tags="dbt" data-month="June 2026">
+          <span class="archive-date">5 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>From Excel to dbt: a realistic transition guide for Polish data teams</strong>
+            <span>A practitioner's guide to migrating analytics from spreadsheets to dbt, covering the governance and trust-building steps that most teams skip.</span>
+          </span>
+          <span class="archive-time">9 min</span>
         </a>
-        <a class="post-card" href="dbt-47-models-nobody-trusts.html" data-category="dbt" data-tags="dbt,data-quality">
-          <div class="card-meta">
-            <span class="card-primary">dbt</span>
-            <span>5 Jun 2026</span>
-          </div>
-          <h3>Why your dbt project has 47 models and nobody trusts any of them</h3>
-          <p>The dbt trust problem isn't a tooling issue — it's architectural. It shows up in every team that moved fast and skipped the governance layer.</p>
-          <div class="card-footer">
-            <span>7 min read</span>
-            <span>Data quality</span>
-            <span>Read →</span>
-          </div>
+        <a class="archive-row" href="dbt-47-models-nobody-trusts.html" data-category="dbt" data-tags="dbt,data-quality" data-month="June 2026">
+          <span class="archive-date">5 Jun</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Why your dbt project has 47 models and nobody trusts any of them</strong>
+            <span>The dbt trust problem isn't a tooling issue — it's architectural. It shows up in every team that moved fast and skipped the governance layer.</span>
+          </span>
+          <span class="archive-time">7 min</span>
         </a>
       </div>
       <p class="empty-state" id="empty-state" hidden>No blog posts match. Try another topic or clear your search.</p>
-      <p class="archive-note">Category color marks the primary topic; filters also match secondary topics.</p>
     </section>
 
     <footer class="site-footer">
@@ -546,31 +513,42 @@
   </main>
 
   <script>
-    const cards = [...document.querySelectorAll(".featured-post, .post-card")];
+    const featured = document.querySelector(".featured-post");
+    const rows = [...document.querySelectorAll(".archive-row")];
+    const months = [...document.querySelectorAll(".archive-month")];
+    const curated = [...document.querySelectorAll("#recent, #series")];
+    const cards = [featured, ...rows];
     const filterButtons = [...document.querySelectorAll(".filter-button")];
     const searchInput = document.querySelector("#article-search");
     const archiveSummary = document.querySelector("#archive-summary");
     const emptyState = document.querySelector("#empty-state");
     let activeTopic = "all";
 
-    function topicLabel(topic) {
-      return topic === "data-quality" ? "Data quality" : topic;
+    function matches(card, query) {
+      const tags = card.dataset.tags ? card.dataset.tags.split(",") : [];
+      const matchesTopic = activeTopic === "all" || tags.includes(activeTopic);
+      return matchesTopic && (!query || card.textContent.toLowerCase().includes(query));
     }
 
     function updateArchive() {
       const query = searchInput.value.trim().toLowerCase();
-      let visibleCount = 0;
+      const browsing = activeTopic === "all" && !query;
+      let matchCount = 0;
 
       for (const card of cards) {
-        const tags = card.dataset.tags ? card.dataset.tags.split(",") : [];
-        const matchesTopic = activeTopic === "all" || tags.includes(activeTopic);
-        const matchesQuery = !query || card.textContent.toLowerCase().includes(query);
-        card.hidden = !(matchesTopic && matchesQuery);
-        if (!card.hidden) visibleCount += 1;
+        const isMatch = matches(card, query);
+        if (isMatch) matchCount += 1;
+        card.hidden = !isMatch || (browsing && "inRecent" in card.dataset);
+      }
+      for (const section of curated) section.hidden = !browsing;
+      for (const month of months) {
+        month.hidden = !rows.some(row => !row.hidden && row.dataset.month === month.dataset.month);
       }
 
-      emptyState.hidden = visibleCount !== 0;
-      archiveSummary.textContent = `Showing ${visibleCount} of ${cards.length} posts.`;
+      emptyState.hidden = matchCount !== 0;
+      archiveSummary.textContent = browsing
+        ? `${cards.length} posts. Pick a topic or search to see every match in one list.`
+        : `Showing ${matchCount} of ${cards.length} posts.`;
     }
 
     for (const button of filterButtons) {

@@ -110,6 +110,8 @@ def parse_posts() -> list:
             "title": post["title"],
             "published_at": published_at,
             "date_formatted": date_formatted,
+            "date_short": f"{published_at.day} {MONTH_ABBR[published_at.month]}",
+            "month_label": published_at.strftime("%B %Y"),
             "date_iso": published_at.date().isoformat(),
             "date_rss": published_at.strftime("%a, %d %b %Y %H:%M:%S +0000"),
             "slug": post["slug"],
@@ -157,11 +159,48 @@ def build_posts(posts: list, env: Environment) -> None:
         print(f"  ✓ writing/{post['slug']}.html")
 
 
+SERIES_TITLE = re.compile(r"^(?P<name>.+?), Part (?P<part>\d+): (?P<title>.+)$")
+WRITING_RECENT_COUNT = 6
+
+
+def _series(posts: list) -> list:
+    groups: dict[str, list] = {}
+    for post in posts:
+        match = SERIES_TITLE.match(post["title"])
+        if not match:
+            continue
+        groups.setdefault(match["name"], []).append({
+            "part": int(match["part"]),
+            "title": match["title"],
+            "slug": post["slug"],
+            "read_time": post["read_time"],
+            "published_at": post["published_at"],
+            "category": post["tags"][0] if post["tags"] else "",
+        })
+    series = [
+        {
+            "name": name,
+            "parts": sorted(parts, key=lambda p: p["part"]),
+            "latest": max(p["published_at"] for p in parts),
+            "category": parts[0]["category"],
+            "read_time": sum(p["read_time"] for p in parts),
+        }
+        for name, parts in groups.items()
+    ]
+    return sorted(series, key=lambda s: s["latest"], reverse=True)
+
+
 def build_writing_index(posts: list, env: Environment) -> None:
     template = env.get_template("writing.html")
     tag_counts = Counter(tag for p in posts for tag in p["tags"])
     all_tags = sorted(tag_counts.keys())
-    html = template.render(posts=posts, all_tags=all_tags, tag_counts=tag_counts)
+    html = template.render(
+        posts=posts,
+        all_tags=all_tags,
+        tag_counts=tag_counts,
+        series=_series(posts),
+        recent_count=WRITING_RECENT_COUNT,
+    )
     out = WRITING_DIR / "index.html"
     out.write_text(html, encoding="utf-8")
     print("  ✓ writing/index.html")
@@ -200,13 +239,11 @@ def _home_lead_html(post: dict) -> str:
 def _home_recent_html(post: dict) -> str:
     primary_tag = post["tags"][0] if post["tags"] else ""
     tags = " · ".join(_tag_label(t) for t in post["tags"]) or "Blog post"
-    published_at = post["published_at"]
-    short_date = f"{published_at.day} {MONTH_ABBR[published_at.month]}"
     return (
         f'            <li><a class="home-recent-item" href="/writing/{escape(post["slug"], quote=True)}.html" data-category="{escape(primary_tag, quote=True)}">\n'
         f'              <p class="home-kicker">{escape(tags)}</p>\n'
         f'              <h3>{escape(post["title"])}</h3>\n'
-        f'              <div class="home-meta"><span>{escape(short_date)}</span>'
+        f'              <div class="home-meta"><span>{escape(post["date_short"])}</span>'
         f'<span>{escape(str(post["read_time"]))} min</span></div>\n'
         f'            </a></li>\n'
     )
