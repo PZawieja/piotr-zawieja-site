@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git for analytics engineers, Part 2: One metric change, command by command — Piotr Zawieja</title>
+<meta name="description" content="One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.">
+<meta property="og:title" content="Git for analytics engineers, Part 2: One metric change, command by command">
+<meta property="og:description" content="One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.">
+<meta property="og:url" content="https://goldlayer.dev/writing/git-metric-change-command-by-command.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/git-metric-change-command-by-command/branch-lifecycle.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span>23 Nov 2026 · 8 min read</span>
+        </div>
+        <h1 class="article-title">Git for analytics engineers, Part 2: One metric change, command by command</h1>
+        <p class="article-deck">One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-request">The request</a></li>
+<li><a href="#before-you-write-any-sql">Before you write any SQL</a></li>
+<li><a href="#getting-it-reviewed">Getting it reviewed</a></li>
+<li><a href="#when-main-moves-under-you">When main moves under you</a></li>
+<li><a href="#finishing-and-getting-out-of-trouble">Finishing, and getting out of trouble</a></li>
+<li><a href="#try-this-at-work">Try this at work</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Changing how a metric is calculated takes one line of SQL and about nine git steps. The SQL is rarely the part that goes wrong.</p>
+<p>What goes wrong is a stale <code>main</code>, a <code>git add .</code> that sweeps in a CSV, or a conflict resolved by picking a side. So here is one ordinary request, start to finish, with the check I'd run at every step.</p>
+<div class="post-brief">
+<ul>
+<li>One metric request touches git nine times before it ships.</li>
+<li>Each step has a check that takes seconds and gets skipped.</li>
+<li>The conflict step is where a metric quietly gets the wrong formula.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">series</span>
+<p>Part 2 of <em>Git for analytics engineers</em>: <a href="git-for-analytics-engineers.html">Part 1: Branch or not to branch</a> · Part 2: One metric change, command by command (this post)</p>
+<p>Telhado is the same fictional rooftop-solar co-op in Porto. I ran every git command below on git 2.54 in a scratch repository, including the conflict and the squash merge, and copied the outputs from that run. If <code>origin/main</code> or rebase feel fuzzy, Part 1 explains them in one picture.</p>
+</div>
+
+<hr />
+<h2 id="the-request">The request</h2>
+<p>Telhado's operations lead writes on a Tuesday morning: capacity factor should divide by each site's installed capacity, not its peak output, and could the daily table show the inverter model too? That's one model, one metric and one new column.</p>
+<p>Think of it as a single parcel. You pack it on your own table (a branch), a colleague checks it (review), and it joins the shared shelf (<code>main</code>) only when it's right.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/git-metric-change-command-by-command/branch-lifecycle-mobile.svg">
+<img src="../assets/posts/git-metric-change-command-by-command/branch-lifecycle.svg" alt="A timeline. The main line runs left to right with three commits: fresh main, Ana's rounding change, and a green squash merge. A branch leaves the first commit with two dashed grey commits, step 5 commit and step 7 review fix. A dashed arrow labelled 8 rebase points to two gold copies of those commits that start from Ana's commit. A green arrow labelled 9 squash merge runs from the gold branch tip into main.">
+</picture>
+<figcaption>The branch's whole life. Rebase copies your commits onto the new main; the dashed originals stay in the reflog.</figcaption>
+</figure>
+
+<hr />
+<h2 id="before-you-write-any-sql">Before you write any SQL</h2>
+<p><strong>1. Start from a fresh main.</strong></p>
+<pre><code class="language-bash">git switch main
+git pull
+</code></pre>
+<p>You want <code>Already up to date.</code> or a fast-forward. If pull refuses with "divergent branches", your local <code>main</code> has commits that never went through review. Move them onto a branch with <code>git switch -c &lt;name&gt;</code>, then put <code>main</code> back with <code>git switch main</code> and <code>git reset --hard origin/main</code>. Run that reset only once the branch holds your commits.</p>
+<p><strong>2. One branch for the request.</strong></p>
+<pre><code class="language-bash">git switch -c feat/capacity-factor-installed-kw
+</code></pre>
+<p>Both changes touch the same model and ship together, so they share a branch. If the same message also asks you to rename a dashboard field, that's a second branch.</p>
+<p><strong>3. Change the model, then build it with everything downstream.</strong></p>
+<pre><code class="language-bash">dbt build --select fct_daily_generation+
+</code></pre>
+<p>The <code>+</code> builds and tests every model that depends on this one. A metric change rarely breaks the model you edited. It breaks the reporting model two steps downstream.</p>
+<p><strong>4. Read your own diff before git does anything with it.</strong></p>
+<pre><code class="language-bash">git status
+git diff
+</code></pre>
+<p>Only the files you meant to change should appear. If <code>target/</code>, <code>logs/</code> or a <code>profiles.yml</code> show up, they belong in <code>.gitignore</code>, not in a commit.</p>
+<hr />
+<h2 id="getting-it-reviewed">Getting it reviewed</h2>
+<p><strong>5. Commit files by name, with a message about the data.</strong></p>
+<pre><code class="language-bash">git add models/marts/fct_daily_generation.sql
+git commit -m &quot;Use installed capacity in capacity_factor&quot;
+</code></pre>
+<p><code>git add .</code> is how a stray CSV ends up in history forever. "fix" and "wip" tell a reviewer nothing; the message should say what changes in the numbers.</p>
+<p><strong>6. Push and open the pull request.</strong></p>
+<pre><code class="language-bash">git push -u origin feat/capacity-factor-installed-kw
+</code></pre>
+<p>The <code>-u</code> links your branch to its copy on GitHub, so later a plain <code>git push</code> knows where to go. In the pull request, say how the numbers moved: which sites' capacity factor went up or down, and roughly by how much. Reviewers can read SQL. They can't guess what it does to last month's report.</p>
+<p><strong>7. Answer review on the same branch.</strong></p>
+<p>The reviewer asks you to document the new column:</p>
+<pre><code class="language-bash">git add models/marts/schema.yml
+git commit -m &quot;Document inverter_model&quot;
+git push
+</code></pre>
+<p>No new branch and no new pull request. The open one picks up the commit.</p>
+<hr />
+<h2 id="when-main-moves-under-you">When main moves under you</h2>
+<p><strong>8. Fetch, rebase, and resolve the conflict by keeping both intents.</strong></p>
+<p>Meanwhile Ana merged a change that rounds <code>capacity_factor</code> to four decimals. It's the same line you changed.</p>
+<pre><code class="language-bash">git fetch
+git rebase origin/main
+</code></pre>
+<p>In my run, the rebase stopped with <code>CONFLICT (content): Merge conflict in models/marts/fct_daily_generation.sql</code>, and the file held both versions.</p>
+<p><img src="../assets/posts/git-metric-change-command-by-command/conflict-markers.png" alt="Two editor panes. The left pane shows the conflicted SQL: between the HEAD marker and the equals line, main's version with ROUND around kwh_generated divided by peak_kw times 24; below it, your version adding inverter_model and dividing by installed_kw times 24. Labels mark the top half as main's version, Ana's change, and the bottom half as yours. The right pane shows the resolved lines: inverter_model, then ROUND of kwh_generated divided by installed_kw times 24, 4 decimals."></p>
+<p>During a rebase the top half, marked <code>HEAD</code>, is main's version and the bottom half is yours. Most people expect the opposite. Don't pick a side: keep Ana's rounding and your denominator, delete the marker lines, then finish the rebase.</p>
+<pre><code class="language-bash">git add models/marts/fct_daily_generation.sql
+git rebase --continue
+dbt build --select fct_daily_generation+
+git push --force-with-lease
+</code></pre>
+<p>Build again before pushing, because the combined line is new code nobody has run. If <code>--continue</code> opens an editor for the commit message, save and close it.</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>A rebase conflict that "resolves" by taking one half whole is the quiet way a metric ships with the wrong formula. The build passes, the tests pass, and either the rounding or the new denominator is gone.</p>
+</div>
+
+<hr />
+<h2 id="finishing-and-getting-out-of-trouble">Finishing, and getting out of trouble</h2>
+<p><strong>9. Clean up after the merge.</strong></p>
+<pre><code class="language-bash">git switch main
+git pull
+git branch -d feat/capacity-factor-installed-kw
+</code></pre>
+<p>If your team squash-merges on GitHub, <code>-d</code> refuses with "not fully merged". A squash merge lands your work on main as one new commit, so git can't find your branch's commits inside main. Once the pull request shows Merged, <code>git branch -D</code> is safe.</p>
+<p>When something goes sideways, three commands get you out of almost everything:</p>
+<ul>
+<li><strong><code>git status</code></strong> first, every time. It names the state you're in and usually prints the next command.</li>
+<li><strong><code>git rebase --abort</code></strong> when a rebase hits conflicts you don't want to resolve now. You land back where you started.</li>
+<li><strong><code>git reflog</code></strong> when you think you lost work. It lists every place your branch has pointed, including the pre-rebase commits. Git keeps those entries for 30 days by default, and <code>git switch -c rescue &lt;hash&gt;</code> brings one back as a new branch.</li>
+</ul>
+<p><img src="../assets/posts/git-metric-change-command-by-command/daily-routine.png" alt="A cheat sheet card titled the analytics engineer's git day, with four columns: start, with git switch main, git pull and git switch -c; work, with dbt build, git add and git commit; catch up, with git fetch and git rebase origin/main; share, with git push -u origin and open a pull request. A strip at the bottom lists git status, git rebase --abort and git reflog for when things go wrong."></p>
+<hr />
+<h2 id="try-this-at-work">Try this at work</h2>
+<div class="callout callout-tip">
+<span class="callout-label">ten minutes</span>
+<p>Open your last merged pull request and walk it against the nine steps. Which did you skip? If I had to pick two to fix first, it's step 3 (build downstream, not just the model) and the rebuild in step 8, because both catch broken numbers before a reviewer has to.</p>
+</div>
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Start every request from a freshly pulled main</strong> — if pull refuses, you committed to main; move the work to a branch first.</li>
+<li><strong>Build downstream, not just the model</strong> — the <code>+</code> selector catches the report that actually breaks.</li>
+<li><strong>Commit files by name</strong> — <code>git add .</code> is how <code>target/</code> and stray CSVs get into history.</li>
+<li><strong>Review fixes go on the same branch</strong> — the open pull request updates itself.</li>
+<li><strong>In a rebase conflict, HEAD is main</strong> — keep both intents, then rebuild before <code>--force-with-lease</code>.</li>
+<li><strong>Squash merges confuse <code>git branch -d</code></strong> — use <code>-D</code> once the pull request shows Merged.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 20 November 2026. I ran every git command on git 2.54.0; the documentation below is current to git 2.56.1. The <code>dbt build</code> commands were not part of that run.</p>
+<ul>
+<li><a href="https://git-scm.com/docs/git-rebase">git-rebase</a> — conflicts, <code>--continue</code> and <code>--abort</code>.</li>
+<li><a href="https://git-scm.com/docs/git-push">git-push</a> — what <code>--force-with-lease</code> checks before overwriting.</li>
+<li><a href="https://git-scm.com/docs/git-branch">git-branch</a> — when <code>-d</code> refuses and what <code>-D</code> does.</li>
+<li><a href="https://git-scm.com/docs/git-reflog">git-reflog</a> and <a href="https://git-scm.com/docs/git-config">git-config</a> — <code>gc.reflogExpireUnreachable</code> defaults to 30 days.</li>
+<li><a href="https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/configuring-pull-request-merges/about-merge-methods-on-github">About merge methods on GitHub</a> — squash merging.</li>
+<li><a href="https://docs.getdbt.com/reference/node-selection/graph-operators">Graph operators</a> — dbt’s <code>+</code> selector.</li>
+</ul>
+<p>Which of the nine steps does your team skip most often?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="git-for-analytics-engineers.html" class="related-card" data-category="dbt">
+              <span>dbt · 20 Nov 2026</span>
+              <h3>Git for analytics engineers, Part 1: Branch or not to branch</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="dbt-layers-enforced-in-ci.html" class="related-card" data-category="dbt">
+              <span>dbt · 19 Nov 2026</span>
+              <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+              <span>9 min read →</span>
+            </a>
+            <a href="analytics-agent-semantic-contract.html" class="related-card" data-category="AI">
+              <span>AI · 16 Nov 2026</span>
+              <h3>Give your analytics agent a contract, not a bigger prompt</h3>
+              <span>12 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

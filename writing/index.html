@@ -38,24 +38,24 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">34</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">35</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="git-for-analytics-engineers.html" data-category="dbt" data-tags="dbt">
+      <a class="featured-post" href="git-metric-change-command-by-command.html" data-category="dbt" data-tags="dbt">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>20 Nov 2026</span>
+              <span>23 Nov 2026</span>
             </div>
             <div class="category-tags">
               <span class="category-tag">dbt</span>
             </div>
-            <h2>Git for analytics engineers, Part 1: Branch or not to branch</h2>
-            <p class="featured-description">What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture explains it.</p>
+            <h2>Git for analytics engineers, Part 2: One metric change, command by command</h2>
+            <p class="featured-description">One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.</p>
           </div>
           <div class="featured-meta">
             <span>8 min read</span>
@@ -63,7 +63,7 @@
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches.">
+          <img src="/assets/posts/git-metric-change-command-by-command/branch-lifecycle.svg" alt="A timeline. The main line runs left to right with three commits: fresh main, Ana's rounding change, and a green squash merge. A branch leaves the first commit with two dashed grey commits, step 5 commit and step 7 review fix. A dashed arrow labelled 8 rebase points to two gold copies of those commits that start from Ana's commit. A green arrow labelled 9 squash merge runs from the gold branch tip into main.">
           <figcaption class="featured-caption"></figcaption>
         </figure>
       </a>
@@ -75,6 +75,16 @@
         <span>Newest 6 after the latest</span>
       </div>
       <div class="recent-grid">
+        <a class="recent-card" href="git-for-analytics-engineers.html" data-category="dbt">
+          <figure class="recent-art">
+            <img src="/assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">dbt</span><span>20 Nov</span></p>
+            <h3>Git for analytics engineers, Part 1: Branch or not to branch</h3>
+            <p class="recent-read">8 min read</p>
+          </div>
+        </a>
         <a class="recent-card" href="dbt-layers-enforced-in-ci.html" data-category="dbt">
           <figure class="recent-art">
             <img src="/assets/posts/dbt-layers-enforced-in-ci/layer-rules.svg" alt="Four columns, sources, staging, intermediate and marts, joined by green arrows that flow left to right one layer at a time. Below them, three pairs of red-bordered boxes linked by dashed red arrows show the forbidden edges: a source straight into a mart, one staging model into another, and a mart back into staging." loading="lazy">
@@ -125,16 +135,6 @@
             <p class="recent-read">10 min read</p>
           </div>
         </a>
-        <a class="recent-card" href="analytics-agent-semantic-contract.html" data-category="AI">
-          <figure class="recent-art">
-            <img src="/assets/posts/analytics-agent-semantic-contract/semantic-contract.png" alt="Diagram showing a business question becoming a defined metric contract, passing through a governed query interface, and returning an answer with its definition and time range." loading="lazy">
-          </figure>
-          <div class="recent-body">
-            <p class="recent-meta"><span class="recent-tag">AI · dbt</span><span>16 Nov</span></p>
-            <h3>Give your analytics agent a contract, not a bigger prompt</h3>
-            <p class="recent-read">12 min read</p>
-          </div>
-        </a>
       </div>
     </section>
 
@@ -147,10 +147,11 @@
         <article class="series-card" data-category="dbt">
           <header class="series-head">
             <h3>Git for analytics engineers</h3>
-            <span>1 part · 8 min</span>
+            <span>2 parts · 16 min</span>
           </header>
           <ol class="series-parts">
             <li><a href="git-for-analytics-engineers.html"><span class="series-num">1</span><span class="series-title">Branch or not to branch</span><span class="series-time">8 min</span></a></li>
+            <li><a href="git-metric-change-command-by-command.html"><span class="series-num">2</span><span class="series-title">One metric change, command by command</span><span class="series-time">8 min</span></a></li>
           </ol>
         </article>
         <article class="series-card" data-category="AI">
@@ -196,6 +197,15 @@
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-list" id="archive-list">
         <h3 class="archive-month" data-month="November 2026">November 2026</h3>
+        <a class="archive-row" href="git-for-analytics-engineers.html" data-category="dbt" data-tags="dbt" data-month="November 2026" data-in-recent>
+          <span class="archive-date">20 Nov</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Git for analytics engineers, Part 1: Branch or not to branch</strong>
+            <span>What branch, main, origin and origin/main really are, why git status can lie, and when to fetch, pull or rebase. One picture explains it.</span>
+          </span>
+          <span class="archive-time">8 min</span>
+        </a>
         <a class="archive-row" href="dbt-layers-enforced-in-ci.html" data-category="dbt" data-tags="dbt,data-quality" data-month="November 2026" data-in-recent>
           <span class="archive-date">19 Nov</span>
           <span class="archive-tag">dbt</span>
@@ -241,7 +251,7 @@
           </span>
           <span class="archive-time">10 min</span>
         </a>
-        <a class="archive-row" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt" data-month="November 2026" data-in-recent>
+        <a class="archive-row" href="analytics-agent-semantic-contract.html" data-category="AI" data-tags="AI,dbt" data-month="November 2026">
           <span class="archive-date">16 Nov</span>
           <span class="archive-tag">AI</span>
           <span class="archive-text">
@@ -499,7 +509,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 34 posts</span>
+      <span>© 2026 Piotr Zawieja · 35 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>
