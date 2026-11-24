@@ -10,6 +10,9 @@ tags:
 - data-quality
 read_time: 8
 status: published
+feature_image: ../assets/posts/snowflake-iceberg-share-without-exports/cover.jpg
+feature_image_alt: "Illustration of a layered iceberg inside a gold ring, read in place by light beams from a lantern, a small boat and a person with a laptop, while a cracked copy drifts away on the left."
+feature_image_caption: "Read the table where it lives. The exported copy leaves your grants behind."
 ---
 
 Every Snowflake account already runs an Apache Iceberg REST catalog. Nobody had to switch it on, yet plenty of teams still run a nightly job that copies a table to S3 so a Spark cluster or a laptop running DuckDB can read it.
