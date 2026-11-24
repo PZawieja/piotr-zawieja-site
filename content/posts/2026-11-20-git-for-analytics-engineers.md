@@ -7,6 +7,9 @@ description: "What branch, main, origin and origin/main really are, why git stat
 tags: [dbt]
 read_time: 8
 status: published
+feature_image: ../assets/posts/git-for-analytics-engineers/cover.jpg
+feature_image_alt: "Illustration of two floating islands joined by a dotted path: on the right, a hand slips a new gold page into a binder; on the left, a desk with a photocopy covered in sticky notes and a faded photo of the binder without the new page."
+feature_image_caption: "Your photo of the shelf is older than the shelf. That is origin/main."
 ---
 
 I keep seeing the same git setup on data teams: five commands copied from a wiki page in someone's first week, and a small prayer whenever one of them prints red text.
