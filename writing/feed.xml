@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Your nightly export is a second copy nobody governs</title>
+      <link>https://goldlayer.dev/writing/snowflake-iceberg-share-without-exports.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-iceberg-share-without-exports.html</guid>
+      <pubDate>Tue, 24 Nov 2026 11:46:01 +0000</pubDate>
+      <description>Snowflake's Horizon Catalog lets Spark and DuckDB read an Iceberg table in place. When to drop the export, how to scope access, and where governance stops.</description>
+    </item>
+    <item>
       <title>Git for analytics engineers, Part 2: One metric change, command by command</title>
       <link>https://goldlayer.dev/writing/git-metric-change-command-by-command.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/git-metric-change-command-by-command.html</guid>

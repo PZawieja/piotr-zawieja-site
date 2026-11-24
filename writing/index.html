@@ -38,24 +38,25 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">35</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">36</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="git-metric-change-command-by-command.html" data-category="dbt" data-tags="dbt">
+      <a class="featured-post" href="snowflake-iceberg-share-without-exports.html" data-category="Snowflake" data-tags="Snowflake,data-quality">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>23 Nov 2026</span>
+              <span>24 Nov 2026</span>
             </div>
             <div class="category-tags">
-              <span class="category-tag">dbt</span>
+              <span class="category-tag">Snowflake</span>
+              <span class="category-tag secondary">Data quality</span>
             </div>
-            <h2>Git for analytics engineers, Part 2: One metric change, command by command</h2>
-            <p class="featured-description">One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.</p>
+            <h2>Your nightly export is a second copy nobody governs</h2>
+            <p class="featured-description">Snowflake's Horizon Catalog lets Spark and DuckDB read an Iceberg table in place. When to drop the export, how to scope access, and where governance stops.</p>
           </div>
           <div class="featured-meta">
             <span>8 min read</span>
@@ -63,7 +64,7 @@
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/git-metric-change-command-by-command/branch-lifecycle.svg" alt="A timeline. The main line runs left to right with three commits: fresh main, Ana's rounding change, and a green squash merge. A branch leaves the first commit with two dashed grey commits, step 5 commit and step 7 review fix. A dashed arrow labelled 8 rebase points to two gold copies of those commits that start from Ana's commit. A green arrow labelled 9 squash merge runs from the gold branch tip into main.">
+          <img src="/assets/posts/snowflake-iceberg-share-without-exports/export-vs-catalog.svg" alt="Two panels. On the left, labelled before, a Snowflake table feeds a nightly export job that writes files to a bucket, and Spark and DuckDB each read their own stale copy with no Snowflake grants attached. On the right, labelled after, Spark, Trino and DuckDB connect to Horizon Catalog, which checks the role and hands out short-lived storage credentials before each engine reads the same Iceberg table files, while Snowflake reads those files directly.">
           <figcaption class="featured-caption"></figcaption>
         </figure>
       </a>
@@ -75,6 +76,16 @@
         <span>Newest 6 after the latest</span>
       </div>
       <div class="recent-grid">
+        <a class="recent-card" href="git-metric-change-command-by-command.html" data-category="dbt">
+          <figure class="recent-art">
+            <img src="/assets/posts/git-metric-change-command-by-command/branch-lifecycle.svg" alt="A timeline. The main line runs left to right with three commits: fresh main, Ana's rounding change, and a green squash merge. A branch leaves the first commit with two dashed grey commits, step 5 commit and step 7 review fix. A dashed arrow labelled 8 rebase points to two gold copies of those commits that start from Ana's commit. A green arrow labelled 9 squash merge runs from the gold branch tip into main." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">dbt</span><span>23 Nov</span></p>
+            <h3>Git for analytics engineers, Part 2: One metric change, command by command</h3>
+            <p class="recent-read">8 min read</p>
+          </div>
+        </a>
         <a class="recent-card" href="git-for-analytics-engineers.html" data-category="dbt">
           <figure class="recent-art">
             <img src="/assets/posts/git-for-analytics-engineers/four-places.svg" alt="Two dashed areas, your laptop and GitHub. On the laptop: a working folder, local branches main and fix/generation-timezone, and an origin/main snapshot box. On GitHub: origin with main and the same branch. Arrows show commit from the folder to local branches, push from local branches to origin, fetch from origin to the snapshot, and pull, rebase or merge from the snapshot into local branches." loading="lazy">
@@ -123,16 +134,6 @@
             <p class="recent-meta"><span class="recent-tag">AI</span><span>17 Nov</span></p>
             <h3>Can you trust this answer? Evaluate the whole analytics agent</h3>
             <p class="recent-read">9 min read</p>
-          </div>
-        </a>
-        <a class="recent-card" href="analytics-agent-context-engineering.html" data-category="AI">
-          <figure class="recent-art">
-            <img src="/assets/posts/analytics-agent-context-engineering/context-pack.png" alt="Diagram showing resort metrics and lift telemetry supplying an approved wait-time definition, a Saturday time window, and lift-level results to an analytics agent." loading="lazy">
-          </figure>
-          <div class="recent-body">
-            <p class="recent-meta"><span class="recent-tag">AI</span><span>16 Nov</span></p>
-            <h3>Give your analytics agent the right context, not the whole warehouse</h3>
-            <p class="recent-read">10 min read</p>
           </div>
         </a>
       </div>
@@ -197,6 +198,15 @@
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-list" id="archive-list">
         <h3 class="archive-month" data-month="November 2026">November 2026</h3>
+        <a class="archive-row" href="git-metric-change-command-by-command.html" data-category="dbt" data-tags="dbt" data-month="November 2026" data-in-recent>
+          <span class="archive-date">23 Nov</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Git for analytics engineers, Part 2: One metric change, command by command</strong>
+            <span>One metric request taken from a fresh main to a merged pull request: the git commands at each step, what to check, and the conflict that bites.</span>
+          </span>
+          <span class="archive-time">8 min</span>
+        </a>
         <a class="archive-row" href="git-for-analytics-engineers.html" data-category="dbt" data-tags="dbt" data-month="November 2026" data-in-recent>
           <span class="archive-date">20 Nov</span>
           <span class="archive-tag">dbt</span>
@@ -242,7 +252,7 @@
           </span>
           <span class="archive-time">9 min</span>
         </a>
-        <a class="archive-row" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI" data-month="November 2026" data-in-recent>
+        <a class="archive-row" href="analytics-agent-context-engineering.html" data-category="AI" data-tags="AI" data-month="November 2026">
           <span class="archive-date">16 Nov</span>
           <span class="archive-tag">AI</span>
           <span class="archive-text">
@@ -509,7 +519,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 35 posts</span>
+      <span>© 2026 Piotr Zawieja · 36 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>

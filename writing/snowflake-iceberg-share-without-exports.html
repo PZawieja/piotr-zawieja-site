@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your nightly export is a second copy nobody governs — Piotr Zawieja</title>
+<meta name="description" content="Snowflake's Horizon Catalog lets Spark and DuckDB read an Iceberg table in place. When to drop the export, how to scope access, and where governance stops.">
+<meta property="og:title" content="Your nightly export is a second copy nobody governs">
+<meta property="og:description" content="Snowflake's Horizon Catalog lets Spark and DuckDB read an Iceberg table in place. When to drop the export, how to scope access, and where governance stops.">
+<meta property="og:url" content="https://goldlayer.dev/writing/snowflake-iceberg-share-without-exports.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/snowflake-iceberg-share-without-exports/export-vs-catalog.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="Snowflake">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">Snowflake</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>24 Nov 2026 · 8 min read</span>
+        </div>
+        <h1 class="article-title">Your nightly export is a second copy nobody governs</h1>
+        <p class="article-deck">Snowflake's Horizon Catalog lets Spark and DuckDB read an Iceberg table in place. When to drop the export, how to scope access, and where governance stops.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-export-is-the-problem-not-the-file-format">The export is the problem, not the file format</a></li>
+<li><a href="#what-snowflake-gives-you-now">What Snowflake gives you now</a></li>
+<li><a href="#scope-access-with-a-role-not-a-bucket-key">Scope access with a role, not a bucket key</a></li>
+<li><a href="#where-governance-stops">Where governance stops</a></li>
+<li><a href="#what-it-costs">What it costs</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Every Snowflake account already runs an Apache Iceberg REST catalog. Nobody had to switch it on, yet plenty of teams still run a nightly job that copies a table to S3 so a Spark cluster or a laptop running DuckDB can read it.</p>
+<p>That copy lives outside every grant, masking policy and audit log you built in Snowflake. It is also wrong from the moment the source table changes.</p>
+<div class="post-brief">
+<ul>
+<li>Exported files drift, and your grants never travel with them.</li>
+<li>Snowflake now lets other engines read the original table in place.</li>
+<li>Policy enforcement has gaps, and they depend on the engine.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">the example</span>
+<p>Salar Norte is fictional: a lithium producer in Chile's Atacama whose analytics team shares daily equipment telemetry with a partner's Spark team and a geologist who lives in DuckDB. The SQL and config below follow the Snowflake, dbt and DuckDB docs as I read them on 19 November 2026. I haven't run them against a live account, so try them in a sandbox first.</p>
+</div>
+
+<hr />
+<h2 id="the-export-is-the-problem-not-the-file-format">The export is the problem, not the file format</h2>
+<p>A nightly export is a photocopy of a ledger for every auditor who asks. Each copy is accurate for about an hour. After that, nobody knows which one is current, and copies don't check who reads them.</p>
+<p>At Salar Norte, a task unloads <code>equipment_daily</code> to a bucket at 02:00 and the partner's Spark job reads it at 06:00. When the analytics team fixes a unit bug at 10:00, every reader keeps yesterday's numbers, and the only access control is whoever holds the bucket keys.</p>
+<p>The alternative is a reading room: one ledger, a librarian checking badges at the door. In Snowflake terms, the ledger is a Snowflake-managed Iceberg table, and the librarian is Horizon Catalog.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/snowflake-iceberg-share-without-exports/export-vs-catalog-mobile.svg">
+<img src="../assets/posts/snowflake-iceberg-share-without-exports/export-vs-catalog.svg" alt="Two panels. On the left, labelled before, a Snowflake table feeds a nightly export job that writes files to a bucket, and Spark and DuckDB each read their own stale copy with no Snowflake grants attached. On the right, labelled after, Spark, Trino and DuckDB connect to Horizon Catalog, which checks the role and hands out short-lived storage credentials before each engine reads the same Iceberg table files, while Snowflake reads those files directly.">
+</picture>
+<figcaption>Before: every consumer reads a copy that left your access model. After: every outside engine asks the catalog, and the catalog checks the role.</figcaption>
+</figure>
+
+<hr />
+<h2 id="what-snowflake-gives-you-now">What Snowflake gives you now</h2>
+<p>Iceberg is an open table format: a folder of Parquet files plus metadata that says which files make up the current version, like a book's table of contents. A REST catalog is the front desk that hands out the latest contents page over HTTP.</p>
+<p>Horizon Catalog exposes that Iceberg REST API on every account:</p>
+<pre><code class="language-text">https://&lt;org&gt;-&lt;account&gt;.snowflakecomputing.com/polaris/api/catalog
+</code></pre>
+<p>The Snowflake docs list Spark, Trino, Flink, Dremio, PyIceberg and DuckDB among the engines that can read through it. Reads and writes are both generally available.</p>
+<p>The catch is one word: <em>Snowflake-managed</em> Iceberg tables. Native Snowflake tables are not exposed, and neither are Snowflake-managed Iceberg tables you filled by running <code>COPY INTO</code> on Parquet files. So you don't share <code>fct_equipment_telemetry</code>. You build a purpose-made share table in Iceberg format.</p>
+<p>If you use dbt, that's one config line. On dbt 2.0, <code>table_format = 'iceberg'</code> without an <code>external_volume</code> creates the table on Snowflake-managed storage, so you don't have to configure a bucket:</p>
+<pre><code class="language-sql">-- models/share/share_equipment_daily.sql
+{{
+    config(
+        materialized = 'table'
+        , table_format = 'iceberg'
+    )
+}}
+
+SELECT
+    telemetry_date
+    , equipment_id
+    , site_code
+    , AVG(engine_temp_c) AS avg_engine_temp_c
+    , SUM(operating_minutes) AS operating_minutes
+FROM {{ ref('fct_equipment_telemetry') }}
+GROUP BY
+    telemetry_date
+    , equipment_id
+    , site_code
+</code></pre>
+<p>That model already does one governance job: it holds only daily aggregates, with no operator IDs or raw sensor rows. Put share models in their own schema, one per audience, so there's one place to grant from.</p>
+<hr />
+<h2 id="scope-access-with-a-role-not-a-bucket-key">Scope access with a role, not a bucket key</h2>
+<p>The badge check is ordinary Snowflake access control. The external engine authenticates as a Snowflake user with a role and sees exactly what that role can <code>SELECT</code>.</p>
+<pre><code class="language-sql">CREATE ROLE geo_reader;
+
+GRANT USAGE ON DATABASE salar_norte TO ROLE geo_reader;
+GRANT USAGE ON SCHEMA salar_norte.share TO ROLE geo_reader;
+GRANT SELECT ON TABLE salar_norte.share.share_equipment_daily TO ROLE geo_reader;
+
+CREATE USER geo_duckdb_svc TYPE = SERVICE DEFAULT_ROLE = geo_reader;
+GRANT ROLE geo_reader TO USER geo_duckdb_svc;
+
+ALTER USER geo_duckdb_svc ADD PAT geo_duckdb_pat
+    DAYS_TO_EXPIRY = 7
+    ROLE_RESTRICTION = 'GEO_READER';
+</code></pre>
+<p>A programmatic access token (PAT) is a password-like secret tied to one user and one role, expiring here in a week. Swap it for a short-lived access token:</p>
+<pre><code class="language-bash">curl -s -X POST &quot;https://salarnorte-prod.snowflakecomputing.com/polaris/api/catalog/v1/oauth/tokens&quot; \
+    --data-urlencode 'grant_type=client_credentials' \
+    --data-urlencode 'scope=session:role:GEO_READER' \
+    --data-urlencode &quot;client_secret=${GEO_PAT}&quot;
+</code></pre>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>By default, a service user can only generate or use a PAT if a network policy applies to it. Horizon Catalog doesn't support network policies set at the user level. Put the service user under an account-level network policy, or relax the requirement with an authentication policy, and decide which on purpose.</p>
+</div>
+
+<p>The geologist passes that token to DuckDB through its generic bearer-token option, which doesn't refresh, so she reruns the <code>curl</code> when it expires. The "warehouse" you attach is your Snowflake <em>database</em>, in capitals if you created it without quotes:</p>
+<pre><code class="language-sql">CREATE SECRET horizon (
+    TYPE iceberg
+    , TOKEN getenv('HORIZON_TOKEN')
+);
+
+ATTACH 'SALAR_NORTE' AS sn (
+    TYPE iceberg
+    , SECRET horizon
+    , URI 'https://salarnorte-prod.snowflakecomputing.com/polaris/api/catalog'
+);
+
+SELECT site_code, SUM(operating_minutes) AS minutes
+FROM sn.SHARE.SHARE_EQUIPMENT_DAILY
+WHERE telemetry_date &gt;= DATE '2026-11-01'
+GROUP BY site_code;
+</code></pre>
+<p>DuckDB never gets bucket keys. It defaults to <em>vended credentials</em>: short-lived storage credentials scoped to one table, like a valet key that opens one car and soon stops working.</p>
+<p><img src="../assets/posts/snowflake-iceberg-share-without-exports/duckdb-attach-session.png" alt="DuckDB terminal session that creates an iceberg secret, attaches SALAR_NORTE through the Horizon catalog URI, and prints operating minutes per site code, marked as illustrative."></p>
+<hr />
+<h2 id="where-governance-stops">Where governance stops</h2>
+<p>This is the part the launch posts skim over. Grants follow the table to every engine. Masking and row access policies, bouncers who work inside Snowflake, only follow it to some.</p>
+<p>The Snowflake Connector for Spark routes queries through Snowflake. The Scan Plan API, in preview for Enterprise Edition and above, has the catalog build a policy-filtered copy for the engine to read; it needs Iceberg SDK 1.11 or later, and the docs name Spark, Trino and PyIceberg. DuckDB has a server-side scan planning setting, but I found nothing in either project's docs confirming it works with Horizon policies.</p>
+<div class="pull-quote">
+If you can't prove an engine enforces your masking policy, don't share a table that needs one.
+</div>
+
+<p>For any engine you haven't tested end to end, share a table that contains only what that reader may see. The aggregate in <code>share_equipment_daily</code> <em>is</em> the policy: nothing to enforce, so nothing to bypass.</p>
+<p>Even the Scan Plan API has limits. Its filtered copy is deleted after 24 hours, so longer queries can fail; only the latest snapshot is readable; and anyone with direct storage access can read around it. Tables converted from externally managed to Snowflake-managed can't be read with vended credentials at all.</p>
+<div class="decision-tree">
+<p class="decision-tree-title">Should this export become an Iceberg share?</p>
+<div class="decision-step">
+<span class="decision-q">The reader's engine speaks Iceberg REST (Spark, Trino, PyIceberg, DuckDB)</span>
+<span class="decision-a">Build a share table and grant a role. <strong>Drop the export.</strong></span>
+</div>
+<div class="decision-step">
+<span class="decision-q">The data needs masking or row filtering and the engine is DuckDB</span>
+<span class="decision-a">Share a <strong>pre-filtered table</strong>, or wait until you've tested enforcement yourself</span>
+</div>
+<div class="decision-step">
+<span class="decision-q">The reader wants a spreadsheet, or a vendor needs a file drop</span>
+<span class="decision-a">Keep the export. <strong>Iceberg won't help</strong> someone who opens CSVs in Excel</span>
+</div>
+</div>
+
+<p><img src="../assets/posts/snowflake-iceberg-share-without-exports/governance-follows.png" alt="Grid of what follows the table to Spark, DuckDB and a raw bucket reader: Spark gets every protection, DuckDB gets grants, vended credentials and audit but not documented masking or row access, and the bucket reader gets none."></p>
+<hr />
+<h2 id="what-it-costs">What it costs</h2>
+<p>Per the Snowflake docs, catalog API calls cost 0.5 credits per million as Cloud Services (scheduled to start in the second half of 2026, so assume it's on). External engines reading Snowflake-managed storage are billed per request, plus normal cross-region transfer. The Scan Plan API adds serverless compute and temporary storage.</p>
+<p>The export costs a nightly unload, storage for every copy, and hours explaining why the partner's numbers don't match yours. I'd take the API calls, and the audit trail: external reads appear in <code>SNOWFLAKE.ACCOUNT_USAGE.ACCESS_HISTORY</code> with <code>event_source = 'horizon_irc'</code>. With a bucket full of files, you couldn't answer who read what.</p>
+<p><strong>Try this at work:</strong> pick one export job and list who reads its output. Build the share table, grant a role, issue a seven-day PAT, and ask one reader to run <code>SHOW ALL TABLES</code> from their engine. Leave the export running for two weeks in parallel, then delete it.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>An export is a copy outside your access model</strong> — it drifts, and no grant or audit log follows it.</li>
+<li><strong>Every account already has an Iceberg REST catalog</strong> — Horizon serves Snowflake-managed Iceberg tables to outside engines.</li>
+<li><strong>Share a purpose-made table</strong> — native tables aren't exposed, and a narrow model is easier to grant.</li>
+<li><strong>Roles replace bucket keys</strong> — a role-restricted, short-lived PAT plus vended credentials.</li>
+<li><strong>Policy enforcement depends on the engine</strong> — don't assume DuckDB gets masking or row access policies.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 19 November 2026. The Scan Plan API is in preview and Horizon catalog billing was scheduled to start in the second half of 2026; check both against the current docs before you rely on them.</p>
+<ul>
+<li><a href="https://docs.snowflake.com/en/user-guide/tables-iceberg-access-using-external-query-engine-snowflake-horizon">External engines through Horizon Catalog</a>: endpoint, engines, billing.</li>
+<li><a href="https://docs.snowflake.com/en/user-guide/tables-iceberg-query-using-external-query-engine-snowflake-horizon-enforce-access-policies">Enforcing policies for external engines</a> and <a href="https://docs.snowflake.com/en/user-guide/tables-iceberg-enforce-access-policies-scan-plan-api">the Scan Plan API</a>.</li>
+<li><a href="https://docs.snowflake.com/en/user-guide/tables-iceberg-internal-storage">Snowflake storage for Iceberg tables</a> and <a href="https://docs.snowflake.com/en/user-guide/programmatic-access-tokens">programmatic access tokens</a>.</li>
+<li><a href="https://docs.getdbt.com/docs/build/iceberg/adapters/snowflake-iceberg-support">dbt: Snowflake and Apache Iceberg</a>.</li>
+<li>DuckDB 2.0: <a href="https://duckdb.org/docs/2.0/core_extensions/iceberg/overview">Iceberg extension</a>, <a href="https://duckdb.org/docs/2.0/core_extensions/iceberg/catalogs">catalogs</a>, <a href="https://duckdb.org/docs/2.0/core_extensions/iceberg/iceberg_options">options</a>.</li>
+</ul>
+<p>Which export job in your warehouse would you delete first if your readers could query the source directly?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="warehouse-prompt-injection-analytics-agents.html" class="related-card" data-category="AI">
+              <span>AI · 18 Nov 2026</span>
+              <h3>Your warehouse is a prompt injection vector</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="snowflake-variant-flatten.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 27 Jun 2026</span>
+              <h3>You've been flattening Snowflake JSON wrong</h3>
+              <span>9 min read →</span>
+            </a>
+            <a href="snowflake-clustering-keys-guide.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 16 Jun 2026</span>
+              <h3>Snowflake clustering keys: what they are, when they help, and when to skip them</h3>
+              <span>10 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>
