@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five things you believe about your Snowflake bill, tested — Piotr Zawieja</title>
+<meta name="description" content="Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.">
+<meta property="og:title" content="Five things you believe about your Snowflake bill, tested">
+<meta property="og:description" content="Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.">
+<meta property="og:url" content="https://goldlayer.dev/writing/snowflake-bill-beliefs-tested.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/snowflake-bill-beliefs-tested/suspend-timeline.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="Snowflake">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">Snowflake</span>
+          <span>24 Nov 2026 · 7 min read</span>
+        </div>
+        <h1 class="article-title">Five things you believe about your Snowflake bill, tested</h1>
+        <p class="article-deck">Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-bill-jumped-and-everyone-had-a-theory">The bill jumped, and everyone had a theory</a></li>
+<li><a href="#beliefs-1-and-5-the-monitor-sees-warehouses-nothing-else">Beliefs 1 and 5: the monitor sees warehouses, nothing else</a></li>
+<li><a href="#belief-2-auto-suspend-is-on-but-the-warehouse-never-sleeps">Belief 2: auto-suspend is on, but the warehouse never sleeps</a></li>
+<li><a href="#belief-3-a-bigger-warehouse-isnt-always-more-expensive">Belief 3: a bigger warehouse isn't always more expensive</a></li>
+<li><a href="#belief-4-failed-queries-cost-exactly-as-much-as-they-ran">Belief 4: failed queries cost exactly as much as they ran</a></li>
+<li><a href="#the-ranked-fix-list">The ranked fix list</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>A Snowflake warehouse that runs one 20-second query every five minutes never goes to sleep. With the default auto-suspend of 600 seconds, the next query always arrives before the timer runs out, so you pay for every minute of the day the dashboard is open.</p>
+<p>Nobody on the team believes they're paying for that. They believe the resource monitor caps the bill and auto-suspend handles the rest.</p>
+<div class="post-brief">
+<ul>
+<li>Most Snowflake cost advice is sizing folklore nobody has measured.</li>
+<li>The biggest leaks sit where your resource monitor can't see.</li>
+<li>Four ACCOUNT_USAGE queries turn opinions into a ranked fix list.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">context</span>
+<p>Brezelwerk is a fictional Munich bakery chain, and its numbers are illustrative. The queries use documented <code>SNOWFLAKE.ACCOUNT_USAGE</code> views and columns; I checked them against the docs, not on a live account.</p>
+</div>
+
+<hr />
+<h2 id="the-bill-jumped-and-everyone-had-a-theory">The bill jumped, and everyone had a theory</h2>
+<p>Brezelwerk's monthly Snowflake usage went from about 1,950 credits to 2,950 after the ops team got a store dashboard that refreshes every five minutes. In the meeting, five beliefs came up:</p>
+<ol>
+<li>"Our resource monitor caps spend at 2,500, so that can't be right."</li>
+<li>"Auto-suspend is on, so idle warehouses cost nothing."</li>
+<li>"A bigger warehouse costs more."</li>
+<li>"Failed queries are free, they didn't produce anything."</li>
+<li>"Serverless features are a rounding error."</li>
+</ol>
+<p>Each one is testable. Snowflake records where every credit went in the <code>ACCOUNT_USAGE</code> schema: a shared database every account has, with a year of history and a delay of up to a few hours. Think of it as the itemised receipt, where your monthly invoice is just the total at the bottom.</p>
+<hr />
+<h2 id="beliefs-1-and-5-the-monitor-sees-warehouses-nothing-else">Beliefs 1 and 5: the monitor sees warehouses, nothing else</h2>
+<p>The docs are blunt: "Resource monitors work for warehouses only." Automatic clustering, search optimization, Snowpipe, serverless tasks, materialized view refreshes and AI services all bill outside any monitor.</p>
+<p>Even for warehouses, a monitor is a smoke alarm, not a circuit breaker. The <code>SUSPEND</code> action "waits for currently executing queries to finish", so credits keep flowing after the quota is hit, and Snowflake suggests triggering at 90% instead of 100% to leave a buffer.</p>
+<p>This query shows the whole receipt, grouped by service:</p>
+<pre><code class="language-sql">SELECT
+    service_type
+    , SUM(credits_billed) AS credits
+FROM snowflake.account_usage.metering_daily_history
+WHERE usage_date &gt;= DATEADD('day', -30, CURRENT_DATE())
+GROUP BY service_type
+ORDER BY credits DESC;
+</code></pre>
+<p>At Brezelwerk, <code>AUTO_CLUSTERING</code> (260 credits) and <code>SEARCH_OPTIMIZATION</code> (150) never showed up on the monitor. For spend outside warehouses, create a <a href="https://docs.snowflake.com/en/user-guide/budgets">budget</a>: budgets cover serverless and AI services, though they only alert and never stop anything. Then check whether that clustering key still earns its credits (<a href="snowflake-clustering-keys-guide.html">my clustering guide</a> has the test).</p>
+<hr />
+<h2 id="belief-2-auto-suspend-is-on-but-the-warehouse-never-sleeps">Belief 2: auto-suspend is on, but the warehouse never sleeps</h2>
+<p>A warehouse bills per second while it runs, with a 60-second minimum every time it starts. Auto-suspend stops it after a quiet period, 600 seconds unless you change it.</p>
+<p>Picture a shop that locks up after ten quiet minutes, with a customer walking in every five. The lights never go off.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/snowflake-bill-beliefs-tested/suspend-timeline-mobile.svg">
+<img src="../assets/posts/snowflake-bill-beliefs-tested/suspend-timeline.svg" alt="Two one-hour timelines with a dashboard query every five minutes. With auto-suspend at 600 seconds the warehouse bar runs the full hour. With 60 seconds it shows twelve short blocks of about 90 seconds each, 18 billed minutes in total.">
+</picture>
+<figcaption>Same queries, same hour. The suspend timer decides whether you pay for 60 minutes or about 18.</figcaption>
+</figure>
+
+<p>The docs give an idle-cost query, and it's the first one I'd run on any account:</p>
+<pre><code class="language-sql">SELECT
+    warehouse_name
+    , SUM(credits_used_compute) AS compute_credits
+    , SUM(credits_used_compute)
+        - SUM(credits_attributed_compute_queries) AS idle_credits
+FROM snowflake.account_usage.warehouse_metering_history
+WHERE start_time &gt;= DATEADD('day', -30, CURRENT_DATE())
+GROUP BY warehouse_name
+ORDER BY idle_credits DESC;
+</code></pre>
+<p><code>credits_attributed_compute_queries</code> counts only time spent running queries, so the difference is the lights left on.</p>
+<p><img src="../assets/posts/snowflake-bill-beliefs-tested/idle-credits-result.png" alt="Query result grid for the last 30 days: BI_WH used 970 compute credits of which 905 were idle, TRANSFORM_WH 1,180 with 96 idle, ADHOC_WH 220 with 41 idle."></p>
+<p><code>BI_WH</code> is a Small warehouse (2 credits an hour) kept awake 16 hours a day by the dashboard: about 970 credits a month, of which 905 were idle. Setting <code>AUTO_SUSPEND = 60</code> brings it to roughly 290. Each refresh now bills about 90 seconds (the query, a minute of idle, and a suspend check that runs every 30 seconds or so).</p>
+<div class="callout callout-warn">
+<span class="callout-label">watch out</span>
+<p>A suspended warehouse loses its local cache, so the first query after waking reads from remote storage and runs slower. For a dashboard that refreshes on a timer, that trade is almost always worth it. For an analyst clicking around all afternoon, it may not be.</p>
+</div>
+
+<hr />
+<h2 id="belief-3-a-bigger-warehouse-isnt-always-more-expensive">Belief 3: a bigger warehouse isn't always more expensive</h2>
+<p>Each size up doubles the credits per hour: X-Small 1, Small 2, Medium 4, Large 8. What you pay is that rate times the time the warehouse runs. If a query finishes in half the time on a size twice as big, it costs the same, and sometimes it gets faster still.</p>
+<p>That happens when a query spills: the warehouse runs out of memory and writes intermediate results to local disk, then to remote storage, which is much slower. Find spilling queries first:</p>
+<pre><code class="language-sql">SELECT
+    warehouse_name
+    , warehouse_size
+    , COUNT(*) AS spilling_queries
+    , SUM(bytes_spilled_to_remote_storage) / POWER(1024, 3) AS remote_gb
+FROM snowflake.account_usage.query_history
+WHERE start_time &gt;= DATEADD('day', -30, CURRENT_DATE())
+    AND bytes_spilled_to_remote_storage &gt; 0
+GROUP BY warehouse_name, warehouse_size
+ORDER BY remote_gb DESC;
+</code></pre>
+<p>Brezelwerk's nightly <code>fct_store_sales_hourly</code> took 52 minutes on Medium (3.5 credits). On Large it stopped spilling and took 19 minutes (2.5 credits). Bigger and cheaper. The fix isn't to resize the whole transform warehouse but to point that one model at a larger one with dbt's <code>snowflake_warehouse</code> config. For small, quick queries the folklore holds: "larger is not necessarily faster", so you just pay double.</p>
+<hr />
+<h2 id="belief-4-failed-queries-cost-exactly-as-much-as-they-ran">Belief 4: failed queries cost exactly as much as they ran</h2>
+<p>A warehouse bills while it runs. It doesn't care whether the query at the end succeeded. Join per-query cost to query status:</p>
+<pre><code class="language-sql">SELECT
+    q.execution_status
+    , COUNT(*) AS queries
+    , SUM(a.credits_attributed_compute) AS credits
+FROM snowflake.account_usage.query_attribution_history AS a
+INNER JOIN snowflake.account_usage.query_history AS q
+    ON a.query_id = q.query_id
+WHERE a.start_time &gt;= DATEADD('day', -30, CURRENT_DATE())
+GROUP BY q.execution_status;
+</code></pre>
+<p>One Brezelwerk model failed every night after 38 minutes on a type-cast error, and the orchestrator retried it twice: three failures a night, about 230 credits a month for no rows at all. A retry helps with a network blip. It can't fix a bad cast, so retry only errors that might pass the second time.</p>
+<p><code>QUERY_ATTRIBUTION_HISTORY</code> leaves out idle time and queries under about 100 ms, and can lag eight hours, so use it to rank, not to reconcile the invoice.</p>
+<hr />
+<h2 id="the-ranked-fix-list">The ranked fix list</h2>
+<p><img src="../assets/posts/snowflake-bill-beliefs-tested/ranked-fixes.png" alt="Scorecard of five beliefs with verdicts and monthly credits: auto-suspend wrong, 680 credits saved; serverless wrong, up to 410 to review; failed queries wrong, about 150 saved by dropping retries; bigger warehouse wrong for one spilling model, 28 saved; resource monitor partly true for warehouses only."></p>
+<p>Ship the top two this week: one <code>ALTER WAREHOUSE</code> and one orchestrator setting, both easy to undo. Add a budget for serverless today, and give the clustering review its own ticket. At $3 a credit (contract prices vary), the first fix alone is about $2,000 a month.</p>
+<div class="pull-quote">
+Your invoice is the total. ACCOUNT_USAGE is the receipt, and the receipt settles arguments.
+</div>
+
+<p><strong>Try this at work:</strong> run the idle-credits query before your next cost meeting and bring the top row.</p>
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>Resource monitors watch warehouses only</strong>, and <code>SUSPEND</code> lets running queries finish; use a budget for serverless and AI spend.</li>
+<li><strong>Auto-suspend at 600 seconds never fires</strong> under a dashboard that refreshes every few minutes; measure idle credits, then lower it.</li>
+<li><strong>Cost is rate times runtime</strong>: a larger warehouse can be cheaper for a query that spills to remote storage.</li>
+<li><strong>Failed queries bill for every second they ran</strong>, and blind retries multiply that.</li>
+<li><strong>Rank fixes by credits saved</strong> from ACCOUNT_USAGE, not by which belief was loudest in the meeting.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 23 November 2026 against the Snowflake docs. The queries weren't run on a live account, and Brezelwerk's figures are illustrative. New standard warehouses default to Gen2 in most regions; the size-to-credits table above is for Gen1. Adaptive warehouses bill per query and are excluded from <code>QUERY_ATTRIBUTION_HISTORY</code>.</p>
+<ul>
+<li><a href="https://docs.snowflake.com/en/user-guide/resource-monitors">Resource monitors</a> and <a href="https://docs.snowflake.com/en/user-guide/budgets">budgets</a></li>
+<li><a href="https://docs.snowflake.com/en/user-guide/cost-understanding-compute">Understanding compute cost</a> (per-second billing, 60-second minimum, 10% cloud services adjustment)</li>
+<li><a href="https://docs.snowflake.com/en/sql-reference/sql/create-warehouse">CREATE WAREHOUSE</a> (<code>AUTO_SUSPEND</code> default 600) and <a href="https://docs.snowflake.com/en/user-guide/warehouses-considerations">warehouse considerations</a></li>
+<li><a href="https://docs.snowflake.com/en/sql-reference/account-usage/warehouse_metering_history">WAREHOUSE_METERING_HISTORY</a>, <a href="https://docs.snowflake.com/en/sql-reference/account-usage/metering_daily_history">METERING_DAILY_HISTORY</a>, <a href="https://docs.snowflake.com/en/sql-reference/account-usage/query_attribution_history">QUERY_ATTRIBUTION_HISTORY</a> and <a href="https://docs.snowflake.com/en/sql-reference/account-usage/query_history">QUERY_HISTORY</a></li>
+</ul>
+<p>Which of the five beliefs did your team say out loud in the last cost meeting?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="snowflake-iceberg-share-without-exports.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 24 Nov 2026</span>
+              <h3>Your nightly export is a second copy nobody governs</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="warehouse-prompt-injection-analytics-agents.html" class="related-card" data-category="AI">
+              <span>AI · 18 Nov 2026</span>
+              <h3>Your warehouse is a prompt injection vector</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="snowflake-variant-flatten.html" class="related-card" data-category="Snowflake">
+              <span>Snowflake · 27 Jun 2026</span>
+              <h3>You've been flattening Snowflake JSON wrong</h3>
+              <span>9 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

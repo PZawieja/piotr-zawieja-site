@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Five things you believe about your Snowflake bill, tested</title>
+      <link>https://goldlayer.dev/writing/snowflake-bill-beliefs-tested.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-bill-beliefs-tested.html</guid>
+      <pubDate>Tue, 24 Nov 2026 12:11:06 +0000</pubDate>
+      <description>Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.</description>
+    </item>
+    <item>
       <title>Your nightly export is a second copy nobody governs</title>
       <link>https://goldlayer.dev/writing/snowflake-iceberg-share-without-exports.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-iceberg-share-without-exports.html</guid>
