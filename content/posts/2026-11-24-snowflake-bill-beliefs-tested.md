@@ -8,6 +8,9 @@ description: 'Resource monitors, auto-suspend, warehouse size, failed queries, s
 tags:
 - Snowflake
 read_time: 7
+feature_image: ../assets/posts/snowflake-bill-beliefs-tested/cover.jpg
+feature_image_alt: "Illustration of a factory with lit windows and a stopwatch on its roof, mine carts circling it at night under a sleeping moon, gold coins dripping from a pipe beside a large gauge, while a person with a magnifying glass examines it next to a rack of test tubes."
+feature_image_caption: "The warehouse never sleeps if the next query always beats the timer."
 status: published
 ---
 
