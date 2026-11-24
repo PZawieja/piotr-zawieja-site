@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "23,53 * * * *"
   workflow_dispatch:
+  # GitHub drops most scheduled runs; a daily cloud routine pushes to this branch as a reliable trigger
+  push:
+    branches: [claude/publish-tick]
 
 concurrency:
   group: publish-due
@@ -20,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
