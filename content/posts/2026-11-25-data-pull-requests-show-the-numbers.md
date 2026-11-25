@@ -9,6 +9,9 @@ tags:
 - dbt
 - data-quality
 read_time: 6
+feature_image: ../assets/posts/data-pull-requests-show-the-numbers/cover.jpg
+feature_image_alt: "Isometric illustration of two floating platforms joined by a dotted line. On the left, a person at a desk beside a tall stack of printed code holds out a single sheet. On the right, a second person looks at that sheet through a large magnifying glass that shows a small table with one gold cell and a downward arrow, next to a rubber stamp with a gold checkmark."
+feature_image_caption: "Skip the pile of code. Hand the reviewer the numbers."
 status: published
 ---
 
