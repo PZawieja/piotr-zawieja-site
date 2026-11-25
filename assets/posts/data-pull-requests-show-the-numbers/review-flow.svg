@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="t d">
+<title id="t">How a data pull request gets reviewed</title>
+<desc id="d">The author opens a draft, CI runs dbt build and the linter, the author marks it ready, the reviewer checks numbers, grain, tests, downstream and nits within one business day, then either requests changes, which loops back to the author, or approves, which leads to a squash merge.</desc>
+<defs>
+<style>
+.sans { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+</style>
+<marker id="aw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#f0ece4"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7a9e7e"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c0614a"/></marker>
+</defs>
+<rect width="1200" height="660" rx="24" fill="#0d0d0f"/><rect x="1" y="1" width="1198" height="658" rx="23" fill="none" stroke="#2a2924" stroke-width="2"/>
+<text x="54" y="62" class="mono" font-size="15" fill="#c8a96e" letter-spacing="3">TELHADO · PR #42</text>
+<text x="54" y="104" class="sans" font-size="32" fill="#f0ece4" font-weight="700">Machines first, then a person, in a fixed order</text>
+<line x1="54" y1="255" x2="1146" y2="255" stroke="#2a2924" stroke-width="1"/><text x="54" y="200" class="mono" font-size="13" fill="#8a8680" letter-spacing="2">AUTHOR</text>
+<line x1="54" y1="405" x2="1146" y2="405" stroke="#2a2924" stroke-width="1"/><text x="54" y="350" class="mono" font-size="13" fill="#8a8680" letter-spacing="2">CI</text>
+<line x1="54" y1="555" x2="1146" y2="555" stroke="#2a2924" stroke-width="1"/><text x="54" y="500" class="mono" font-size="13" fill="#8a8680" letter-spacing="2">REVIEWER</text>
+<rect x="170" y="150" width="220" height="80" rx="10" fill="#131311" stroke="#2a2924" stroke-width="1.5"/><text x="188" y="182" class="sans" font-size="17" fill="#f0ece4" font-weight="700">Open a draft</text><text x="188" y="208" class="sans" font-size="14" fill="#8a8680">description filled in</text>
+<rect x="430" y="300" width="240" height="80" rx="10" fill="#131311" stroke="#2a2924" stroke-width="1.5"/><text x="448" y="332" class="sans" font-size="17" fill="#f0ece4" font-weight="700">dbt build + linter</text><text x="448" y="358" class="sans" font-size="14" fill="#8a8680">style caught here</text>
+<rect x="700" y="150" width="220" height="80" rx="10" fill="#131311" stroke="#2a2924" stroke-width="1.5"/><text x="718" y="182" class="sans" font-size="17" fill="#f0ece4" font-weight="700">Ready for review</text><text x="718" y="208" class="sans" font-size="14" fill="#8a8680">CI green</text>
+<rect x="700" y="440" width="300" height="140" rx="10" fill="#131311" stroke="#c8a96e" stroke-width="1.5"/><text x="718" y="472" class="sans" font-size="17" fill="#f0ece4" font-weight="700">Review in order</text><text x="718" y="498" class="sans" font-size="14" fill="#8a8680">within one business day</text><text x="718" y="530" class="mono" font-size="14" fill="#c8a96e">numbers → grain → tests</text><text x="718" y="556" class="mono" font-size="14" fill="#c8a96e">→ downstream → nits</text>
+<rect x="1040" y="150" width="120" height="80" rx="10" fill="#131311" stroke="#7a9e7e" stroke-width="1.5"/><text x="1100" y="186" text-anchor="middle" class="sans" font-size="17" fill="#7a9e7e" font-weight="700">Squash</text><text x="1100" y="208" text-anchor="middle" class="sans" font-size="17" fill="#7a9e7e" font-weight="700">merge</text>
+<path d="M390,215 L470,296" stroke="#f0ece4" stroke-width="2" fill="none" marker-end="url(#aw)"/>
+<path d="M640,300 L720,234" stroke="#f0ece4" stroke-width="2" fill="none" marker-end="url(#aw)"/>
+<path d="M830,230 L830,436" stroke="#f0ece4" stroke-width="2" fill="none" marker-end="url(#aw)"/>
+<path d="M1000,500 L1100,500 L1100,236" stroke="#7a9e7e" stroke-width="2.5" fill="none" marker-end="url(#ag)"/><text x="1112" y="380" class="mono" font-size="14" fill="#7a9e7e">Approve</text>
+<path d="M700,540 L280,540 L280,236" stroke="#c0614a" stroke-width="2" stroke-dasharray="7 5" fill="none" marker-end="url(#ar)"/><text x="300" y="530" class="mono" font-size="14" fill="#c0614a">Request changes → new commits, re-request</text>
+<text x="54" y="625" class="sans" font-size="16" fill="#8a8680">Request changes only for what would break numbers. Everything else is a comment.</text>
+</svg>

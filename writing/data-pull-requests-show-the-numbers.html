@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reviewers can read your SQL. Show them the numbers. — Piotr Zawieja</title>
+<meta name="description" content="How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.">
+<meta property="og:title" content="Reviewers can read your SQL. Show them the numbers.">
+<meta property="og:description" content="How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.">
+<meta property="og:url" content="https://goldlayer.dev/writing/data-pull-requests-show-the-numbers.html">
+<meta property="og:type" content="article">
+<meta property="og:image" content="https://goldlayer.dev/assets/posts/data-pull-requests-show-the-numbers/pr-description.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="alternate" type="application/rss+xml" title="Piotr Zawieja — Blog" href="https://goldlayer.dev/writing/feed.xml">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0d0d0f;
+    --surface: #141417;
+    --border:  #232328;
+    --accent:  #e8d5b0;
+    --accent2: #c8a96e;
+    --text:    #d4d0c8;
+    --muted:   #7a7870;
+    --dim:     #4a4844;
+    --white:   #f0ece4;
+    --mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    --sans:    'Inter', system-ui, -apple-system, sans-serif;
+    --serif:   'Space Grotesk', 'Inter', system-ui, sans-serif;
+    --max:     680px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ─── Nav ──────────────────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  nav .inner {
+    max-width: 860px; margin: 0 auto; padding: 0 1.5rem;
+    height: 52px; display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .nav-brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-size: 0.8rem; color: var(--accent2); }
+  .nav-brand a { display: flex; align-items: center; gap: 0.55rem; color: inherit; text-decoration: none; }
+  .nav-logo { width: 22px; height: 22px; flex-shrink: 0; }
+  .nav-back { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); text-decoration: none; transition: color 0.15s; }
+  .nav-back:hover { color: var(--accent); }
+
+  /* ─── Article layout ───────────────────────────────────────── */
+  .article-wrap { max-width: var(--max); margin: 0 auto; padding: 6rem 1.5rem 5rem; }
+
+  /* ─── Header ───────────────────────────────────────────────── */
+  .article-meta { margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .meta-tag {
+    font-family: var(--mono); font-size: 0.68rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); background: rgba(200,169,110,0.08);
+    border: 1px solid rgba(200,169,110,0.2);
+    padding: 0.2rem 0.6rem; border-radius: 3px;
+  }
+
+  .meta-date { font-family: var(--mono); font-size: 0.72rem; color: var(--dim); }
+
+  .article-title {
+    font-family: var(--serif); font-weight: 700;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    line-height: 1.15; letter-spacing: -0.02em;
+    color: var(--white); margin-bottom: 1.5rem;
+  }
+
+  .article-lede {
+    font-size: 1.05rem; color: var(--muted);
+    line-height: 1.7; margin-bottom: 2rem;
+    padding-bottom: 2rem; border-bottom: 1px solid var(--border);
+  }
+
+  /* ─── Body ─────────────────────────────────────────────────── */
+  .article-body { font-size: 1rem; line-height: 1.8; }
+
+  .article-body p { margin-bottom: 1.3rem; color: var(--text); }
+
+  .article-body h2 {
+    font-family: var(--serif); font-size: 1.45rem; font-weight: 700;
+    color: var(--white); letter-spacing: -0.02em;
+    margin: 2.5rem 0 1rem;
+  }
+
+  .article-body h3 {
+    font-family: var(--sans); font-size: 1rem; font-weight: 600;
+    color: var(--white); margin: 2rem 0 0.75rem;
+  }
+
+  .article-body strong { color: var(--white); font-weight: 600; }
+
+  .article-body a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(232,213,176,0.3); }
+  .article-body a:hover { color: var(--white); }
+
+  .article-body hr {
+    border: none; border-top: 1px solid var(--border);
+    margin: 2.5rem 0;
+  }
+
+  /* ─── Screenshots ──────────────────────────────────────────── */
+  .article-body img {
+    max-width: 100%; display: block;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 1.75rem 0;
+    cursor: zoom-in;
+  }
+
+  .article-body figure { margin: 1.75rem 0; }
+  .article-body figure img { margin: 0 0 0.6rem; }
+  .article-body figcaption {
+    font-size: 0.78rem; color: var(--dim); text-align: center;
+  }
+
+  #lightbox-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(13,13,15,0.94);
+    display: none; align-items: center; justify-content: center;
+    padding: 3rem 1.5rem; cursor: zoom-out;
+  }
+  #lightbox-overlay.active { display: flex; }
+  #lightbox-overlay img {
+    max-width: 100%; max-height: 100%;
+    border: 1px solid var(--border); border-radius: 8px;
+    margin: 0;
+  }
+
+  /* ─── Code ─────────────────────────────────────────────────── */
+  .article-body code {
+    font-family: var(--mono); font-size: 0.85em;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--accent); border-radius: 3px;
+    padding: 0.1em 0.4em;
+  }
+
+  .article-body pre {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0; overflow-x: auto;
+  }
+
+  .article-body pre code {
+    background: none; border: none; padding: 0;
+    color: var(--text); font-size: 0.82rem; line-height: 1.6;
+  }
+
+  .article-body pre .comment { color: var(--dim); }
+  .article-body pre .keyword { color: var(--accent2); }
+  .article-body pre .string  { color: var(--accent); }
+  .article-body pre .tag     { color: var(--muted); }
+
+  /* ─── Lists ────────────────────────────────────────────────── */
+  .article-body ul {
+    list-style: none; margin: 1rem 0 1.3rem; padding: 0;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+
+  .article-body ul li { padding-left: 1.25rem; position: relative; }
+  .article-body ul li::before {
+    content: '—'; position: absolute; left: 0;
+    color: var(--accent2); font-family: var(--mono); font-size: 0.8em;
+  }
+
+  /* ─── Comparison grids (tradeoff-grid / strategy-grid) ────── */
+  .tradeoff-grid, .strategy-grid {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .tradeoff-row, .strategy-row {
+    display: grid;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .tradeoff-row { grid-template-columns: repeat(4, 1fr); }
+  .strategy-row { grid-template-columns: repeat(3, 1fr); }
+
+  .tradeoff-row:last-child, .strategy-row:last-child { border-bottom: none; }
+
+  .tradeoff-row.header, .strategy-row.header {
+    background: var(--surface);
+  }
+
+  .tradeoff-row.header .tradeoff-cell,
+  .strategy-row.header .strategy-cell {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+  }
+
+  .tradeoff-cell, .strategy-cell {
+    padding: 0.7rem 0.9rem;
+    border-right: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tradeoff-cell:last-child, .strategy-cell:last-child { border-right: none; }
+
+  /* ─── Timestamp definition block (ts-block) ────────────────── */
+  .ts-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 1.5rem 0;
+    overflow: hidden;
+  }
+
+  .ts-row {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    border-bottom: 1px solid var(--border);
+    align-items: start;
+  }
+
+  .ts-row:last-child { border-bottom: none; }
+
+  .ts-label {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--accent2);
+    padding: 0.75rem 1rem;
+    border-right: 1px solid var(--border);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .ts-desc {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ─── doc-table / generic article tables ───────────────────── */
+  .article-body table, .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.87rem;
+  }
+
+  .article-body th, .doc-table th {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 0.6rem 0.9rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .article-body td, .doc-table td {
+    padding: 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* ─── Post brief (2-3 bullets right after the opening hook) ─ */
+  .post-brief {
+    border-left: 2px solid var(--accent2);
+    padding: 0.15rem 0 0.15rem 1.25rem;
+    margin: 1.5rem 0 2.25rem;
+  }
+
+  .post-brief ul { margin: 0 !important; padding-left: 0 !important; gap: 0.45rem !important; }
+
+  .post-brief ul li {
+    color: var(--white); font-size: 1.02rem; line-height: 1.5;
+    padding-left: 1.1rem !important;
+  }
+
+  .post-brief ul li::before { content: '›' !important; font-size: 1em !important; }
+
+  /* ─── Takeaways ────────────────────────────────────────────── */
+  .takeaways {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: 1.5rem 1.5rem 1.5rem 1.75rem;
+    margin: 2rem 0;
+  }
+
+  .takeaways h2 {
+    font-size: 0.75rem !important; font-family: var(--mono) !important;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2) !important; margin: 0 0 1rem !important;
+  }
+
+  .takeaways ul { margin: 0 !important; }
+
+  .takeaways ul li { color: var(--text); font-size: 0.92rem; }
+
+  /* ─── Decision tree (quick "if X, do Y" reference) ─────────── */
+  .decision-tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 6px;
+    margin: 2rem 0;
+    overflow: hidden;
+  }
+
+  .decision-tree-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    padding: 1.1rem 1.25rem 0.6rem;
+  }
+
+  .decision-step {
+    display: grid;
+    grid-template-columns: 9rem 1fr;
+    gap: 0.5rem 0.9rem;
+    padding: 0.7rem 1.25rem;
+    border-top: 1px solid var(--border);
+    align-items: baseline;
+  }
+
+  .decision-step:first-of-type { border-top: none; }
+
+  .decision-q {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--white);
+    line-height: 1.5;
+  }
+
+  .decision-a { font-size: 0.9rem; color: var(--text); line-height: 1.55; }
+  .decision-a strong { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .decision-step { grid-template-columns: 1fr; gap: 0.25rem; }
+  }
+
+  /* ─── Related articles ─────────────────────────────────────── */
+  .related-section {
+    margin-top: 3rem; padding-top: 2.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .related-label {
+    font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 1rem;
+  }
+
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .related-card {
+    display: block; padding: 1rem 1.1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .related-card:hover { border-color: var(--accent2); }
+  .related-card:hover .related-title { color: var(--accent); }
+
+  .related-tag {
+    font-family: var(--mono); font-size: 0.62rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent2); margin-bottom: 0.4rem; display: block;
+  }
+
+  .related-title {
+    font-size: 0.88rem; font-weight: 600;
+    color: var(--white); line-height: 1.35;
+    transition: color 0.15s; margin-bottom: 0.3rem;
+  }
+
+  .related-date {
+    font-family: var(--mono); font-size: 0.68rem; color: var(--dim);
+  }
+
+  /* ─── RSS nudge ────────────────────────────────────────────── */
+  .rss-nudge {
+    margin-top: 2rem; padding: 1rem 1.25rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 0.85rem; color: var(--muted);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+
+  .rss-nudge a { color: var(--accent2); text-decoration: none; font-family: var(--mono); font-size: 0.78rem; }
+  .rss-nudge a:hover { color: var(--accent); }
+
+  /* ─── Pull quote ───────────────────────────────────────────── */
+  .pull-quote {
+    border-left: 3px solid var(--accent2);
+    padding: 0.9rem 1.5rem;
+    margin: 2rem 0;
+    font-family: var(--serif);
+    font-size: 1.1rem;
+    color: var(--white);
+    line-height: 1.55;
+    font-style: italic;
+  }
+
+  /* ─── Callout boxes ────────────────────────────────────────── */
+  .callout {
+    border-radius: 6px;
+    padding: 1.1rem 1.4rem;
+    margin: 1.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    border: 1px solid var(--border);
+  }
+
+  .callout-label {
+    font-family: var(--mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .callout p { margin-bottom: 0; color: var(--text); }
+
+  .callout-tip    { background: rgba(109,184,122,0.06); border-color: rgba(109,184,122,0.3); }
+  .callout-tip    .callout-label { color: #6db87a; }
+
+  .callout-warn   { background: rgba(200,169,110,0.06); border-color: rgba(200,169,110,0.3); }
+  .callout-warn   .callout-label { color: var(--accent2); }
+
+  .callout-info   { background: rgba(142,207,240,0.06); border-color: rgba(142,207,240,0.3); }
+  .callout-info   .callout-label { color: #8ecff0; }
+
+  /* ─── Byline ───────────────────────────────────────────────── */
+  .article-footer {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+
+  .byline { font-size: 0.85rem; color: var(--muted); }
+  .byline strong { color: var(--white); }
+
+  .back-link {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); text-decoration: none;
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--accent); }
+
+  /* ─── Nav links ────────────────────────────────────────────── */
+  .nav-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); letter-spacing: 0.06em;
+    text-transform: lowercase; text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  /* ─── Mobile ───────────────────────────────────────────────── */
+  @media (max-width: 600px) {
+    .article-wrap { padding: 5rem 1.25rem 4rem; }
+    .article-body pre { padding: 1rem; margin: 1.25rem 0; border-radius: 4px; }
+    .tradeoff-row { grid-template-columns: 1fr 1fr; }
+    .tradeoff-row.header .tradeoff-cell:nth-child(n+3),
+    .tradeoff-row .tradeoff-cell:nth-child(n+3) { display: none; }
+    .strategy-row { grid-template-columns: 1fr 1fr; }
+    .strategy-row.header .strategy-cell:last-child,
+    .strategy-row .strategy-cell:last-child { display: none; }
+    .ts-row { grid-template-columns: 1fr; }
+    .ts-label { border-right: none; border-bottom: 1px solid var(--border); }
+    .article-body table, .doc-table { display: block; overflow-x: auto; }
+    .nav-links { gap: 1rem; }
+    .nav-links a { font-size: 0.72rem; }
+    .related-grid { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<link rel="stylesheet" href="../assets/site-fern.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="Piotr Zawieja home">
+        <span class="brand-mark">PZ</span>
+        <span>Piotr Zawieja</span>
+      </a>
+      <nav class="primary-nav" aria-label="Main navigation">
+        <a href="/writing/" aria-current="page">Blog</a>
+        <a href="/projects/">Projects</a>
+        <a href="/about/">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <article class="container article-layout" data-category="dbt">
+      <header class="article-header">
+        <a class="article-back" href="/writing/">← Back to blog</a>
+        <div class="article-meta">
+          <span class="category-tag">dbt</span>
+          <span class="category-tag secondary">Data quality</span>
+          <span>25 Nov 2026 · 6 min read</span>
+        </div>
+        <h1 class="article-title">Reviewers can read your SQL. Show them the numbers.</h1>
+        <p class="article-deck">How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.</p>
+      </header>
+
+      <details class="article-toc" open>
+        <summary>On this page</summary>
+        <div class="toc">
+<ul>
+<li><a href="#the-description-is-a-handover-note">The description is a handover note</a></li>
+<li><a href="#show-how-the-numbers-moved">Show how the numbers moved</a></li>
+<li><a href="#how-review-should-work">How review should work</a></li>
+<li><a href="#try-this-at-work">Try this at work</a></li>
+<li><a href="#sources-and-version-notes">Sources and version notes</a></li>
+</ul>
+</div>
+
+      </details>
+
+      <div class="article-body">
+        <p>Most pull requests on data teams get reviewed by someone reading SQL. On its own, the SQL says the least about whether the numbers are right.</p>
+<p>A reviewer can confirm that a join compiles and a column has a good name. Unless you show them, they can't see that capacity factor at one site just dropped by 13%.</p>
+<div class="post-brief">
+<ul>
+<li>A SQL diff hides what a change does to the numbers.</li>
+<li>Review time spent on style is time not spent on joins.</li>
+<li>Both sides of the review need one shared order.</li>
+</ul>
+</div>
+
+<div class="callout callout-info">
+<span class="callout-label">the example</span>
+<p>Telhado is the fictional rooftop-solar co-op from the git series, and this is the capacity-factor change from <a href="git-metric-change-command-by-command.html">Part 2</a>. I ran the comparison query below in DuckDB on synthetic data; the numbers in the description come from that run.</p>
+</div>
+
+<hr />
+<h2 id="the-description-is-a-handover-note">The description is a handover note</h2>
+<p>When a nurse ends a shift, the next one doesn't re-examine every patient. The handover says what changed, what was done, and what to watch. A pull request description is the same thing, from the person who knows the change to the person who has to vouch for it.</p>
+<p>GitHub fills every new pull request from a template if the repository has one at <code>.github/pull_request_template.md</code>. This one has five headings:</p>
+<pre><code class="language-markdown">## Why
+The request in one sentence, with a link.
+
+## What changes in the data
+Models and columns touched, and how the numbers move.
+
+## How I checked
+Commands you ran and what you compared.
+
+## Downstream and rollout
+Models, dashboards or exports affected. Backfill needed?
+
+## Not in this PR
+What a reviewer might expect but won't find.
+</code></pre>
+<p>The second heading is the one a reviewer can't get anywhere else. The others take a minute each, and "Not in this PR" saves a round of "did you forget X?" comments.</p>
+<p><img src="../assets/posts/data-pull-requests-show-the-numbers/pr-description.png" alt="A dark pull request page for Telhado PR 42, Capacity factor uses installed kW and adds inverter_model. The description has the five headings filled in: a one-line why, a before and after table of capacity factor for sites PRT-027, PRT-001 and PRT-014, the dbt build command and a row count check of 42 against 42, two downstream dashboards, and a note that no backfill is needed."></p>
+<hr />
+<h2 id="show-how-the-numbers-moved">Show how the numbers moved</h2>
+<p>You already have both versions of the model: production, and the copy dbt built in your development schema. One query compares them:</p>
+<pre><code class="language-sql">SELECT
+    prod.site_id
+    , COUNT(*) AS days_compared
+    , ROUND(AVG(prod.capacity_factor), 3) AS cf_prod
+    , ROUND(AVG(dev.capacity_factor), 3) AS cf_dev
+    , ROUND(AVG(dev.capacity_factor) - AVG(prod.capacity_factor), 3) AS cf_change
+FROM analytics.fct_daily_generation AS prod
+INNER JOIN dbt_you.fct_daily_generation AS dev
+    ON prod.site_id = dev.site_id
+    AND prod.generation_date = dev.generation_date
+WHERE prod.generation_date &gt;= DATE '2026-11-01'
+GROUP BY prod.site_id
+ORDER BY ABS(cf_change) DESC
+</code></pre>
+<pre><code class="language-text">site_id   days_compared  cf_prod  cf_dev  cf_change
+PRT-027   14             0.189    0.164   -0.025
+PRT-001   14             0.181    0.203    0.022
+PRT-014   14             0.184    0.184    0.0
+</code></pre>
+<p>That table goes straight into the description, with one sentence of explanation: PRT-027 drops because its installed capacity is above its peak output, and PRT-014 doesn't move because the two are equal. Now the reviewer checks a claim instead of reverse-engineering one.</p>
+<p>Add a row count for both tables. In my run, both were 42. When a count moves and the change wasn't supposed to add or remove rows, a join changed the grain, and that's the bug a reviewer reading SQL most often misses.</p>
+<div class="pull-quote">
+A reviewer should check your claim about the numbers, not reconstruct it from the diff.
+</div>
+
+<p>Keep the change small enough for that to work. Google's code review guide calls about 100 lines reasonable and 1,000 usually too large, and says small changes get reviewed both faster and more thoroughly. On a data team, I'd put it as one request per pull request.</p>
+<hr />
+<h2 id="how-review-should-work">How review should work</h2>
+<p>A good review runs in a fixed order, most expensive bugs first. Style comes last because a linter can catch most of it before a person looks.</p>
+<figure>
+<picture>
+<source media="(max-width: 600px)" srcset="../assets/posts/data-pull-requests-show-the-numbers/review-flow-mobile.svg">
+<img src="../assets/posts/data-pull-requests-show-the-numbers/review-flow.svg" alt="Three lanes: author, CI and reviewer. The author opens a draft pull request, CI runs dbt build and the SQL linter, and the author marks it ready for review. The reviewer responds within one business day, checking numbers, grain, tests, downstream and then nits. Request changes loops back to the author, who pushes new commits. Approve leads to a squash merge.">
+</picture>
+<figcaption>Machines check style and builds first, so the reviewer's time goes to the numbers.</figcaption>
+</figure>
+
+<div class="ts-block">
+<div class="ts-row">
+<span class="ts-label">1 · request</span>
+<span class="ts-desc">Does the description match what was asked? Wrong problem, solved well, is still wrong.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">2 · numbers</span>
+<span class="ts-desc">Do they move the way the description says? Spot-check one site or one day yourself.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">3 · grain</span>
+<span class="ts-desc">Can any join duplicate rows? Row counts before and after answer this fast.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">4 · tests</span>
+<span class="ts-desc">New columns documented, keys tested with <code>not_null</code> and <code>unique</code>.</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">5 · downstream</span>
+<span class="ts-desc">Who reads this model, and do they know the number changes?</span>
+</div>
+<div class="ts-row">
+<span class="ts-label">6 · nits</span>
+<span class="ts-desc">Anything left, prefixed <code>nit:</code> so the author knows it's optional.</span>
+</div>
+</div>
+
+<p>Three habits make that order stick:</p>
+<ul>
+<li><strong>Answer within one business day.</strong> That's the maximum in Google's guide, and it's what stops reviews from becoming the team's bottleneck.</li>
+<li><strong>Approve when it's better, not when it's perfect.</strong> Google's senior principle is to approve once a change definitely improves the codebase. Use GitHub's Request changes for what would break numbers, and a comment for everything else.</li>
+<li><strong>Open drafts early.</strong> A draft pull request can't be merged and doesn't ping code owners, so CI can run while you finish. Mark it ready when the description is filled in.</li>
+</ul>
+<p>The author has a job too: reply to every comment, push fixes as new commits so the reviewer sees only what changed, and re-request review.</p>
+<p><img src="../assets/posts/data-pull-requests-show-the-numbers/review-order.png" alt="A checklist card titled review a data pull request in this order, listing six numbered steps: request, numbers, grain, tests, downstream and nits, each with a one-line question. A strip at the bottom reads respond within one business day, approve when it is better, not perfect."></p>
+<hr />
+<h2 id="try-this-at-work">Try this at work</h2>
+<div class="callout callout-tip">
+<span class="callout-label">today</span>
+<p>Commit the template above as <code>.github/pull_request_template.md</code>. On the next pull request you review, read "What changes in the data" before you open the diff. If that section is empty, ask for it before you comment on anything else.</p>
+</div>
+
+<div class="takeaways">
+<h2>Takeaways</h2>
+<ul>
+<li><strong>The SQL diff is the least informative part</strong> — reviewers need to see how the numbers move.</li>
+<li><strong>Compare prod and dev in one query</strong> — paste the before and after into the description.</li>
+<li><strong>Row counts catch grain bugs</strong> — a count that moves unexpectedly means a join changed.</li>
+<li><strong>Review in a fixed order</strong> — request, numbers, grain, tests, downstream, then nits.</li>
+<li><strong>Fast and good enough beats slow and perfect</strong> — one business day to respond, approve when it's better.</li>
+</ul>
+</div>
+
+<h2 id="sources-and-version-notes">Sources and version notes</h2>
+<p>Checked on 20 November 2026. I ran the comparison query on DuckDB with synthetic data; the schema names are illustrative.</p>
+<ul>
+<li><a href="https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository">Creating a pull request template</a> — GitHub Docs.</li>
+<li><a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests">About pull requests</a> and <a href="https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/about-pull-request-reviews">about pull request reviews</a> — drafts and review decisions.</li>
+<li>Google Engineering Practices: <a href="https://google.github.io/eng-practices/review/reviewer/speed.html">speed of code reviews</a>, <a href="https://google.github.io/eng-practices/review/reviewer/standard.html">the standard of code review</a>, <a href="https://google.github.io/eng-practices/review/developer/small-cls.html">small CLs</a> and <a href="https://google.github.io/eng-practices/review/developer/cl-descriptions.html">writing good CL descriptions</a>.</li>
+</ul>
+<p>What's the last bug a reviewer caught for you, and was it in the SQL or in the numbers?</p>
+
+        <div class="rss-callout">
+          New blog posts on analytics engineering and practical AI. <a href="/writing/feed.xml">Subscribe via RSS →</a>
+        </div>
+
+        <section class="related-reading" aria-labelledby="related-heading">
+          <h2 id="related-heading">More like this</h2>
+          <div class="related-grid">
+            <a href="git-metric-change-command-by-command.html" class="related-card" data-category="dbt">
+              <span>dbt · 23 Nov 2026</span>
+              <h3>Git for analytics engineers, Part 2: One metric change, command by command</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="git-for-analytics-engineers.html" class="related-card" data-category="dbt">
+              <span>dbt · 20 Nov 2026</span>
+              <h3>Git for analytics engineers, Part 1: Branch or not to branch</h3>
+              <span>8 min read →</span>
+            </a>
+            <a href="dbt-layers-enforced-in-ci.html" class="related-card" data-category="dbt">
+              <span>dbt · 19 Nov 2026</span>
+              <h3>Your dbt layers are a suggestion until CI enforces them</h3>
+              <span>9 min read →</span>
+            </a>
+          </div>
+        </section>
+
+        <footer class="article-footer">
+          <p class="byline">Written by <strong>Piotr Zawieja</strong> — Analytics Engineer. Code examples use synthetic data.</p>
+          <a href="/writing/" class="back-link">← Back to blog</a>
+        </footer>
+      </div>
+    </article>
+  </main>
+
+  <footer class="container site-footer">
+    <span>© 2026 Piotr Zawieja</span>
+    <div class="footer-links">
+      <a href="/">Home</a>
+      <a href="/projects/">Projects</a>
+      <a href="/about/">About</a>
+      <a href="/writing/feed.xml">RSS</a>
+      <a href="https://github.com/PZawieja">GitHub</a>
+    </div>
+  </footer>
+
+  <div id="lightbox-overlay"><img id="lightbox-img" alt=""></div>
+  <script>
+    (function () {
+      var overlay = document.getElementById("lightbox-overlay");
+      var overlayImg = document.getElementById("lightbox-img");
+      var toc = document.querySelector(".article-toc");
+
+      if (toc) {
+        var mobileViewport = window.matchMedia("(max-width: 800px)");
+        var syncToc = function () {
+          toc.open = !mobileViewport.matches;
+        };
+        syncToc();
+        mobileViewport.addEventListener("change", syncToc);
+      }
+
+      document.querySelectorAll(".article-body img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          overlayImg.src = img.src;
+          overlayImg.alt = img.alt;
+          overlay.classList.add("active");
+        });
+      });
+
+      overlay.addEventListener("click", function () {
+        overlay.classList.remove("active");
+      });
+
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          overlay.classList.remove("active");
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -38,33 +38,34 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">37</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">38</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="snowflake-bill-beliefs-tested.html" data-category="Snowflake" data-tags="Snowflake">
+      <a class="featured-post" href="data-pull-requests-show-the-numbers.html" data-category="dbt" data-tags="dbt,data-quality">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>24 Nov 2026</span>
+              <span>25 Nov 2026</span>
             </div>
             <div class="category-tags">
-              <span class="category-tag">Snowflake</span>
+              <span class="category-tag">dbt</span>
+              <span class="category-tag secondary">Data quality</span>
             </div>
-            <h2>Five things you believe about your Snowflake bill, tested</h2>
-            <p class="featured-description">Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.</p>
+            <h2>Reviewers can read your SQL. Show them the numbers.</h2>
+            <p class="featured-description">How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.</p>
           </div>
           <div class="featured-meta">
-            <span>7 min read</span>
+            <span>6 min read</span>
             <span>Read the latest post →</span>
           </div>
         </div>
         <figure class="featured-art">
-          <img src="/assets/posts/snowflake-bill-beliefs-tested/cover.jpg" alt="Illustration of a factory with lit windows and a stopwatch on its roof, mine carts circling it at night under a sleeping moon, gold coins dripping from a pipe beside a large gauge, while a person with a magnifying glass examines it next to a rack of test tubes.">
-          <figcaption class="featured-caption">The warehouse never sleeps if the next query always beats the timer.</figcaption>
+          <img src="/assets/posts/data-pull-requests-show-the-numbers/pr-description.png" alt="A dark pull request page for Telhado PR 42, Capacity factor uses installed kW and adds inverter_model. The description has the five headings filled in: a one-line why, a before and after table of capacity factor for sites PRT-027, PRT-001 and PRT-014, the dbt build command and a row count check of 42 against 42, two downstream dashboards, and a note that no backfill is needed.">
+          <figcaption class="featured-caption"></figcaption>
         </figure>
       </a>
     </section>
@@ -75,6 +76,16 @@
         <span>Newest 6 after the latest</span>
       </div>
       <div class="recent-grid">
+        <a class="recent-card" href="snowflake-bill-beliefs-tested.html" data-category="Snowflake">
+          <figure class="recent-art">
+            <img src="/assets/posts/snowflake-bill-beliefs-tested/cover.jpg" alt="Illustration of a factory with lit windows and a stopwatch on its roof, mine carts circling it at night under a sleeping moon, gold coins dripping from a pipe beside a large gauge, while a person with a magnifying glass examines it next to a rack of test tubes." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">Snowflake</span><span>24 Nov</span></p>
+            <h3>Five things you believe about your Snowflake bill, tested</h3>
+            <p class="recent-read">7 min read</p>
+          </div>
+        </a>
         <a class="recent-card" href="snowflake-iceberg-share-without-exports.html" data-category="Snowflake">
           <figure class="recent-art">
             <img src="/assets/posts/snowflake-iceberg-share-without-exports/cover.jpg" alt="Illustration of a layered iceberg inside a gold ring, read in place by light beams from a lantern, a small boat and a person with a laptop, while a cracked copy drifts away on the left." loading="lazy">
@@ -122,16 +133,6 @@
           <div class="recent-body">
             <p class="recent-meta"><span class="recent-tag">AI · Snowflake</span><span>18 Nov</span></p>
             <h3>Your warehouse is a prompt injection vector</h3>
-            <p class="recent-read">8 min read</p>
-          </div>
-        </a>
-        <a class="recent-card" href="analytics-agent-cost-optimization.html" data-category="AI">
-          <figure class="recent-art">
-            <img src="/assets/posts/analytics-agent-cost-optimization/cost-per-answer.png" alt="A cost-per-answer diagram separates model, warehouse, and retry costs, then compares total serving spend with answers that pass the quality bar." loading="lazy">
-          </figure>
-          <div class="recent-body">
-            <p class="recent-meta"><span class="recent-tag">AI</span><span>18 Nov</span></p>
-            <h3>Make every token earn its place: cost optimization for analytics agents</h3>
             <p class="recent-read">8 min read</p>
           </div>
         </a>
@@ -197,6 +198,15 @@
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-list" id="archive-list">
         <h3 class="archive-month" data-month="November 2026">November 2026</h3>
+        <a class="archive-row" href="snowflake-bill-beliefs-tested.html" data-category="Snowflake" data-tags="Snowflake" data-month="November 2026" data-in-recent>
+          <span class="archive-date">24 Nov</span>
+          <span class="archive-tag">Snowflake</span>
+          <span class="archive-text">
+            <strong>Five things you believe about your Snowflake bill, tested</strong>
+            <span>Resource monitors, auto-suspend, warehouse size, failed queries, serverless: test each Snowflake cost belief with ACCOUNT_USAGE and fix the top two.</span>
+          </span>
+          <span class="archive-time">7 min</span>
+        </a>
         <a class="archive-row" href="snowflake-iceberg-share-without-exports.html" data-category="Snowflake" data-tags="Snowflake,data-quality" data-month="November 2026" data-in-recent>
           <span class="archive-date">24 Nov</span>
           <span class="archive-tag">Snowflake</span>
@@ -242,7 +252,7 @@
           </span>
           <span class="archive-time">8 min</span>
         </a>
-        <a class="archive-row" href="analytics-agent-cost-optimization.html" data-category="AI" data-tags="AI" data-month="November 2026" data-in-recent>
+        <a class="archive-row" href="analytics-agent-cost-optimization.html" data-category="AI" data-tags="AI" data-month="November 2026">
           <span class="archive-date">18 Nov</span>
           <span class="archive-tag">AI</span>
           <span class="archive-text">
@@ -527,7 +537,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 37 posts</span>
+      <span>© 2026 Piotr Zawieja · 38 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>

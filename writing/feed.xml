@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Reviewers can read your SQL. Show them the numbers.</title>
+      <link>https://goldlayer.dev/writing/data-pull-requests-show-the-numbers.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/data-pull-requests-show-the-numbers.html</guid>
+      <pubDate>Wed, 25 Nov 2026 09:07:04 +0000</pubDate>
+      <description>How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.</description>
+    </item>
+    <item>
       <title>Five things you believe about your Snowflake bill, tested</title>
       <link>https://goldlayer.dev/writing/snowflake-bill-beliefs-tested.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/snowflake-bill-beliefs-tested.html</guid>
