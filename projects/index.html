@@ -88,36 +88,42 @@
 
     <section class="section">
       <div class="section-heading">
-        <div><p class="section-label">Analytics engineering</p><h2>Five public projects. Real patterns.</h2></div>
+        <div><p class="section-label">Analytics engineering</p><h2>Six public projects. Real patterns.</h2></div>
         <p>Models, tests, and workflows that make analytics easier to trust and operate.</p>
       </div>
       <div class="projects-grid">
+        <a class="project-card" href="https://github.com/PZawieja/dbt-pr-diff" target="_blank" rel="noopener noreferrer">
+          <div class="project-card-top"><span class="project-number">01 · PR data review</span><span class="repo-link">GitHub ↗</span></div>
+          <h3>dbt-pr-diff</h3>
+          <p>A GitHub Action that builds both sides of a dbt pull request in DuckDB and posts the numbers as one comment: row counts, key changes, duplicate keys and metric shifts. A fan-out join fails the check.</p>
+          <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">GitHub Actions</span><span class="tag">Claude</span></div>
+        </a>
         <a class="project-card" href="https://github.com/PZawieja/gtm-revenue-analytics" target="_blank" rel="noopener noreferrer">
-          <div class="project-card-top"><span class="project-number">01 · Revenue analytics</span><span class="repo-link">GitHub ↗</span></div>
+          <div class="project-card-top"><span class="project-number">02 · Revenue analytics</span><span class="repo-link">GitHub ↗</span></div>
           <h3>GTM Revenue Analytics Platform</h3>
           <p>End-to-end SaaS revenue modeling: MRR waterfall, NRR cohort analysis, ARR bridge, and churn by tenure. Revenue motions are defined and tested in a shared dbt model, with a Streamlit dashboard.</p>
           <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Streamlit</span><span class="tag">CI/CD</span></div>
         </a>
         <a class="project-card" href="https://github.com/PZawieja/experimentation-analytics-platform" target="_blank" rel="noopener noreferrer">
-          <div class="project-card-top"><span class="project-number">02 · Experimentation</span><span class="repo-link">GitHub ↗</span></div>
+          <div class="project-card-top"><span class="project-number">03 · Experimentation</span><span class="repo-link">GitHub ↗</span></div>
           <h3>Experimentation Analytics Platform</h3>
           <p>A/B testing pipeline that keeps assignment and exposure distinct, monitors exposure quality, and gates statistical output on integrity checks.</p>
           <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Statistics</span><span class="tag">Data quality</span></div>
         </a>
         <a class="project-card" href="https://github.com/PZawieja/air-traffic-pulse" target="_blank" rel="noopener noreferrer">
-          <div class="project-card-top"><span class="project-number">03 · Anomaly detection</span><span class="repo-link">GitHub ↗</span></div>
+          <div class="project-card-top"><span class="project-number">04 · Anomaly detection</span><span class="repo-link">GitHub ↗</span></div>
           <h3>Air Traffic Pulse</h3>
           <p>Live anomaly detection on ADS-B aircraft data over four European cities. It demonstrates an observe → baseline → compare → flag → explain workflow.</p>
           <div class="tags"><span class="tag">Python</span><span class="tag">DuckDB</span><span class="tag">dbt</span><span class="tag">Monitoring</span></div>
         </a>
         <a class="project-card" href="https://github.com/PZawieja/event-analytics-platform" target="_blank" rel="noopener noreferrer">
-          <div class="project-card-top"><span class="project-number">04 · Event analytics</span><span class="repo-link">GitHub ↗</span></div>
+          <div class="project-card-top"><span class="project-number">05 · Event analytics</span><span class="repo-link">GitHub ↗</span></div>
           <h3>Event Analytics Platform</h3>
           <p>A behavioral event pipeline from raw stream to governed self-service layer. Staging, intermediate, and mart layers isolate raw schemas from BI consumers.</p>
           <div class="tags"><span class="tag">Python</span><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">Funnel analytics</span></div>
         </a>
         <a class="project-card" href="https://github.com/PZawieja/churn-early-warning-platform" target="_blank" rel="noopener noreferrer">
-          <div class="project-card-top"><span class="project-number">05 · Churn prediction</span><span class="repo-link">GitHub ↗</span></div>
+          <div class="project-card-top"><span class="project-number">06 · Churn prediction</span><span class="repo-link">GitHub ↗</span></div>
           <h3>Churn Early-Warning Platform</h3>
           <p>Scores every B2B account weekly for churn risk, from rule-based weighted scoring to an ML model, with SCD2 risk history and a prioritised CSM action queue.</p>
           <div class="tags"><span class="tag">dbt</span><span class="tag">DuckDB</span><span class="tag">scikit-learn</span><span class="tag">Snapshots</span></div>

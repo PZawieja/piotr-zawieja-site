@@ -94,6 +94,8 @@ That table goes straight into the description, with one sentence of explanation:
 
 Add a row count for both tables. In my run, both were 42. When a count moves and the change wasn't supposed to add or remove rows, a join changed the grain, and that's the bug a reviewer reading SQL most often misses.
 
+I've since automated both checks in [dbt-pr-diff](https://github.com/PZawieja/dbt-pr-diff), a GitHub Action that builds main and the pull request in DuckDB, compares every changed model, and posts row counts, duplicate keys and metric shifts as a comment. Its [fan-out demo](https://github.com/PZawieja/dbt-pr-diff/pull/2) shows why the comment needs sums as well as averages: the average moves 0.9% while the total rises 65%.
+
 <div class="pull-quote">
 A reviewer should check your claim about the numbers, not reconstruct it from the diff.
 </div>
