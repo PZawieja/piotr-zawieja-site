@@ -199,6 +199,8 @@ Triage buys you time and focus. It doesn't replace the domain knowledge that tel
 
 For both of these edge cases, the fix is human review of the "auto_acknowledge" log at least once a week. Treat it the same way you treat a spam folder — mostly right, but worth a periodic scan.
 
+I've since built this end to end in [observability-on-a-budget](https://github.com/PZawieja/observability-on-a-budget), with one change: because the rules above are deterministic, they run in SQL, and the model only writes the note. On 90 simulated days with 15 planted faults, the rules cleared 62% of alerts, the notes called all 7 false pages benign, and the AI cost for the whole run was $0.20. The [report](https://pzawieja.github.io/observability-on-a-budget/) shows every alert.
+
 ---
 
 ## The payoff

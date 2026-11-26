@@ -703,6 +703,7 @@ Triage buys you time and focus. It doesn't replace the domain knowledge that tel
 </div>
 
 <p>For both of these edge cases, the fix is human review of the "auto_acknowledge" log at least once a week. Treat it the same way you treat a spam folder — mostly right, but worth a periodic scan.</p>
+<p>I've since built this end to end in <a href="https://github.com/PZawieja/observability-on-a-budget">observability-on-a-budget</a>, with one change: because the rules above are deterministic, they run in SQL, and the model only writes the note. On 90 simulated days with 15 planted faults, the rules cleared 62% of alerts, the notes called all 7 false pages benign, and the AI cost for the whole run was $0.20. The <a href="https://pzawieja.github.io/observability-on-a-budget/">report</a> shows every alert.</p>
 <hr />
 <h2 id="the-payoff">The payoff</h2>
 <p>On a mature pipeline with well-tuned monitoring, roughly 60–70% of overnight alerts are upstream-caused cascades or known-noisy checks. Auto-acknowledging those — with a clear reasoning field and an audit trail — means your on-call engineer wakes up to three actionable items instead of forty.</p>
