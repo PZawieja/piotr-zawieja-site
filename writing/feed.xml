@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>My first monitors missed 3 of the 12 critical faults I planted</title>
+      <link>https://goldlayer.dev/writing/planted-faults-data-monitoring.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/planted-faults-data-monitoring.html</guid>
+      <pubDate>Thu, 26 Nov 2026 15:08:39 +0000</pubDate>
+      <description>I planted 15 faults in a pipeline to test SQL monitors, rules triage and AI alert notes. What caught them, what didn't, and the $0.20 bill.</description>
+    </item>
+    <item>
       <title>Building a Churn Early-Warning Platform, Part 1: Architecture Before SQL</title>
       <link>https://goldlayer.dev/writing/churn-ewp-01-architecture.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/churn-ewp-01-architecture.html</guid>
