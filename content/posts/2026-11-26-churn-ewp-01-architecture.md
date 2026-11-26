@@ -9,6 +9,9 @@ tags:
 - dbt
 - AI
 read_time: 9
+feature_image: ../assets/posts/churn-ewp-01-architecture/cover.jpg
+feature_image_alt: "Isometric illustration of three floating platforms joined by a dotted line. On the left, a person files folders beside a filing cabinet. In the middle, two people stand at a scale under a large risk gauge whose needle points toward red, next to a stack of cards, a glass box of gears and a weekly calendar with pinned notes. On the right, a person in a headset sits at a desk with an inbox tray, a phone and a small gold flag."
+feature_image_caption: "Account data in, a risk score in the middle, a short list for the CSM at the end."
 status: published
 published_at: '2026-11-26T09:06:44Z'
 ---
