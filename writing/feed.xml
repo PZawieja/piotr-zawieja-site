@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Building a Churn Early-Warning Platform, Part 1: Architecture Before SQL</title>
+      <link>https://goldlayer.dev/writing/churn-ewp-01-architecture.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/churn-ewp-01-architecture.html</guid>
+      <pubDate>Thu, 26 Nov 2026 09:06:44 +0000</pubDate>
+      <description>Most engineers start with SQL. The skill is knowing what to build before touching the keyboard — three signal categories, one dbt layer design, one controversial first-version choice.</description>
+    </item>
+    <item>
       <title>Reviewers can read your SQL. Show them the numbers.</title>
       <link>https://goldlayer.dev/writing/data-pull-requests-show-the-numbers.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/data-pull-requests-show-the-numbers.html</guid>

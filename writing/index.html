@@ -38,35 +38,35 @@
 
   <main class="container">
     <header class="page-intro writing-intro">
-      <p class="eyebrow">Blog · <span id="total-count">38</span> posts</p>
+      <p class="eyebrow">Blog · <span id="total-count">39</span> posts</p>
       <h1>Good data work is worth explaining.</h1>
       <p>Practical posts on analytics engineering, semantic layers, and AI agents built with trust in mind.</p>
     </header>
 
     <section aria-label="Latest blog post">
-      <a class="featured-post" href="data-pull-requests-show-the-numbers.html" data-category="dbt" data-tags="dbt,data-quality">
+      <a class="featured-post" href="churn-ewp-01-architecture.html" data-category="dbt" data-tags="dbt,AI">
         <div class="featured-copy">
           <div>
             <div class="featured-topline">
               <span class="latest-label">Latest post</span>
-              <span>25 Nov 2026</span>
+              <span>26 Nov 2026</span>
             </div>
             <div class="category-tags">
               <span class="category-tag">dbt</span>
-              <span class="category-tag secondary">Data quality</span>
+              <span class="category-tag secondary">AI</span>
             </div>
-            <h2>Reviewers can read your SQL. Show them the numbers.</h2>
-            <p class="featured-description">How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.</p>
+            <h2>Building a Churn Early-Warning Platform, Part 1: Architecture Before SQL</h2>
+            <p class="featured-description">Most engineers start with SQL. The skill is knowing what to build before touching the keyboard — three signal categories, one dbt layer design, one controversial first-version choice.</p>
           </div>
           <div class="featured-meta">
-            <span>6 min read</span>
+            <span>9 min read</span>
             <span>Read the latest post →</span>
           </div>
         </div>
-        <figure class="featured-art">
-          <img src="/assets/posts/data-pull-requests-show-the-numbers/cover.jpg" alt="Isometric illustration of two floating platforms joined by a dotted line. On the left, a person at a desk beside a tall stack of printed code holds out a single sheet. On the right, a second person looks at that sheet through a large magnifying glass that shows a small table with one gold cell and a downward arrow, next to a rubber stamp with a gold checkmark.">
-          <figcaption class="featured-caption">Skip the pile of code. Hand the reviewer the numbers.</figcaption>
-        </figure>
+        <div class="featured-art featured-placeholder" aria-hidden="true">
+          <span class="kicker">dbt</span>
+          <strong>Building a Churn Early-Warning Platform, Part 1: Architecture Before SQL</strong>
+        </div>
       </a>
     </section>
 
@@ -76,6 +76,16 @@
         <span>Newest 6 after the latest</span>
       </div>
       <div class="recent-grid">
+        <a class="recent-card" href="data-pull-requests-show-the-numbers.html" data-category="dbt">
+          <figure class="recent-art">
+            <img src="/assets/posts/data-pull-requests-show-the-numbers/cover.jpg" alt="Isometric illustration of two floating platforms joined by a dotted line. On the left, a person at a desk beside a tall stack of printed code holds out a single sheet. On the right, a second person looks at that sheet through a large magnifying glass that shows a small table with one gold cell and a downward arrow, next to a rubber stamp with a gold checkmark." loading="lazy">
+          </figure>
+          <div class="recent-body">
+            <p class="recent-meta"><span class="recent-tag">dbt · Data quality</span><span>25 Nov</span></p>
+            <h3>Reviewers can read your SQL. Show them the numbers.</h3>
+            <p class="recent-read">6 min read</p>
+          </div>
+        </a>
         <a class="recent-card" href="snowflake-bill-beliefs-tested.html" data-category="Snowflake">
           <figure class="recent-art">
             <img src="/assets/posts/snowflake-bill-beliefs-tested/cover.jpg" alt="Illustration of a factory with lit windows and a stopwatch on its roof, mine carts circling it at night under a sleeping moon, gold coins dripping from a pipe beside a large gauge, while a person with a magnifying glass examines it next to a rack of test tubes." loading="lazy">
@@ -126,16 +136,6 @@
             <p class="recent-read">9 min read</p>
           </div>
         </a>
-        <a class="recent-card" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI">
-          <figure class="recent-art">
-            <img src="/assets/posts/warehouse-prompt-injection-analytics-agents/injection-path.png" alt="A repayment table row whose payment note contains a hidden instruction flows into an analytics agent's context, next to the user's real question, and the agent treats both as instructions." loading="lazy">
-          </figure>
-          <div class="recent-body">
-            <p class="recent-meta"><span class="recent-tag">AI · Snowflake</span><span>18 Nov</span></p>
-            <h3>Your warehouse is a prompt injection vector</h3>
-            <p class="recent-read">8 min read</p>
-          </div>
-        </a>
       </div>
     </section>
 
@@ -145,6 +145,15 @@
         <span>Read in order</span>
       </div>
       <div class="series-rail">
+        <article class="series-card" data-category="dbt">
+          <header class="series-head">
+            <h3>Building a Churn Early-Warning Platform</h3>
+            <span>1 part · 9 min</span>
+          </header>
+          <ol class="series-parts">
+            <li><a href="churn-ewp-01-architecture.html"><span class="series-num">1</span><span class="series-title">Architecture Before SQL</span><span class="series-time">9 min</span></a></li>
+          </ol>
+        </article>
         <article class="series-card" data-category="dbt">
           <header class="series-head">
             <h3>Git for analytics engineers</h3>
@@ -198,6 +207,15 @@
       <p class="archive-summary" id="archive-summary" aria-live="polite"></p>
       <div class="archive-list" id="archive-list">
         <h3 class="archive-month" data-month="November 2026">November 2026</h3>
+        <a class="archive-row" href="data-pull-requests-show-the-numbers.html" data-category="dbt" data-tags="dbt,data-quality" data-month="November 2026" data-in-recent>
+          <span class="archive-date">25 Nov</span>
+          <span class="archive-tag">dbt</span>
+          <span class="archive-text">
+            <strong>Reviewers can read your SQL. Show them the numbers.</strong>
+            <span>How to write a data pull request a reviewer can approve in minutes, and how review should run: numbers first, grain second, style last.</span>
+          </span>
+          <span class="archive-time">6 min</span>
+        </a>
         <a class="archive-row" href="snowflake-bill-beliefs-tested.html" data-category="Snowflake" data-tags="Snowflake" data-month="November 2026" data-in-recent>
           <span class="archive-date">24 Nov</span>
           <span class="archive-tag">Snowflake</span>
@@ -243,7 +261,7 @@
           </span>
           <span class="archive-time">9 min</span>
         </a>
-        <a class="archive-row" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake" data-month="November 2026" data-in-recent>
+        <a class="archive-row" href="warehouse-prompt-injection-analytics-agents.html" data-category="AI" data-tags="AI,Snowflake" data-month="November 2026">
           <span class="archive-date">18 Nov</span>
           <span class="archive-tag">AI</span>
           <span class="archive-text">
@@ -537,7 +555,7 @@
     </section>
 
     <footer class="site-footer">
-      <span>© 2026 Piotr Zawieja · 38 posts</span>
+      <span>© 2026 Piotr Zawieja · 39 posts</span>
       <div class="footer-links">
         <a href="/">Home</a>
         <a href="/projects/">Projects</a>
