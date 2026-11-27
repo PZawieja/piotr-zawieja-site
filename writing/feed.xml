@@ -7,6 +7,13 @@
     <language>en</language>
     <atom:link href="https://goldlayer.dev/writing/feed.xml" rel="self" type="application/rss+xml"/>
     <item>
+      <title>Claude followed my CLAUDE.md 10 times out of 10. Then I asked nicely.</title>
+      <link>https://goldlayer.dev/writing/claude-code-hooks-dbt.html</link>
+      <guid isPermaLink="true">https://goldlayer.dev/writing/claude-code-hooks-dbt.html</guid>
+      <pubDate>Fri, 27 Nov 2026 23:01:53 +0000</pubDate>
+      <description>In 35 Claude Code runs, CLAUDE.md held until the user pushed back. Three hooks that lint, build and block prod whatever the chat says.</description>
+    </item>
+    <item>
       <title>My first monitors missed 3 of the 12 critical faults I planted</title>
       <link>https://goldlayer.dev/writing/planted-faults-data-monitoring.html</link>
       <guid isPermaLink="true">https://goldlayer.dev/writing/planted-faults-data-monitoring.html</guid>
